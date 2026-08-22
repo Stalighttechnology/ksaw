@@ -214,14 +214,9 @@ export const SKILLS = [
   "Emergency Medical Technician-Basic",
 ] as const;
 
-export const TRAINING_DURATIONS = [
-  "less than 2 weeks",
-  "2 - 4 weeks",
-  "4 - 6 weeks",
-  "6 - 8 weeks",
-  "8 - 12 weeks",
-  "12 - 24 weeks",
-] as const;
+export const TRAINING_DURATIONS = ["2 - 4 weeks"] as const;
+
+export const PASSING_YEARS = Array.from({ length: 2035 - 2015 + 1 }, (_, i) => String(2015 + i));
 
 export const LAST_SALARY = ["Less than 10,000", "10,000 to 20,000", "20,000 and 25,000", "25,000 and above"] as const;
 
