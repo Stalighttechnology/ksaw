@@ -1,21 +1,23 @@
 import univLogo from "@/assets/akkamahadevi-logo.jpeg.asset.json";
-import govLogo from "@/assets/karnataka-govt-logo.png";
+import govLogo from "@/assets/karnataka-govt-emblem.png.asset.json";
 
 export function SiteHeader() {
   return (
     <header className="kk-header">
       <div className="kk-wrap kk-header-in">
         <div className="kk-logo">
-          <img src={govLogo} alt="Government of Karnataka emblem" width={45} height={45} />
-          <img src={univLogo.url} alt="Karnataka State Akkamahadevi Women's University logo" width={45} height={45} />
+          <img src={govLogo.url} alt="Government of Karnataka emblem" width={58} height={58} />
+          <img src={univLogo.url} alt="Karnataka State Akkamahadevi Women's University logo" width={58} height={58} />
         </div>
-        <p className="kk-header-title">KARNATAKA STATE AKKAMAHADEVI WOMENS UNIVERSITY</p>
+        <div className="kk-header-titles">
+          <p className="kk-header-title">Karnataka State Akkamahadevi Women&apos;s University</p>
+          <p className="kk-header-sub">Vijayapura, Karnataka</p>
+        </div>
         <div className="kk-logo kk-header-spacer" aria-hidden />
       </div>
     </header>
   );
 }
-
 
 export function PageBanner() {
   return (
@@ -29,4 +31,3 @@ export function PageBanner() {
     </section>
   );
 }
-
