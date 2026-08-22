@@ -834,46 +834,6 @@ function RegistrationPage() {
                 </>
               ) : null}
               <Row>
-                <RadioGroup
-                  label="Are You Willing To Migrate ?"
-                  name="willing_to_migrate"
-                  value={willingToMigrate}
-                  onChange={setWillingToMigrate}
-                  options={["Yes", "No"]}
-                />
-                {willingToMigrate === "Yes" ? (
-                  <MultiSelect
-                    label="Migration Area"
-                    required
-                    options={MIGRATION_AREAS}
-                    value={migrationArea}
-                    onChange={setMigrationArea}
-                    error={errors["migrationArea"]}
-                  />
-                ) : null}
-                <RadioGroup
-                  label="Are You Willing To Work Overseas ?"
-                  name="work_overseas"
-                  value={workOverseas}
-                  onChange={setWorkOverseas}
-                  options={["Yes", "No"]}
-                />
-              </Row>
-              <Row>
-                <SelectField
-                  label="Expected Salary Outside District In Rs"
-                  value={salaryOutside}
-                  onChange={setSalaryOutside}
-                  options={EXPECTED_SALARY}
-                />
-                <SelectField
-                  label="Expected Salary Within District In Rs"
-                  value={salaryWithin}
-                  onChange={setSalaryWithin}
-                  options={EXPECTED_SALARY}
-                />
-              </Row>
-              <Row>
                 <FileField
                   label="Proof of Education"
                   required
