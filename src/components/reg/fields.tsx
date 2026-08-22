@@ -25,13 +25,13 @@ export function Field({
   children,
   span = 4,
 }: {
-  label?: ReactNode;
-  required?: boolean;
-  info?: string;
-  error?: string;
-  htmlFor?: string;
+  label?: ReactNode | undefined;
+  required?: boolean | undefined;
+  info?: string | undefined;
+  error?: string | undefined;
+  htmlFor?: string | undefined;
   children: ReactNode;
-  span?: 4 | 8 | 12;
+  span?: 4 | 8 | 12 | undefined;
 }) {
   return (
     <div className={`fcol fcol-${span}`}>
@@ -52,11 +52,11 @@ export function Field({
 }
 
 type BaseInput = {
-  label?: string;
-  required?: boolean;
-  info?: string;
-  error?: string;
-  span?: 4 | 8 | 12;
+  label?: string | undefined;
+  required?: boolean | undefined;
+  info?: string | undefined;
+  error?: string | undefined;
+  span?: 4 | 8 | 12 | undefined;
 };
 
 export function TextField({
@@ -74,10 +74,10 @@ export function TextField({
 }: BaseInput & {
   value: string;
   onChange: (v: string) => void;
-  placeholder?: string;
-  type?: string;
-  maxLength?: number;
-  inputMode?: "text" | "numeric" | "tel" | "email";
+  placeholder?: string | undefined;
+  type?: string | undefined;
+  maxLength?: number | undefined;
+  inputMode?: "text" | "numeric" | "tel" | "email" | undefined;
 }) {
   const id = useId();
   return (
@@ -172,8 +172,8 @@ export function MultiSelect({
   options: readonly string[];
   value: string[];
   onChange: (v: string[]) => void;
-  max?: number;
-  searchable?: boolean;
+  max?: number | undefined;
+  searchable?: boolean | undefined;
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -249,7 +249,7 @@ export function DateField({
   value,
   onChange,
   placeholder,
-}: BaseInput & { value: string; onChange: (v: string) => void; placeholder?: string }) {
+}: BaseInput & { value: string; onChange: (v: string) => void; placeholder?: string | undefined }) {
   const id = useId();
   return (
     <Field label={label} required={required} error={error} htmlFor={id} span={span}>
