@@ -198,20 +198,33 @@
 .kk-topnav a { color: var(--kk-text); }
 .kk-topnav a:hover { color: var(--kk-blue); }
 
-.kk-header { border-bottom: 1px solid var(--kk-line); background: #fff; }
+.kk-header { border-bottom: 1px solid #e0e0e0; background: #fff; }
 .kk-header-in {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 16px;
-  padding: 10px 0;
+  min-height: 70px;
+  padding: 8px 0;
 }
-.kk-logo { display: flex; min-width: 0; align-items: center; gap: 10px; }
-.kk-logo img { height: 44px; width: auto; }
-.kk-mainnav { display: none; gap: 20px; align-items: center; font-size: 13px; font-weight: 700; text-transform: uppercase; }
-.kk-mainnav a { color: var(--kk-text); white-space: nowrap; }
-.kk-mainnav a:hover { color: var(--kk-blue); }
-@media (min-width: 1024px) { .kk-mainnav { display: flex; } }
+.kk-logo { display: flex; min-width: 0; align-items: center; gap: 12px; }
+.kk-logo img { height: 45px; width: auto; object-fit: contain; }
+.kk-header-title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--kk-text);
+}
+.kk-header-spacer { width: 102px; }
+@media (max-width: 900px) {
+  .kk-header-title { font-size: 13px; }
+  .kk-logo img { height: 34px; }
+  .kk-header-spacer { display: none; }
+  .kk-header-in { grid-template-columns: auto minmax(0, 1fr); }
+}
+
 
 /* ---- banner ---- */
 .kk-banner {
