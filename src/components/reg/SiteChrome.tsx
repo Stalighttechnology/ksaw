@@ -1,40 +1,21 @@
+import univLogo from "@/assets/akkamahadevi-logo.jpeg.asset.json";
+import govLogo from "@/assets/karnataka-govt-logo.png";
+
 export function SiteHeader() {
   return (
-    <>
-      <div className="kk-topbar">
-        <div className="kk-wrap kk-topbar-in">
-          <span className="kk-topbar-title">Karnataka Skill Development Corporation</span>
-          <nav className="kk-topnav" aria-label="Utility">
-            <a href="#">World Skill Registration</a>
-            <a href="#">Career</a>
-            <a href="#">E-Kaushalya</a>
-            <a href="#">Certificate Verification</a>
-            <a href="#">UNDP – Code Unnati</a>
-          </nav>
+    <header className="kk-header">
+      <div className="kk-wrap kk-header-in">
+        <div className="kk-logo">
+          <img src={govLogo} alt="Government of Karnataka emblem" width={45} height={45} />
+          <img src={univLogo.url} alt="Karnataka State Akkamahadevi Women's University logo" width={45} height={45} />
         </div>
+        <p className="kk-header-title">KARNATAKA STATE AKKAMAHADEVI WOMENS UNIVERSITY</p>
+        <div className="kk-logo kk-header-spacer" aria-hidden />
       </div>
-      <header className="kk-header">
-        <div className="kk-wrap kk-header-in">
-          <div className="kk-logo">
-            <img
-              src="/images/header-logo.png"
-              alt="Karnataka Skill Development Corporation, Department of Skill Development, Entrepreneurship and Livelihood"
-            />
-          </div>
-          <nav className="kk-mainnav" aria-label="Main">
-            <a href="#">Home</a>
-            <a href="#">About Us</a>
-            <a href="#">Programs</a>
-            <a href="#">Resources</a>
-            <a href="#">Registration</a>
-            <a href="#">More</a>
-            <a href="#">Login</a>
-          </nav>
-        </div>
-      </header>
-    </>
+    </header>
   );
 }
+
 
 export function PageBanner() {
   return (
