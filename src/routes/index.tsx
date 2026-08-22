@@ -513,15 +513,19 @@ function RegistrationPage() {
                   <Row>
                     <TextField
                       label="Id Card Number"
+                      required
                       placeholder="ID Card Number"
                       value={idCardNumber}
                       onChange={setIdCardNumber}
+                      error={errors["idCardNumber"]}
                     />
                     <TextField
                       label="Husband Regiment Name"
+                      required
                       placeholder="Husband/Regiment Name"
                       value={regimentName}
                       onChange={setRegimentName}
+                      error={errors["regimentName"]}
                     />
                   </Row>
                   <Row>
@@ -577,7 +581,14 @@ function RegistrationPage() {
                   onChange={setGFirstName}
                   error={errors["gFirstName"]}
                 />
-                <TextField label="Last Name" placeholder="Last Name" value={gLastName} onChange={setGLastName} />
+                <TextField
+                  label="Last Name"
+                  required
+                  placeholder="Last Name"
+                  value={gLastName}
+                  onChange={setGLastName}
+                  error={errors["gLastName"]}
+                />
               </Row>
             </Section>
 
