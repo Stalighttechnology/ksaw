@@ -23,6 +23,7 @@ import {
   OBC_SUB_CATEGORIES,
   RELIGIONS,
   SALUTATIONS,
+  PASSING_YEARS,
   SKILLS,
   SPECIALLY_ABLED_SUB_TYPES,
   SPECIALLY_ABLED_TYPES,
@@ -173,6 +174,9 @@ function RegistrationPage() {
   const validate = (): Errors => {
     const e: Errors = {};
     if (!firstName.trim()) e["firstName"] = "First name is required";
+    if (!lastName.trim()) e["lastName"] = "Last name is required";
+    if (!gender) e["gender"] = "Gender is required";
+    if (!marital) e["marital"] = "Marital status is required";
     if (!/^[6-9]\d{9}$/.test(phone)) e["phone"] = "Enter a valid 10 digit phone number";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e["email"] = "Enter a valid email address";
     if (!dob) e["dob"] = "Date of birth is required";
@@ -191,6 +195,11 @@ function RegistrationPage() {
       if (!martyrdomProof) e["martyrdomProof"] = "Proof of martyrdom is required";
     }
     if (!gFirstName.trim()) e["gFirstName"] = "First name is required";
+    if (!gLastName.trim()) e["gLastName"] = "Last name is required";
+    if (classification === "Ex-Service Personnel") {
+      if (!idCardNumber.trim()) e["idCardNumber"] = "ID card number is required";
+      if (!regimentName.trim()) e["regimentName"] = "Regiment name is required";
+    }
 
     validateAddress("cur", current, e);
     if (sameAddress === "No") validateAddress("per", permanent, e);
@@ -199,10 +208,10 @@ function RegistrationPage() {
     if (streamOptions.length > 0 && !stream) e["stream"] = "Stream is required";
     if (subjectOptions.length > 0 && !subject) e["subject"] = "Subject is required";
     if (langInstruction === "Other" && !otherLanguage.trim()) e["otherLanguage"] = "Other language is required";
-    if (!/^(19|20)\d{2}$/.test(yearOfPassing)) e["yearOfPassing"] = "Enter a valid year. Ex: YYYY";
+    if (!yearOfPassing) e["yearOfPassing"] = "Year of passing is required";
     if (languagesKnown.length === 0) e["languagesKnown"] = "Select at least one language";
     if (pastSkillExp === "Yes" && !skillExpProof) e["skillExpProof"] = "Proof of past skill experience is required";
-    if (skills.length === 0) e["skills"] = "Select at least one skill";
+    if (skills.length !== 1) e["skills"] = "Select one skill";
     if (!trainingDuration) e["trainingDuration"] = "Preferred duration is required";
 
     if (currentlyEmployed === "Yes") {
@@ -645,15 +654,13 @@ function RegistrationPage() {
                     error={errors["otherLanguage"]}
                   />
                 ) : null}
-                <TextField
+                <SelectField
                   label="Year of Passing"
                   required
-                  info="Enter year in YYYY format"
-                  placeholder="Year Of Passing. Ex: YYYY"
-                  inputMode="numeric"
-                  maxLength={4}
+                  placeholder="Select Year"
+                  options={PASSING_YEARS}
                   value={yearOfPassing}
-                  onChange={(v) => setYearOfPassing(v.replace(/\D/g, ""))}
+                  onChange={setYearOfPassing}
                   error={errors["yearOfPassing"]}
                 />
               </Row>
@@ -689,7 +696,7 @@ function RegistrationPage() {
                   label="Skills Sought"
                   required
                   searchable
-                  max={5}
+                  single
                   options={SKILLS}
                   value={skills}
                   onChange={setSkills}
@@ -713,7 +720,7 @@ function RegistrationPage() {
                 />
               </Row>
               <p className="required-text" style={{ marginBottom: 14 }}>
-                *( You Can Select Max 5 Skills Only. )
+                *( You Can Select Only 1 Skill. )
               </p>
             </Section>
 
@@ -831,6 +838,8 @@ function RegistrationPage() {
                 <FileField
                   label="Profile image"
                   required
+                  accept="image/*"
+                  hint="Image, max 1 MB"
                   value={profileImg}
                   onChange={setProfileImg}
                   error={errors["profileImg"]}
