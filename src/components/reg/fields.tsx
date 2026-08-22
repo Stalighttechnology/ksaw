@@ -207,7 +207,7 @@ export function MultiSelect({
               {shown.map((o) => (
                 <li key={o}>
                   <label>
-                    <input type="checkbox" checked={value.includes(o)} onChange={() => toggle(o)} />
+                    <input type={single ? "radio" : "checkbox"} checked={value.includes(o)} onChange={() => toggle(o)} />
                     <span>{o}</span>
                   </label>
                 </li>
@@ -228,21 +228,52 @@ export function FileField({
   span,
   value,
   onChange,
-}: BaseInput & { value: string; onChange: (v: string) => void }) {
+  accept = "application/pdf",
+  maxSizeMb = 1,
+  hint = "PDF only, max 1 MB",
+}: BaseInput & {
+  value: string;
+  onChange: (v: string) => void;
+  accept?: string | undefined;
+  maxSizeMb?: number | undefined;
+  hint?: string | undefined;
+}) {
   const id = useId();
+  const [localError, setLocalError] = useState("");
+  const shownError = localError || error;
+
+  const handle = (file: File | undefined) => {
+    if (!file) {
+      setLocalError("");
+      onChange("");
+      return;
+    }
+    const acceptList = accept.split(",").map((a) => a.trim().toLowerCase());
+    const ok = acceptList.some((a) =>
+      a.startsWith(".") ? file.name.toLowerCase().endsWith(a) : a.endsWith("/*") ? file.type.startsWith(a.slice(0, -1)) : file.type === a,
+    );
+    if (!ok) {
+      setLocalError(accept === "application/pdf" ? "Only PDF files are allowed" : "Invalid file type");
+      onChange("");
+      return;
+    }
+    if (file.size > maxSizeMb * 1024 * 1024) {
+      setLocalError(`File must be less than ${maxSizeMb} MB`);
+      onChange("");
+      return;
+    }
+    setLocalError("");
+    onChange(file.name);
+  };
+
   return (
-    <Field label={label} required={required} error={error} span={span}>
+    <Field label={label} required={required} error={shownError} span={span} info={hint}>
       <div className="file-input">
-        <input className={`form-ctrl file-name${error ? " is-invalid" : ""}`} readOnly value={value} placeholder="" />
+        <input className={`form-ctrl file-name${shownError ? " is-invalid" : ""}`} readOnly value={value} placeholder={hint} />
         <label className="file-btn" htmlFor={id}>
           Browse
         </label>
-        <input
-          id={id}
-          type="file"
-          className="sr-only"
-          onChange={(e) => onChange(e.target.files?.[0]?.name ?? "")}
-        />
+        <input id={id} type="file" accept={accept} className="sr-only" onChange={(e) => handle(e.target.files?.[0])} />
       </div>
     </Field>
   );
