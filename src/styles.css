@@ -142,3 +142,235 @@
     color: var(--color-foreground);
   }
 }
+
+/* ============ Kaushalkar registration design system ============ */
+:root {
+  --kk-navy: oklch(0.32 0.07 265);
+  --kk-blue: oklch(0.42 0.09 250);
+  --kk-blue-dark: oklch(0.3 0.08 258);
+  --kk-orange: oklch(0.66 0.18 45);
+  --kk-red: oklch(0.55 0.21 27);
+  --kk-text: oklch(0.32 0.01 260);
+  --kk-label: oklch(0.42 0.01 260);
+  --kk-line: oklch(0.87 0.005 260);
+  --kk-head-bg: oklch(0.965 0.003 260);
+  --kk-top-bg: oklch(0.94 0.004 260);
+  --kk-footer: oklch(0.27 0.02 265);
+  --kk-field-h: 2.375rem;
+}
+
+@theme inline {
+  --color-kk-navy: var(--kk-navy);
+  --color-kk-blue: var(--kk-blue);
+  --color-kk-orange: var(--kk-orange);
+}
+
+.kk-page {
+  font-family: Arial, Helvetica, "Helvetica Neue", sans-serif;
+  color: var(--kk-text);
+  background: #fff;
+  font-size: 14px;
+  overflow-x: hidden;
+}
+
+/* ---- top bar / header ---- */
+.kk-topbar {
+  background: var(--kk-top-bg);
+  border-bottom: 1px solid var(--kk-line);
+  font-size: 12px;
+}
+.kk-wrap {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+.kk-topbar-in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+  flex-wrap: wrap;
+}
+.kk-topbar-title { font-size: 15px; color: var(--kk-text); }
+.kk-topnav { display: flex; flex-wrap: wrap; gap: 18px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.02em; }
+.kk-topnav a { color: var(--kk-text); }
+.kk-topnav a:hover { color: var(--kk-blue); }
+
+.kk-header { border-bottom: 1px solid var(--kk-line); background: #fff; }
+.kk-header-in {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0;
+}
+.kk-logo { display: flex; min-width: 0; align-items: center; gap: 10px; }
+.kk-logo img { height: 44px; width: auto; }
+.kk-mainnav { display: none; gap: 20px; align-items: center; font-size: 13px; font-weight: 700; text-transform: uppercase; }
+.kk-mainnav a { color: var(--kk-text); white-space: nowrap; }
+.kk-mainnav a:hover { color: var(--kk-blue); }
+@media (min-width: 1024px) { .kk-mainnav { display: flex; } }
+
+/* ---- banner ---- */
+.kk-banner {
+  position: relative;
+  background-image: url("/images/inner-banner.jpg");
+  background-size: cover;
+  background-position: center;
+  padding: 34px 0;
+  text-align: center;
+  color: #fff;
+}
+.kk-banner h1 { font-size: 30px; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,0.35); }
+.kk-banner p { margin-top: 8px; font-size: 13px; }
+.kk-banner a { color: #fff; font-weight: 700; text-decoration: underline; }
+@media (max-width: 640px) { .kk-banner h1 { font-size: 22px; } }
+
+/* ---- form shell ---- */
+.kk-form { padding: 22px 0 40px; }
+.sec-head {
+  background: var(--kk-head-bg);
+  border: 1px solid var(--kk-line);
+  padding: 12px 16px;
+  margin-top: 18px;
+}
+.sec-head h2 { color: var(--kk-navy); font-size: 19px; font-weight: 700; }
+.sec-head--main h2 { text-transform: uppercase; font-size: 20px; }
+.sec-body { border: 1px solid var(--kk-line); border-top: 0; padding: 18px 16px 6px; }
+
+.frow { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 0 20px; }
+.fcol { grid-column: span 12; margin-bottom: 18px; min-width: 0; }
+@media (min-width: 768px) {
+  .fcol-4 { grid-column: span 6; }
+  .fcol-8 { grid-column: span 12; }
+}
+@media (min-width: 992px) {
+  .fcol-4 { grid-column: span 4; }
+  .fcol-8 { grid-column: span 8; }
+}
+
+.ctrl-label { display: block; margin-bottom: 6px; color: var(--kk-label); font-size: 14px; }
+.req { color: var(--kk-red); }
+.required-text { color: var(--kk-red); font-style: italic; }
+.info-i {
+  display: inline-grid;
+  place-items: center;
+  width: 14px; height: 14px;
+  margin-left: 4px;
+  border-radius: 9999px;
+  background: var(--kk-blue);
+  color: #fff;
+  font-size: 10px;
+  font-style: italic;
+  font-weight: 700;
+  cursor: help;
+  vertical-align: middle;
+}
+
+.form-ctrl {
+  display: block;
+  width: 100%;
+  height: var(--kk-field-h);
+  padding: 6px 10px;
+  border: 1px solid var(--kk-line);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--kk-text);
+  font-size: 14px;
+}
+select.form-ctrl { appearance: auto; }
+.form-ctrl::placeholder { color: oklch(0.72 0.01 260); }
+.form-ctrl:focus { outline: none; border-color: var(--kk-blue); box-shadow: 0 0 0 2px oklch(0.42 0.09 250 / 0.15); }
+.form-ctrl.is-invalid { border-color: var(--kk-red); }
+.err-msg { margin-top: 4px; color: var(--kk-red); font-size: 12px; }
+
+.radio-block { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; min-height: var(--kk-field-h); }
+.radio-inline { display: inline-flex; align-items: center; gap: 6px; color: var(--kk-label); cursor: pointer; }
+.radio-inline input { accent-color: var(--kk-blue); }
+
+.inline-group { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.inline-group .radio-block { min-height: auto; }
+.salutation-select { width: auto; min-width: 74px; display: inline-block; }
+
+/* multiselect */
+.ms { position: relative; }
+.ms-btn { display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; }
+.ms-btn-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.caret { border: 4px solid transparent; border-top-color: var(--kk-text); margin-top: 4px; flex: none; }
+.ms-menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 2px);
+  left: 0; right: 0;
+  max-height: 260px;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid var(--kk-line);
+  border-radius: 4px;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+  padding: 6px;
+}
+.ms-search { margin-bottom: 6px; }
+.ms-menu ul { display: block; }
+.ms-menu li label { display: flex; gap: 8px; align-items: flex-start; padding: 5px 6px; cursor: pointer; font-size: 13px; }
+.ms-menu li label:hover { background: var(--kk-head-bg); }
+.ms-menu li input { accent-color: var(--kk-blue); margin-top: 2px; }
+.ms-empty { padding: 6px; color: var(--kk-label); font-size: 13px; }
+
+/* file input */
+.file-input { display: flex; }
+.file-name { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.file-btn {
+  display: inline-flex; align-items: center;
+  height: var(--kk-field-h);
+  padding: 0 14px;
+  border: 1px solid var(--kk-line);
+  border-left: 0;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+  background: var(--kk-head-bg);
+  color: var(--kk-text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.click-bt { color: var(--kk-blue); text-decoration: underline; }
+.declaration { display: flex; gap: 8px; align-items: flex-start; padding: 8px 0 4px; }
+.declaration input { margin-top: 3px; accent-color: var(--kk-blue); }
+.declaration a { color: var(--kk-blue); text-decoration: underline; }
+
+.kk-actions { display: flex; gap: 10px; justify-content: flex-end; padding: 20px 0 0; flex-wrap: wrap; }
+.btn-kk {
+  height: 2.375rem;
+  padding: 0 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.btn-primary-kk { background: var(--kk-navy); color: #fff; }
+.btn-primary-kk:hover { background: var(--kk-blue-dark); }
+.btn-cancel-kk { background: #fff; color: var(--kk-text); border-color: var(--kk-line); }
+.btn-cancel-kk:hover { background: var(--kk-head-bg); }
+
+.kk-alert { margin-top: 16px; border: 1px solid var(--kk-line); background: var(--kk-head-bg); padding: 12px 16px; color: var(--kk-navy); }
+
+/* footer */
+.kk-footer { background: var(--kk-footer); color: oklch(0.85 0.01 260); padding: 34px 0; }
+.kk-footer h3 { color: #fff; font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+.kk-footer-grid { display: grid; gap: 28px; grid-template-columns: 1fr; }
+@media (min-width: 768px) { .kk-footer-grid { grid-template-columns: 1.2fr 1.4fr 0.8fr; } }
+.kk-footer strong { color: #fff; display: block; margin-top: 12px; }
+.kk-footer-links { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px 16px; font-size: 13px; }
+.kk-footer-links a:hover { color: #fff; }
+.kk-copy { background: oklch(0.22 0.02 265); color: oklch(0.85 0.01 260); text-align: center; padding: 14px 0; font-size: 13px; }
+.kk-social {
+  display: grid; place-items: center;
+  width: 44px; height: 44px;
+  border-radius: 9999px;
+  background: oklch(0.42 0.09 250);
+  color: #fff; font-weight: 700;
+}
