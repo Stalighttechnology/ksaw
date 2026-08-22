@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
-import { PageBanner, SiteFooter, SiteHeader } from "@/components/reg/SiteChrome";
+import { PageBanner, SiteHeader } from "@/components/reg/SiteChrome";
 import {
   DateField,
   Field,
@@ -144,20 +144,11 @@ function RegistrationPage() {
   const [lastSalary, setLastSalary] = useState("");
   const [lastEmployerAddress, setLastEmployerAddress] = useState("");
   const [empProof, setEmpProof] = useState("");
-  const [willingToMigrate, setWillingToMigrate] = useState("No");
-  const [migrationArea, setMigrationArea] = useState<string[]>([]);
-  const [workOverseas, setWorkOverseas] = useState("No");
-  const [salaryOutside, setSalaryOutside] = useState("");
-  const [salaryWithin, setSalaryWithin] = useState("");
 
   // Documents & submit
   const [eduProof, setEduProof] = useState("");
   const [ageProof, setAgeProof] = useState("");
-  const [resume, setResume] = useState("");
-  const [certification, setCertification] = useState("");
   const [profileImg, setProfileImg] = useState("");
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
   const [declaration, setDeclaration] = useState(true);
 
   const [errors, setErrors] = useState<Errors>({});
@@ -229,13 +220,10 @@ function RegistrationPage() {
       if (!lastEmployerAddress.trim()) e["lastEmployerAddress"] = "Address of last employer is required";
       if (!empProof) e["empProof"] = "Proof of experience is required";
     }
-    if (willingToMigrate === "Yes" && migrationArea.length === 0) e["migrationArea"] = "Select migration area";
 
     if (!eduProof) e["eduProof"] = "Proof of education is required";
     if (!ageProof) e["ageProof"] = "Proof of age is required";
-    if (!resume) e["resume"] = "Resume is required";
     if (!profileImg) e["profileImg"] = "Profile image is required";
-    if (!/^\d{6}$/.test(otp)) e["otp"] = "Enter 6 digits without space. EX: XXXXXX";
     if (!declaration) e["declaration"] = "You must accept the declaration";
     return e;
   };
@@ -877,8 +865,6 @@ function RegistrationPage() {
           </form>
         </div>
       </main>
-
-      <SiteFooter />
     </div>
   );
 }
