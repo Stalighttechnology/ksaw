@@ -882,10 +882,6 @@ function RegistrationPage() {
                   error={errors["eduProof"]}
                 />
                 <FileField label="Proof of Age" required value={ageProof} onChange={setAgeProof} error={errors["ageProof"]} />
-                <FileField label="Upload Resume" required value={resume} onChange={setResume} error={errors["resume"]} />
-              </Row>
-              <Row>
-                <FileField label="Any other certification" value={certification} onChange={setCertification} />
                 <FileField
                   label="Profile image"
                   required
@@ -894,40 +890,7 @@ function RegistrationPage() {
                   error={errors["profileImg"]}
                 />
               </Row>
-              <Row>
-                <Field
-                  span={4}
-                  error={errors["otp"]}
-                  label={
-                    <>
-                      <span className="req">*</span>{" "}
-                      <button
-                        type="button"
-                        className="click-bt"
-                        style={{ background: "none", border: 0, padding: 0, cursor: "pointer" }}
-                        onClick={() => setOtpSent(true)}
-                      >
-                        Send/ Resend OTP
-                      </button>
-                    </>
-                  }
-                  info="Enter 6 digits without space. EX: XXXXXX"
-                >
-                  <input
-                    className={`form-ctrl${errors["otp"] ? " is-invalid" : ""}`}
-                    inputMode="numeric"
-                    maxLength={6}
-                    placeholder="Enter OTP"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                  />
-                  {otpSent ? (
-                    <p style={{ marginTop: 4, fontSize: 12, color: "var(--kk-label)" }}>
-                      OTP has been sent to your registered mobile number.
-                    </p>
-                  ) : null}
-                </Field>
-              </Row>
+
               <div className="declaration">
                 <input
                   id="declaration"
