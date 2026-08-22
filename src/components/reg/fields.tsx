@@ -168,18 +168,25 @@ export function MultiSelect({
   onChange,
   max,
   searchable,
+  single,
 }: BaseInput & {
   options: readonly string[];
   value: string[];
   onChange: (v: string[]) => void;
   max?: number | undefined;
   searchable?: boolean | undefined;
+  single?: boolean | undefined;
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const shown = q ? options.filter((o) => o.toLowerCase().includes(q.toLowerCase())) : options;
 
   const toggle = (o: string) => {
+    if (single) {
+      onChange(value.includes(o) ? [] : [o]);
+      setOpen(false);
+      return;
+    }
     if (value.includes(o)) onChange(value.filter((v) => v !== o));
     else if (!max || value.length < max) onChange([...value, o]);
   };
