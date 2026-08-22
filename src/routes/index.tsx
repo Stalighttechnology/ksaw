@@ -1,24 +1,961 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
+import { PageBanner, SiteFooter, SiteHeader } from "@/components/reg/SiteChrome";
+import {
+  DateField,
+  Field,
+  FileField,
+  MultiSelect,
+  RadioGroup,
+  Row,
+  Section,
+  SelectField,
+  TextField,
+} from "@/components/reg/fields";
+import {
+  CASTE_CERTIFICATE_TYPES,
+  CATEGORIES,
+  DISTRICTS,
+  EDUCATION_LEVELS,
+  EXPECTED_SALARY,
+  LANGUAGES_KNOWN,
+  LAST_SALARY,
+  MIGRATION_AREAS,
+  OBC_SUB_CATEGORIES,
+  RELIGIONS,
+  SALUTATIONS,
+  SKILLS,
+  SPECIALLY_ABLED_SUB_TYPES,
+  SPECIALLY_ABLED_TYPES,
+  STATES,
+  STREAMS,
+  SUBJECTS,
+  TALUKS,
+  TRAINEE_CLASSIFICATIONS,
+  TRAINING_DURATIONS,
+} from "@/components/reg/options";
+
+const title = "Registration Form | Karnataka Skill Development Corporation";
+const description =
+  "Register with Kaushalkar for skilling, apprenticeship, employment or self-employment with the Karnataka Skill Development Corporation.";
+
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: RegistrationPage,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+type Address = {
+  location: string;
+  street1: string;
+  street2: string;
+  state: string;
+  district: string;
+  taluk: string;
+  city: string;
+  village: string;
+  zip: string;
+};
+
+const emptyAddress = (): Address => ({
+  location: "Urban",
+  street1: "",
+  street2: "",
+  state: "",
+  district: "",
+  taluk: "",
+  city: "",
+  village: "",
+  zip: "",
+});
+
+type Errors = Record<string, string>;
+
+function RegistrationPage() {
+  // Personal
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [dob, setDob] = useState("");
+  const [gender, setGender] = useState("Male");
+  const [marital, setMarital] = useState("Single");
+  const [speciallyAbled, setSpeciallyAbled] = useState("No");
+  const [saTypes, setSaTypes] = useState<string[]>([]);
+  const [saSubTypes, setSaSubTypes] = useState<string[]>([]);
+  const [saProof, setSaProof] = useState("");
+  const [religion, setReligion] = useState("");
+  const [category, setCategory] = useState("General");
+  const [subCategory, setSubCategory] = useState("");
+  const [casteCertType, setCasteCertType] = useState("");
+  const [rdNumber, setRdNumber] = useState("");
+  const [casteProof, setCasteProof] = useState("");
+
+  // Special classification
+  const [classification, setClassification] = useState("");
+  const [idCardNumber, setIdCardNumber] = useState("");
+  const [regimentName, setRegimentName] = useState("");
+  const [martyrdomProof, setMartyrdomProof] = useState("");
+  const [idProof, setIdProof] = useState("");
+
+  // Guardian
+  const [guardianship, setGuardianship] = useState("Father");
+  const [salutation, setSalutation] = useState("Mr.");
+  const [gFirstName, setGFirstName] = useState("");
+  const [gLastName, setGLastName] = useState("");
+
+  // Address
+  const [current, setCurrent] = useState<Address>(emptyAddress());
+  const [sameAddress, setSameAddress] = useState("No");
+  const [permanent, setPermanent] = useState<Address>(emptyAddress());
+
+  // Education
+  const [education, setEducation] = useState("");
+  const [stream, setStream] = useState("");
+  const [subject, setSubject] = useState("");
+  const [langInstruction, setLangInstruction] = useState("English");
+  const [otherLanguage, setOtherLanguage] = useState("");
+  const [yearOfPassing, setYearOfPassing] = useState("");
+  const [languagesKnown, setLanguagesKnown] = useState<string[]>([]);
+  const [pastSkillExp, setPastSkillExp] = useState("No");
+  const [skillExpProof, setSkillExpProof] = useState("");
+  const [skills, setSkills] = useState<string[]>([]);
+  const [trainingDuration, setTrainingDuration] = useState("");
+  const [apprenticeship, setApprenticeship] = useState("No");
+
+  // Employment
+  const [currentlyEmployed, setCurrentlyEmployed] = useState("No");
+  const [employedFrom, setEmployedFrom] = useState("");
+  const [currentEmployer, setCurrentEmployer] = useState("");
+  const [currentDesignation, setCurrentDesignation] = useState("");
+  const [previouslyEmployed, setPreviouslyEmployed] = useState("No");
+  const [workExperience, setWorkExperience] = useState("");
+  const [lastEmployer, setLastEmployer] = useState("");
+  const [lastDesignation, setLastDesignation] = useState("");
+  const [lastSalary, setLastSalary] = useState("");
+  const [lastEmployerAddress, setLastEmployerAddress] = useState("");
+  const [empProof, setEmpProof] = useState("");
+  const [willingToMigrate, setWillingToMigrate] = useState("No");
+  const [migrationArea, setMigrationArea] = useState<string[]>([]);
+  const [workOverseas, setWorkOverseas] = useState("No");
+  const [salaryOutside, setSalaryOutside] = useState("");
+  const [salaryWithin, setSalaryWithin] = useState("");
+
+  // Documents & submit
+  const [eduProof, setEduProof] = useState("");
+  const [ageProof, setAgeProof] = useState("");
+  const [resume, setResume] = useState("");
+  const [certification, setCertification] = useState("");
+  const [profileImg, setProfileImg] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [declaration, setDeclaration] = useState(true);
+
+  const [errors, setErrors] = useState<Errors>({});
+  const [submitted, setSubmitted] = useState(false);
+
+  const streamOptions = useMemo(() => STREAMS[education] ?? [], [education]);
+  const subjectOptions = useMemo(() => SUBJECTS[stream] ?? [], [stream]);
+
+  const setAddr = (which: "current" | "permanent", patch: Partial<Address>) => {
+    const setter = which === "current" ? setCurrent : setPermanent;
+    setter((prev) => ({ ...prev, ...patch }));
+  };
+
+  const validateAddress = (prefix: string, a: Address, e: Errors) => {
+    if (!a.street1.trim()) e[`${prefix}_street1`] = "Street address is required";
+    if (!a.state) e[`${prefix}_state`] = "State is required";
+    if (!a.district) e[`${prefix}_district`] = "District is required";
+    if (!a.taluk) e[`${prefix}_taluk`] = "Taluk is required";
+    if (a.location === "Urban" && !a.city.trim()) e[`${prefix}_city`] = "City is required";
+    if (a.location === "Rural" && !a.village.trim()) e[`${prefix}_village`] = "Village is required";
+    if (!/^\d{6}$/.test(a.zip)) e[`${prefix}_zip`] = "Enter a valid 6 digit postal code";
+  };
+
+  const validate = (): Errors => {
+    const e: Errors = {};
+    if (!firstName.trim()) e["firstName"] = "First name is required";
+    if (!/^[6-9]\d{9}$/.test(phone)) e["phone"] = "Enter a valid 10 digit phone number";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e["email"] = "Enter a valid email address";
+    if (!dob) e["dob"] = "Date of birth is required";
+    if (!religion) e["religion"] = "Religion is required";
+    if (speciallyAbled === "Yes") {
+      if (saTypes.length === 0) e["saTypes"] = "Select at least one type";
+      if (saSubTypes.length === 0) e["saSubTypes"] = "Select at least one sub type";
+    }
+    if (category !== "General") {
+      if (category === "OBC" && !subCategory) e["subCategory"] = "OBC sub category is required";
+      if (!casteCertType) e["casteCertType"] = "Caste certificate is required";
+      if (casteCertType === "RD Number" && !rdNumber.trim()) e["rdNumber"] = "RD number is required";
+      if (casteCertType === "Upload Physical Document" && !casteProof) e["casteProof"] = "Caste proof is required";
+    }
+    if (classification) {
+      if (!martyrdomProof) e["martyrdomProof"] = "Proof of martyrdom is required";
+    }
+    if (!gFirstName.trim()) e["gFirstName"] = "First name is required";
+
+    validateAddress("cur", current, e);
+    if (sameAddress === "No") validateAddress("per", permanent, e);
+
+    if (!education) e["education"] = "Education is required";
+    if (streamOptions.length > 0 && !stream) e["stream"] = "Stream is required";
+    if (subjectOptions.length > 0 && !subject) e["subject"] = "Subject is required";
+    if (langInstruction === "Other" && !otherLanguage.trim()) e["otherLanguage"] = "Other language is required";
+    if (!/^(19|20)\d{2}$/.test(yearOfPassing)) e["yearOfPassing"] = "Enter a valid year. Ex: YYYY";
+    if (languagesKnown.length === 0) e["languagesKnown"] = "Select at least one language";
+    if (pastSkillExp === "Yes" && !skillExpProof) e["skillExpProof"] = "Proof of past skill experience is required";
+    if (skills.length === 0) e["skills"] = "Select at least one skill";
+    if (!trainingDuration) e["trainingDuration"] = "Preferred duration is required";
+
+    if (currentlyEmployed === "Yes") {
+      if (!employedFrom) e["employedFrom"] = "Employed from is required";
+      if (!currentEmployer.trim()) e["currentEmployer"] = "Current employer is required";
+      if (!currentDesignation.trim()) e["currentDesignation"] = "Current designation is required";
+    }
+    if (previouslyEmployed === "Yes") {
+      if (!workExperience.trim()) e["workExperience"] = "Work experience is required";
+      if (!lastEmployer.trim()) e["lastEmployer"] = "Last employer is required";
+      if (!lastDesignation.trim()) e["lastDesignation"] = "Last designation is required";
+      if (!lastSalary) e["lastSalary"] = "Last drawn salary is required";
+      if (!lastEmployerAddress.trim()) e["lastEmployerAddress"] = "Address of last employer is required";
+      if (!empProof) e["empProof"] = "Proof of experience is required";
+    }
+    if (willingToMigrate === "Yes" && migrationArea.length === 0) e["migrationArea"] = "Select migration area";
+
+    if (!eduProof) e["eduProof"] = "Proof of education is required";
+    if (!ageProof) e["ageProof"] = "Proof of age is required";
+    if (!resume) e["resume"] = "Resume is required";
+    if (!profileImg) e["profileImg"] = "Profile image is required";
+    if (!/^\d{6}$/.test(otp)) e["otp"] = "Enter 6 digits without space. EX: XXXXXX";
+    if (!declaration) e["declaration"] = "You must accept the declaration";
+    return e;
+  };
+
+  const onSubmit = (ev: React.FormEvent) => {
+    ev.preventDefault();
+    const e = validate();
+    setErrors(e);
+    setSubmitted(Object.keys(e).length === 0);
+    if (Object.keys(e).length > 0) {
+      const first = document.querySelector(".is-invalid");
+      first?.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const onCancel = () => {
+    window.location.reload();
+  };
+
+  const addressBlock = (which: "current" | "permanent", a: Address, prefix: string) => (
+    <>
+      <Row>
+        <RadioGroup
+          label="Location"
+          required
+          name={`${which}_location`}
+          value={a.location}
+          onChange={(v) => setAddr(which, { location: v })}
+          options={["Urban", "Rural"]}
+        />
+        <TextField
+          label="Street Address"
+          required
+          placeholder="Street Address"
+          value={a.street1}
+          onChange={(v) => setAddr(which, { street1: v })}
+          error={errors[`${prefix}_street1`]}
+        />
+        <TextField
+          label="Street Address Line 2"
+          placeholder="Street Address Line 2"
+          value={a.street2}
+          onChange={(v) => setAddr(which, { street2: v })}
+        />
+      </Row>
+      <Row>
+        <SelectField
+          label="State"
+          required
+          value={a.state}
+          onChange={(v) => setAddr(which, { state: v, district: "", taluk: "" })}
+          options={STATES}
+          error={errors[`${prefix}_state`]}
+        />
+        <SelectField
+          label="District"
+          required
+          value={a.district}
+          onChange={(v) => setAddr(which, { district: v, taluk: "" })}
+          options={DISTRICTS[a.state] ?? []}
+          error={errors[`${prefix}_district`]}
+        />
+        <SelectField
+          label="Taluk"
+          required
+          value={a.taluk}
+          onChange={(v) => setAddr(which, { taluk: v })}
+          options={TALUKS[a.district] ?? []}
+          error={errors[`${prefix}_taluk`]}
+        />
+      </Row>
+      <Row>
+        {a.location === "Urban" ? (
+          <TextField
+            label="City"
+            required
+            info="Enter your city name"
+            placeholder="City"
+            value={a.city}
+            onChange={(v) => setAddr(which, { city: v })}
+            error={errors[`${prefix}_city`]}
+          />
+        ) : (
+          <TextField
+            label="Village"
+            required
+            placeholder="Village"
+            value={a.village}
+            onChange={(v) => setAddr(which, { village: v })}
+            error={errors[`${prefix}_village`]}
+          />
+        )}
+        <TextField
+          label="Postal / Zip Code"
+          required
+          info="Enter 6 digit postal code"
+          placeholder="Postal / Zip Code"
+          inputMode="numeric"
+          maxLength={6}
+          value={a.zip}
+          onChange={(v) => setAddr(which, { zip: v.replace(/\D/g, "") })}
+          error={errors[`${prefix}_zip`]}
+        />
+      </Row>
+    </>
+  );
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="kk-page">
+      <SiteHeader />
+      <PageBanner />
+
+      <main className="kk-form">
+        <div className="kk-wrap">
+          {submitted ? (
+            <div className="kk-alert" role="status">
+              Your registration details have been validated successfully.
+            </div>
+          ) : null}
+
+          <form onSubmit={onSubmit} noValidate>
+            <Section title="Personal Details">
+              <Row>
+                <TextField
+                  label="First Name"
+                  required
+                  placeholder="First Name"
+                  value={firstName}
+                  onChange={setFirstName}
+                  error={errors["firstName"]}
+                />
+                <TextField label="Last Name" placeholder="Last Name" value={lastName} onChange={setLastName} />
+                <TextField
+                  label="Phone Number"
+                  required
+                  info="Enter 10 digit mobile number without country code"
+                  placeholder="10 Digit Phone Number"
+                  inputMode="numeric"
+                  maxLength={10}
+                  value={phone}
+                  onChange={(v) => setPhone(v.replace(/\D/g, ""))}
+                  error={errors["phone"]}
+                />
+              </Row>
+              <Row>
+                <TextField
+                  label="Email"
+                  required
+                  type="email"
+                  placeholder="email address"
+                  value={email}
+                  onChange={setEmail}
+                  error={errors["email"]}
+                />
+                <DateField label="Date of Birth" required value={dob} onChange={setDob} error={errors["dob"]} />
+                <RadioGroup
+                  label="Gender"
+                  required
+                  name="gender"
+                  value={gender}
+                  onChange={setGender}
+                  options={["Male", "Female", "Other"]}
+                />
+              </Row>
+              <Row>
+                <RadioGroup
+                  label="Marital Status"
+                  required
+                  name="marital_status"
+                  value={marital}
+                  onChange={setMarital}
+                  options={["Single", "Married", "Widow"]}
+                />
+                <RadioGroup
+                  label="Specially Abled"
+                  name="is_physically_challenged"
+                  value={speciallyAbled}
+                  onChange={setSpeciallyAbled}
+                  options={["Yes", "No"]}
+                />
+              </Row>
+              {speciallyAbled === "Yes" ? (
+                <Row>
+                  <MultiSelect
+                    label="Specially Abled Types"
+                    required
+                    options={SPECIALLY_ABLED_TYPES}
+                    value={saTypes}
+                    onChange={setSaTypes}
+                    error={errors["saTypes"]}
+                  />
+                  <MultiSelect
+                    label="Specially Abled Sub Types"
+                    required
+                    options={SPECIALLY_ABLED_SUB_TYPES}
+                    value={saSubTypes}
+                    onChange={setSaSubTypes}
+                    error={errors["saSubTypes"]}
+                  />
+                  <FileField label="Proof of Specially Abled Type" value={saProof} onChange={setSaProof} />
+                </Row>
+              ) : null}
+              <Row>
+                <SelectField
+                  label="Religion"
+                  required
+                  value={religion}
+                  onChange={setReligion}
+                  options={RELIGIONS}
+                  error={errors["religion"]}
+                />
+              </Row>
+              <Row>
+                <RadioGroup
+                  label="Category"
+                  required
+                  span={8}
+                  name="category"
+                  value={category}
+                  onChange={setCategory}
+                  options={CATEGORIES}
+                />
+              </Row>
+              {category !== "General" ? (
+                <Row>
+                  {category === "OBC" ? (
+                    <SelectField
+                      label="OBC Sub Category"
+                      required
+                      value={subCategory}
+                      onChange={setSubCategory}
+                      options={OBC_SUB_CATEGORIES}
+                      error={errors["subCategory"]}
+                    />
+                  ) : null}
+                  <SelectField
+                    label="Upload caste certificate"
+                    required
+                    value={casteCertType}
+                    onChange={setCasteCertType}
+                    options={CASTE_CERTIFICATE_TYPES}
+                    error={errors["casteCertType"]}
+                  />
+                  {casteCertType === "RD Number" ? (
+                    <TextField
+                      label="RD Number"
+                      required
+                      placeholder="Rd Number"
+                      value={rdNumber}
+                      onChange={setRdNumber}
+                      error={errors["rdNumber"]}
+                    />
+                  ) : null}
+                  {casteCertType === "Upload Physical Document" ? (
+                    <FileField
+                      label="Proof of Caste"
+                      required
+                      value={casteProof}
+                      onChange={setCasteProof}
+                      error={errors["casteProof"]}
+                    />
+                  ) : null}
+                </Row>
+              ) : null}
+            </Section>
+
+            <Section title="Special Classification">
+              <Row>
+                <SelectField
+                  label="Trainee Classification"
+                  value={classification}
+                  onChange={setClassification}
+                  options={TRAINEE_CLASSIFICATIONS}
+                />
+              </Row>
+              {classification ? (
+                <>
+                  <Row>
+                    <TextField
+                      label="Id Card Number"
+                      placeholder="ID Card Number"
+                      value={idCardNumber}
+                      onChange={setIdCardNumber}
+                    />
+                    <TextField
+                      label="Husband Regiment Name"
+                      placeholder="Husband/Regiment Name"
+                      value={regimentName}
+                      onChange={setRegimentName}
+                    />
+                  </Row>
+                  <Row>
+                    <FileField
+                      label="Proof of martyrdom"
+                      required
+                      value={martyrdomProof}
+                      onChange={setMartyrdomProof}
+                      error={errors["martyrdomProof"]}
+                    />
+                    <FileField label="ID proof" value={idProof} onChange={setIdProof} />
+                  </Row>
+                </>
+              ) : null}
+            </Section>
+
+            <Section title="Father/Mother/Guardian Details">
+              <Row>
+                <Field span={4}>
+                  <div className="inline-group">
+                    <div className="radio-block">
+                      {["Father", "Mother", "Guardian"].map((o) => (
+                        <label key={o} className="radio-inline">
+                          <input
+                            type="radio"
+                            name="guardianship"
+                            checked={guardianship === o}
+                            onChange={() => setGuardianship(o)}
+                          />
+                          <span>{o}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <select
+                      className="form-ctrl salutation-select"
+                      aria-label="Salutation"
+                      value={salutation}
+                      onChange={(e) => setSalutation(e.target.value)}
+                    >
+                      {SALUTATIONS.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </Field>
+                <TextField
+                  label="First Name"
+                  required
+                  placeholder="First Name"
+                  value={gFirstName}
+                  onChange={setGFirstName}
+                  error={errors["gFirstName"]}
+                />
+                <TextField label="Last Name" placeholder="Last Name" value={gLastName} onChange={setGLastName} />
+              </Row>
+            </Section>
+
+            <Section title="ADDRESS" variant="main" />
+            <Section title="Current Address">{addressBlock("current", current, "cur")}</Section>
+
+            <Section title="Permanent Address">
+              <Row>
+                <RadioGroup
+                  label="Is your permanent address same as current address?"
+                  required
+                  span={8}
+                  name="sameas_permanent_address"
+                  value={sameAddress}
+                  onChange={setSameAddress}
+                  options={["Yes", "No"]}
+                />
+              </Row>
+              {sameAddress === "No" ? addressBlock("permanent", permanent, "per") : null}
+            </Section>
+
+            <Section title="EDUCATION" variant="main" />
+            <Section title="Educational Details">
+              <Row>
+                <SelectField
+                  label="Education"
+                  required
+                  value={education}
+                  onChange={(v) => {
+                    setEducation(v);
+                    setStream("");
+                    setSubject("");
+                  }}
+                  options={EDUCATION_LEVELS}
+                  error={errors["education"]}
+                />
+                <SelectField
+                  label="Stream"
+                  required
+                  value={stream}
+                  onChange={(v) => {
+                    setStream(v);
+                    setSubject("");
+                  }}
+                  options={streamOptions}
+                  error={errors["stream"]}
+                />
+                <SelectField
+                  label="Subject"
+                  required
+                  value={subject}
+                  onChange={setSubject}
+                  options={subjectOptions}
+                  placeholder={subjectOptions.length ? "Select" : "N/A"}
+                  error={errors["subject"]}
+                />
+              </Row>
+              <Row>
+                <RadioGroup
+                  label="Language of Instruction"
+                  required
+                  name="language_instruction"
+                  value={langInstruction}
+                  onChange={setLangInstruction}
+                  options={["English", "Kannada", "Other"]}
+                />
+                {langInstruction === "Other" ? (
+                  <TextField
+                    label="Other Language"
+                    required
+                    placeholder="Other Language"
+                    value={otherLanguage}
+                    onChange={setOtherLanguage}
+                    error={errors["otherLanguage"]}
+                  />
+                ) : null}
+                <TextField
+                  label="Year of Passing"
+                  required
+                  info="Enter year in YYYY format"
+                  placeholder="Year Of Passing. Ex: YYYY"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={yearOfPassing}
+                  onChange={(v) => setYearOfPassing(v.replace(/\D/g, ""))}
+                  error={errors["yearOfPassing"]}
+                />
+              </Row>
+              <Row>
+                <MultiSelect
+                  label="Languages Known"
+                  required
+                  searchable
+                  options={LANGUAGES_KNOWN}
+                  value={languagesKnown}
+                  onChange={setLanguagesKnown}
+                  error={errors["languagesKnown"]}
+                />
+                <RadioGroup
+                  label="Past Skill Experience ?"
+                  name="past_skill_exp"
+                  value={pastSkillExp}
+                  onChange={setPastSkillExp}
+                  options={["Yes", "No"]}
+                />
+                {pastSkillExp === "Yes" ? (
+                  <FileField
+                    label="Proof of Past Skill Experience"
+                    required
+                    value={skillExpProof}
+                    onChange={setSkillExpProof}
+                    error={errors["skillExpProof"]}
+                  />
+                ) : null}
+              </Row>
+              <Row>
+                <MultiSelect
+                  label="Skills Sought"
+                  required
+                  searchable
+                  max={5}
+                  options={SKILLS}
+                  value={skills}
+                  onChange={setSkills}
+                  error={errors["skills"]}
+                />
+                <SelectField
+                  label="Preferred Duration Of Training Required"
+                  required
+                  value={trainingDuration}
+                  onChange={setTrainingDuration}
+                  options={TRAINING_DURATIONS}
+                  error={errors["trainingDuration"]}
+                />
+                <RadioGroup
+                  label="Willing To Take Apprenticeship ?"
+                  required
+                  name="apprenticeship"
+                  value={apprenticeship}
+                  onChange={setApprenticeship}
+                  options={["Yes", "No"]}
+                />
+              </Row>
+              <p className="required-text" style={{ marginBottom: 14 }}>
+                *( You Can Select Max 5 Skills Only. )
+              </p>
+            </Section>
+
+            <Section title="EMPLOYMENT" variant="main">
+              <Row>
+                <RadioGroup
+                  label="Currently Employed"
+                  name="currently_employed"
+                  value={currentlyEmployed}
+                  onChange={setCurrentlyEmployed}
+                  options={["Yes", "No"]}
+                />
+                {currentlyEmployed === "Yes" ? (
+                  <>
+                    <DateField
+                      label="Employed From"
+                      required
+                      value={employedFrom}
+                      onChange={setEmployedFrom}
+                      error={errors["employedFrom"]}
+                    />
+                    <TextField
+                      label="Name Of Current Employer"
+                      required
+                      placeholder="Name Of Current Employer"
+                      value={currentEmployer}
+                      onChange={setCurrentEmployer}
+                      error={errors["currentEmployer"]}
+                    />
+                    <TextField
+                      label="Current Designation"
+                      required
+                      placeholder="Current Designation"
+                      value={currentDesignation}
+                      onChange={setCurrentDesignation}
+                      error={errors["currentDesignation"]}
+                    />
+                  </>
+                ) : null}
+              </Row>
+              <Row>
+                <RadioGroup
+                  label="Have You Been Previously Employed"
+                  required
+                  name="previously_employed"
+                  value={previouslyEmployed}
+                  onChange={setPreviouslyEmployed}
+                  options={["Yes", "No"]}
+                />
+              </Row>
+              {previouslyEmployed === "Yes" ? (
+                <>
+                  <Row>
+                    <TextField
+                      label="Total Years Of Work Experience"
+                      required
+                      placeholder="Total Years Of Work Experience"
+                      value={workExperience}
+                      onChange={setWorkExperience}
+                      error={errors["workExperience"]}
+                    />
+                    <TextField
+                      label="Name Of Last Employer"
+                      required
+                      placeholder="Name Of Last Employer"
+                      value={lastEmployer}
+                      onChange={setLastEmployer}
+                      error={errors["lastEmployer"]}
+                    />
+                    <TextField
+                      label="Last Designation"
+                      required
+                      placeholder="Last Designation"
+                      value={lastDesignation}
+                      onChange={setLastDesignation}
+                      error={errors["lastDesignation"]}
+                    />
+                  </Row>
+                  <Row>
+                    <SelectField
+                      label="Last Drawn Salary In Rs"
+                      required
+                      value={lastSalary}
+                      onChange={setLastSalary}
+                      options={LAST_SALARY}
+                      error={errors["lastSalary"]}
+                    />
+                    <Field label="Address Of Last Employer" required error={errors["lastEmployerAddress"]} span={4}>
+                      <textarea
+                        className={`form-ctrl${errors["lastEmployerAddress"] ? " is-invalid" : ""}`}
+                        style={{ height: "auto", minHeight: 76 }}
+                        value={lastEmployerAddress}
+                        onChange={(e) => setLastEmployerAddress(e.target.value)}
+                      />
+                    </Field>
+                    <FileField
+                      label="Proof of Experience"
+                      required
+                      value={empProof}
+                      onChange={setEmpProof}
+                      error={errors["empProof"]}
+                    />
+                  </Row>
+                </>
+              ) : null}
+              <Row>
+                <RadioGroup
+                  label="Are You Willing To Migrate ?"
+                  name="willing_to_migrate"
+                  value={willingToMigrate}
+                  onChange={setWillingToMigrate}
+                  options={["Yes", "No"]}
+                />
+                {willingToMigrate === "Yes" ? (
+                  <MultiSelect
+                    label="Migration Area"
+                    required
+                    options={MIGRATION_AREAS}
+                    value={migrationArea}
+                    onChange={setMigrationArea}
+                    error={errors["migrationArea"]}
+                  />
+                ) : null}
+                <RadioGroup
+                  label="Are You Willing To Work Overseas ?"
+                  name="work_overseas"
+                  value={workOverseas}
+                  onChange={setWorkOverseas}
+                  options={["Yes", "No"]}
+                />
+              </Row>
+              <Row>
+                <SelectField
+                  label="Expected Salary Outside District In Rs"
+                  value={salaryOutside}
+                  onChange={setSalaryOutside}
+                  options={EXPECTED_SALARY}
+                />
+                <SelectField
+                  label="Expected Salary Within District In Rs"
+                  value={salaryWithin}
+                  onChange={setSalaryWithin}
+                  options={EXPECTED_SALARY}
+                />
+              </Row>
+              <Row>
+                <FileField
+                  label="Proof of Education"
+                  required
+                  value={eduProof}
+                  onChange={setEduProof}
+                  error={errors["eduProof"]}
+                />
+                <FileField label="Proof of Age" required value={ageProof} onChange={setAgeProof} error={errors["ageProof"]} />
+                <FileField label="Upload Resume" required value={resume} onChange={setResume} error={errors["resume"]} />
+              </Row>
+              <Row>
+                <FileField label="Any other certification" value={certification} onChange={setCertification} />
+                <FileField
+                  label="Profile image"
+                  required
+                  value={profileImg}
+                  onChange={setProfileImg}
+                  error={errors["profileImg"]}
+                />
+              </Row>
+              <Row>
+                <Field
+                  span={4}
+                  error={errors["otp"]}
+                  label={
+                    <>
+                      <span className="req">*</span>{" "}
+                      <button
+                        type="button"
+                        className="click-bt"
+                        style={{ background: "none", border: 0, padding: 0, cursor: "pointer" }}
+                        onClick={() => setOtpSent(true)}
+                      >
+                        Send/ Resend OTP
+                      </button>
+                    </>
+                  }
+                  info="Enter 6 digits without space. EX: XXXXXX"
+                >
+                  <input
+                    className={`form-ctrl${errors["otp"] ? " is-invalid" : ""}`}
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="Enter OTP"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                  />
+                  {otpSent ? (
+                    <p style={{ marginTop: 4, fontSize: 12, color: "var(--kk-label)" }}>
+                      OTP has been sent to your registered mobile number.
+                    </p>
+                  ) : null}
+                </Field>
+              </Row>
+              <div className="declaration">
+                <input
+                  id="declaration"
+                  type="checkbox"
+                  checked={declaration}
+                  onChange={(e) => setDeclaration(e.target.checked)}
+                />
+                <label htmlFor="declaration">
+                  <a href="#">Acknowledgement &amp; Aadhaar Consent</a> — I hereby declare that the details &amp;
+                  documents furnished in Kaushalkar.com are true and correct to the best of my knowledge and belief.
+                </label>
+              </div>
+              {errors["declaration"] ? <p className="err-msg">{errors["declaration"]}</p> : null}
+
+              <div className="kk-actions">
+                <button type="button" className="btn-kk btn-cancel-kk" onClick={onCancel}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-kk btn-primary-kk">
+                  Submit
+                </button>
+              </div>
+            </Section>
+          </form>
+        </div>
+      </main>
+
+      <SiteFooter />
     </div>
   );
 }
