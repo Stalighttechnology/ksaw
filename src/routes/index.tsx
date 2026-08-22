@@ -364,7 +364,14 @@ function RegistrationPage() {
                   onChange={setFirstName}
                   error={errors["firstName"]}
                 />
-                <TextField label="Last Name" placeholder="Last Name" value={lastName} onChange={setLastName} />
+                <TextField
+                  label="Last Name"
+                  required
+                  placeholder="Last Name"
+                  value={lastName}
+                  onChange={setLastName}
+                  error={errors["lastName"]}
+                />
                 <TextField
                   label="Phone Number"
                   required
