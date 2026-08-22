@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
-import { PageBanner, SiteFooter, SiteHeader } from "@/components/reg/SiteChrome";
+import { PageBanner, SiteHeader } from "@/components/reg/SiteChrome";
 import {
   DateField,
   Field,
@@ -18,10 +18,8 @@ import {
   CATEGORIES,
   DISTRICTS,
   EDUCATION_LEVELS,
-  EXPECTED_SALARY,
   LANGUAGES_KNOWN,
   LAST_SALARY,
-  MIGRATION_AREAS,
   OBC_SUB_CATEGORIES,
   RELIGIONS,
   SALUTATIONS,
@@ -144,20 +142,11 @@ function RegistrationPage() {
   const [lastSalary, setLastSalary] = useState("");
   const [lastEmployerAddress, setLastEmployerAddress] = useState("");
   const [empProof, setEmpProof] = useState("");
-  const [willingToMigrate, setWillingToMigrate] = useState("No");
-  const [migrationArea, setMigrationArea] = useState<string[]>([]);
-  const [workOverseas, setWorkOverseas] = useState("No");
-  const [salaryOutside, setSalaryOutside] = useState("");
-  const [salaryWithin, setSalaryWithin] = useState("");
 
   // Documents & submit
   const [eduProof, setEduProof] = useState("");
   const [ageProof, setAgeProof] = useState("");
-  const [resume, setResume] = useState("");
-  const [certification, setCertification] = useState("");
   const [profileImg, setProfileImg] = useState("");
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
   const [declaration, setDeclaration] = useState(true);
 
   const [errors, setErrors] = useState<Errors>({});
@@ -229,13 +218,10 @@ function RegistrationPage() {
       if (!lastEmployerAddress.trim()) e["lastEmployerAddress"] = "Address of last employer is required";
       if (!empProof) e["empProof"] = "Proof of experience is required";
     }
-    if (willingToMigrate === "Yes" && migrationArea.length === 0) e["migrationArea"] = "Select migration area";
 
     if (!eduProof) e["eduProof"] = "Proof of education is required";
     if (!ageProof) e["ageProof"] = "Proof of age is required";
-    if (!resume) e["resume"] = "Resume is required";
     if (!profileImg) e["profileImg"] = "Profile image is required";
-    if (!/^\d{6}$/.test(otp)) e["otp"] = "Enter 6 digits without space. EX: XXXXXX";
     if (!declaration) e["declaration"] = "You must accept the declaration";
     return e;
   };
@@ -834,46 +820,6 @@ function RegistrationPage() {
                 </>
               ) : null}
               <Row>
-                <RadioGroup
-                  label="Are You Willing To Migrate ?"
-                  name="willing_to_migrate"
-                  value={willingToMigrate}
-                  onChange={setWillingToMigrate}
-                  options={["Yes", "No"]}
-                />
-                {willingToMigrate === "Yes" ? (
-                  <MultiSelect
-                    label="Migration Area"
-                    required
-                    options={MIGRATION_AREAS}
-                    value={migrationArea}
-                    onChange={setMigrationArea}
-                    error={errors["migrationArea"]}
-                  />
-                ) : null}
-                <RadioGroup
-                  label="Are You Willing To Work Overseas ?"
-                  name="work_overseas"
-                  value={workOverseas}
-                  onChange={setWorkOverseas}
-                  options={["Yes", "No"]}
-                />
-              </Row>
-              <Row>
-                <SelectField
-                  label="Expected Salary Outside District In Rs"
-                  value={salaryOutside}
-                  onChange={setSalaryOutside}
-                  options={EXPECTED_SALARY}
-                />
-                <SelectField
-                  label="Expected Salary Within District In Rs"
-                  value={salaryWithin}
-                  onChange={setSalaryWithin}
-                  options={EXPECTED_SALARY}
-                />
-              </Row>
-              <Row>
                 <FileField
                   label="Proof of Education"
                   required
@@ -882,10 +828,6 @@ function RegistrationPage() {
                   error={errors["eduProof"]}
                 />
                 <FileField label="Proof of Age" required value={ageProof} onChange={setAgeProof} error={errors["ageProof"]} />
-                <FileField label="Upload Resume" required value={resume} onChange={setResume} error={errors["resume"]} />
-              </Row>
-              <Row>
-                <FileField label="Any other certification" value={certification} onChange={setCertification} />
                 <FileField
                   label="Profile image"
                   required
@@ -894,40 +836,7 @@ function RegistrationPage() {
                   error={errors["profileImg"]}
                 />
               </Row>
-              <Row>
-                <Field
-                  span={4}
-                  error={errors["otp"]}
-                  label={
-                    <>
-                      <span className="req">*</span>{" "}
-                      <button
-                        type="button"
-                        className="click-bt"
-                        style={{ background: "none", border: 0, padding: 0, cursor: "pointer" }}
-                        onClick={() => setOtpSent(true)}
-                      >
-                        Send/ Resend OTP
-                      </button>
-                    </>
-                  }
-                  info="Enter 6 digits without space. EX: XXXXXX"
-                >
-                  <input
-                    className={`form-ctrl${errors["otp"] ? " is-invalid" : ""}`}
-                    inputMode="numeric"
-                    maxLength={6}
-                    placeholder="Enter OTP"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                  />
-                  {otpSent ? (
-                    <p style={{ marginTop: 4, fontSize: 12, color: "var(--kk-label)" }}>
-                      OTP has been sent to your registered mobile number.
-                    </p>
-                  ) : null}
-                </Field>
-              </Row>
+
               <div className="declaration">
                 <input
                   id="declaration"
@@ -954,8 +863,6 @@ function RegistrationPage() {
           </form>
         </div>
       </main>
-
-      <SiteFooter />
     </div>
   );
 }
