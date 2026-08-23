@@ -681,7 +681,7 @@ function RegistrationPage() {
               </Row>
               <Row>
                 <MultiSelect
-                  label="Skills Sought"
+                  label="Skill Sought / Course"
                   required
                   searchable
                   single

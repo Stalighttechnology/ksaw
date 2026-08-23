@@ -2,8 +2,6 @@ export const RELIGIONS = ["Buddhist", "Christian", "Hindu", "Jain", "Muslim", "O
 
 export const CATEGORIES = ["General", "SC", "ST", "OBC", "Minority"] as const;
 
-export const OBC_SUB_CATEGORIES = ["General", "SC", "ST", "OBC", "Minority"] as const;
-
 export const CASTE_CERTIFICATE_TYPES = ["RD Number", "Upload Physical Document"] as const;
 
 export const SPECIALLY_ABLED_TYPES = [
@@ -28,8 +26,6 @@ export const SPECIALLY_ABLED_SUB_TYPES = [
   "Intellectual Disability",
   "Multiple Disabilities",
 ] as const;
-
-export const TRAINEE_CLASSIFICATIONS = ["Ex-Service Personnel"] as const;
 
 export const SALUTATIONS = ["Mr.", "Ms.", "Mrs.", "Dr."] as const;
 
