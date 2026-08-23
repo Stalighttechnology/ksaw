@@ -13,6 +13,7 @@ import {
   SelectField,
   TextField,
 } from "@/components/reg/fields";
+import { CASTES, CASTE_CATEGORIES, CASTE_NAMES, NIGAMAS } from "@/components/reg/castes";
 import {
   CASTE_CERTIFICATE_TYPES,
   CATEGORIES,
@@ -20,7 +21,6 @@ import {
   EDUCATION_LEVELS,
   LANGUAGES_KNOWN,
   LAST_SALARY,
-  OBC_SUB_CATEGORIES,
   RELIGIONS,
   SALUTATIONS,
   PASSING_YEARS,
@@ -31,9 +31,9 @@ import {
   STREAMS,
   SUBJECTS,
   TALUKS,
-  TRAINEE_CLASSIFICATIONS,
   TRAINING_DURATIONS,
 } from "@/components/reg/options";
+
 
 const title = "Registration Form | Karnataka Skill Development Corporation";
 const description =

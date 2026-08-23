@@ -107,17 +107,25 @@ export function SelectField({
   options,
   placeholder = "Select",
   withPlaceholder = true,
+  disabled,
 }: BaseInput & {
   value: string;
   onChange: (v: string) => void;
   options: readonly string[];
   placeholder?: string;
   withPlaceholder?: boolean;
+  disabled?: boolean | undefined;
 }) {
   const id = useId();
   return (
     <Field label={label} required={required} info={info} error={error} htmlFor={id} span={span}>
-      <select id={id} className={`form-ctrl${error ? " is-invalid" : ""}`} value={value} onChange={(e) => onChange(e.target.value)}>
+      <select
+        id={id}
+        className={`form-ctrl${error ? " is-invalid" : ""}`}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+      >
         {withPlaceholder ? <option value="">{placeholder}</option> : null}
         {options.map((o) => (
           <option key={o} value={o}>
@@ -128,6 +136,7 @@ export function SelectField({
     </Field>
   );
 }
+
 
 export function RadioGroup({
   label,
