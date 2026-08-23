@@ -94,17 +94,12 @@ function RegistrationPage() {
   const [saProof, setSaProof] = useState("");
   const [religion, setReligion] = useState("");
   const [category, setCategory] = useState("General");
-  const [subCategory, setSubCategory] = useState("");
+  const [caste, setCaste] = useState("");
+  const casteInfo = CASTES.find((c) => c.name === caste);
   const [casteCertType, setCasteCertType] = useState("");
   const [rdNumber, setRdNumber] = useState("");
   const [casteProof, setCasteProof] = useState("");
 
-  // Special classification
-  const [classification, setClassification] = useState("");
-  const [idCardNumber, setIdCardNumber] = useState("");
-  const [regimentName, setRegimentName] = useState("");
-  const [martyrdomProof, setMartyrdomProof] = useState("");
-  const [idProof, setIdProof] = useState("");
 
   // Guardian
   const [guardianship, setGuardianship] = useState("Father");
@@ -186,20 +181,14 @@ function RegistrationPage() {
       if (saSubTypes.length === 0) e["saSubTypes"] = "Select at least one sub type";
     }
     if (category !== "General") {
-      if (category === "OBC" && !subCategory) e["subCategory"] = "OBC sub category is required";
+      if (category === "OBC" && !caste) e["caste"] = "Caste is required";
       if (!casteCertType) e["casteCertType"] = "Caste certificate is required";
       if (casteCertType === "RD Number" && !rdNumber.trim()) e["rdNumber"] = "RD number is required";
       if (casteCertType === "Upload Physical Document" && !casteProof) e["casteProof"] = "Caste proof is required";
     }
-    if (classification) {
-      if (!martyrdomProof) e["martyrdomProof"] = "Proof of martyrdom is required";
-    }
     if (!gFirstName.trim()) e["gFirstName"] = "First name is required";
     if (!gLastName.trim()) e["gLastName"] = "Last name is required";
-    if (classification === "Ex-Service Personnel") {
-      if (!idCardNumber.trim()) e["idCardNumber"] = "ID card number is required";
-      if (!regimentName.trim()) e["regimentName"] = "Regiment name is required";
-    }
+
 
     validateAddress("cur", current, e);
     if (sameAddress === "No") validateAddress("per", permanent, e);
@@ -466,15 +455,36 @@ function RegistrationPage() {
               {category !== "General" ? (
                 <Row>
                   {category === "OBC" ? (
-                    <SelectField
-                      label="OBC Sub Category"
-                      required
-                      value={subCategory}
-                      onChange={setSubCategory}
-                      options={OBC_SUB_CATEGORIES}
-                      error={errors["subCategory"]}
-                    />
+                    <>
+                      <MultiSelect
+                        label="Caste"
+                        required
+                        searchable
+                        single
+                        options={CASTE_NAMES}
+                        value={caste ? [caste] : []}
+                        onChange={(v) => setCaste(v[0] ?? "")}
+                        error={errors["caste"]}
+                      />
+                      <SelectField
+                        label="Category (Auto)"
+                        value={casteInfo?.category ?? ""}
+                        onChange={() => {}}
+                        options={CASTE_CATEGORIES}
+                        placeholder="Auto-filled from caste"
+                        disabled
+                      />
+                      <SelectField
+                        label="Nigama (Auto)"
+                        value={casteInfo?.nigama ?? ""}
+                        onChange={() => {}}
+                        options={NIGAMAS}
+                        placeholder="Auto-filled from caste"
+                        disabled
+                      />
+                    </>
                   ) : null}
+
                   <SelectField
                     label="Upload caste certificate"
                     required
@@ -506,48 +516,8 @@ function RegistrationPage() {
               ) : null}
             </Section>
 
-            <Section title="Special Classification">
-              <Row>
-                <SelectField
-                  label="Trainee Classification"
-                  value={classification}
-                  onChange={setClassification}
-                  options={TRAINEE_CLASSIFICATIONS}
-                />
-              </Row>
-              {classification ? (
-                <>
-                  <Row>
-                    <TextField
-                      label="Id Card Number"
-                      required
-                      placeholder="ID Card Number"
-                      value={idCardNumber}
-                      onChange={setIdCardNumber}
-                      error={errors["idCardNumber"]}
-                    />
-                    <TextField
-                      label="Husband Regiment Name"
-                      required
-                      placeholder="Husband/Regiment Name"
-                      value={regimentName}
-                      onChange={setRegimentName}
-                      error={errors["regimentName"]}
-                    />
-                  </Row>
-                  <Row>
-                    <FileField
-                      label="Proof of martyrdom"
-                      required
-                      value={martyrdomProof}
-                      onChange={setMartyrdomProof}
-                      error={errors["martyrdomProof"]}
-                    />
-                    <FileField label="ID proof" value={idProof} onChange={setIdProof} />
-                  </Row>
-                </>
-              ) : null}
-            </Section>
+
+
 
             <Section title="Father/Mother/Guardian Details">
               <Row>
