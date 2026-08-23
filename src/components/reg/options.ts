@@ -2,8 +2,6 @@ export const RELIGIONS = ["Buddhist", "Christian", "Hindu", "Jain", "Muslim", "O
 
 export const CATEGORIES = ["General", "SC", "ST", "OBC", "Minority"] as const;
 
-export const OBC_SUB_CATEGORIES = ["General", "SC", "ST", "OBC", "Minority"] as const;
-
 export const CASTE_CERTIFICATE_TYPES = ["RD Number", "Upload Physical Document"] as const;
 
 export const SPECIALLY_ABLED_TYPES = [
@@ -28,8 +26,6 @@ export const SPECIALLY_ABLED_SUB_TYPES = [
   "Intellectual Disability",
   "Multiple Disabilities",
 ] as const;
-
-export const TRAINEE_CLASSIFICATIONS = ["Ex-Service Personnel"] as const;
 
 export const SALUTATIONS = ["Mr.", "Ms.", "Mrs.", "Dr."] as const;
 
@@ -145,74 +141,16 @@ export const SUBJECTS: Record<string, readonly string[]> = {
 export const LANGUAGES_KNOWN = ["Kannada", "English", "Hindi", "Telugu", "Tamil"] as const;
 
 export const SKILLS = [
-  "Tractor operator",
-  "Animal Health Worker",
-  "Organic grower",
-  "Quality Seed Grower",
-  "Dairy Farmer/ Entrepreneur",
-  "Small poultry farmer",
-  "Green House Operator",
-  "Micro Irrigation Technician",
-  "Gardener",
-  "Aquaculture worker",
-  "In-line Checker",
-  "Sewing Machine Operator",
-  "Sewing Machine Operator - knits",
-  "Pressman",
-  "Hand Embroiderer",
-  "Packer",
-  "Export Assistant",
-  "Washing Machine Operator",
-  "Self Employed Tailor",
-  "Measurement checker",
-  "Store Keeper",
-  "Cutting Supervisor",
-  "Specialised Sewing Machine Operator",
-  "Commercial Vehicle Driver Level 4",
-  "Auto / E Rickshaw Driver & Service Technician",
-  "Automotive Service Technician (Two and Three Wheelers)",
-  "Automotive Electrician Level 4",
-  "Accessory Fitter",
-  "Assistant Beauty Therapist",
-  "Beauty Therapist",
-  "Assistant Hair Stylist",
-  "Hair Stylist",
-  "Life Insurance Agent",
-  "Equity Dealer",
-  "Mutual Fund Agent",
-  "Debt Recovery Agent",
-  "Micro Finance Executive",
-  "Accounts Executive - Payroll",
-  "CNC Operator Turning",
-  "Draughtsman Mechanical",
-  "Fitter Fabrication",
-  "Fitter Mechanical Assembly",
-  "Mason General",
-  "Mason Tiling",
-  "Bar Bender and Steel Fixer",
-  "Assistant Electrician",
-  "General Housekeeper",
-  "Child Caretaker",
-  "Elderly Caretaker (Non-Clinical)",
-  "CCTV Installation Technician",
-  "Field Technician Computing and Peripherals",
-  "Mobile Phone Hardware Repair Technician",
-  "Solar Panel Installation Technician",
-  "TV Repair Technician",
-  "Craft Baker",
-  "Baking Technician",
-  "Carpenter - Wooden Furniture",
-  "Solar PV Installer (Suryamitra)",
-  "Junior Software Developer",
-  "Domestic Data entry Operator",
-  "CRM Domestic Voice",
-  "Forklift Operator",
-  "Warehouse Picker",
-  "Courier Delivery Executive",
-  "General Duty Assistant",
-  "Home Health Aide",
-  "Emergency Medical Technician-Basic",
+  "AWS Academy Cloud Foundation",
+  "Computer Hardware and Networking",
+  "Computer Programming",
+  "AWS Solution Architect Associate",
+  "Business Development Guidance",
+  "Cisco IT Essentials",
+  "AWS Solution Architect Associate with Academy Cloud Foundation",
+  "Accounts Executive - Tally ERP 9",
 ] as const;
+
 
 export const TRAINING_DURATIONS = ["2 - 4 weeks"] as const;
 
