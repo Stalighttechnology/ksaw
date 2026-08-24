@@ -4,7 +4,6 @@ import { toast } from "sonner";
 
 import { SiteHeader } from "@/components/reg/SiteChrome";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 
 const title = "Admin Sign In | Registration Collection";
 const description = "Secure sign in for university staff to manage student registration submissions.";
@@ -71,13 +70,14 @@ function AuthPage() {
   };
 
   const google = async () => {
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (result.error) {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin },
+    });
+    if (error) {
       toast.error("Google sign in failed");
       return;
     }
-    if (result.redirected) return;
-    navigate({ to: "/admin", replace: true });
   };
 
   return (
