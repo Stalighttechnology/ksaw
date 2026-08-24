@@ -31,6 +31,7 @@ export const COLUMNS: ColumnDef[] = [
   { key: "caste_cert_type", label: "Caste Certificate Type", group: "Personal" },
   { key: "rd_number", label: "RD Number", group: "Personal" },
   { key: "caste_proof", label: "Caste Proof", group: "Personal" },
+  { key: "aadhaar_number", label: "Aadhaar Number", group: "Personal" },
 
   { key: "guardianship", label: "Guardianship", group: "Guardian" },
   { key: "guardian_salutation", label: "Salutation", group: "Guardian" },
@@ -85,6 +86,7 @@ export const COLUMNS: ColumnDef[] = [
 
   { key: "education_proof", label: "Proof Of Education", group: "Documents" },
   { key: "age_proof", label: "Proof Of Age", group: "Documents" },
+  { key: "aadhaar_proof", label: "Aadhaar Proof (Upload Aadhaar Photo)", group: "Documents" },
   { key: "profile_image", label: "Profile Image", group: "Documents" },
   { key: "declaration_accepted", label: "Declaration Accepted", group: "Documents", type: "bool" },
 ];
@@ -92,7 +94,7 @@ export const COLUMNS: ColumnDef[] = [
 export const EDITABLE_KEYS = COLUMNS.filter((c) => c.key !== "created_at").map((c) => c.key);
 
 export function formatCell(value: unknown, type?: ColumnDef["type"]): string {
-  if (value === null || value === undefined || value === "") return "—";
+  if (value === null || value === undefined || value === "") return "N/A";
   if (Array.isArray(value)) return value.length ? value.join(", ") : "—";
   if (type === "bool") return value ? "Yes" : "No";
   if (type === "date") {

@@ -429,8 +429,35 @@ function Dialog({ title, children, onClose }: { title: string; children: React.R
   );
 }
 
+function shouldShowField(key: string, row: Row): boolean {
+  if (["sa_types", "sa_sub_types", "sa_proof"].includes(key)) {
+    return row["specially_abled"] === "Yes";
+  }
+  if (["caste", "caste_sub_category", "nigama", "caste_cert_type", "rd_number", "caste_proof"].includes(key)) {
+    return row["category"] !== "General";
+  }
+  if (["stream", "subject"].includes(key)) {
+    return row["education"] !== "10th";
+  }
+  if (key === "skill_experience_proof") {
+    return row["past_skill_experience"] === "Yes";
+  }
+  if (["employed_from", "current_employer", "current_designation"].includes(key)) {
+    return row["currently_employed"] === "Yes";
+  }
+  if (["work_experience", "last_employer", "last_designation", "last_salary", "last_employer_address", "employment_proof"].includes(key)) {
+    return row["previously_employed"] === "Yes";
+  }
+  if (key.startsWith("per_")) {
+    return row["same_address"] !== "Yes";
+  }
+  return true;
+}
+
 function ViewDialog({ row, onClose }: { row: Row; onClose: () => void }) {
-  const groups = [...new Set(COLUMNS.map((c) => c.group))];
+  const visibleColumns = COLUMNS.filter((c) => shouldShowField(c.key, row));
+  const groups = [...new Set(visibleColumns.map((c) => c.group))];
+
   return (
     <Dialog title={`${row["first_name"]} ${row["last_name"]}`} onClose={onClose}>
       <div className="mt-3 space-y-4 max-h-[70vh] overflow-y-auto pr-1">
@@ -438,7 +465,7 @@ function ViewDialog({ row, onClose }: { row: Row; onClose: () => void }) {
           <div key={g}>
             <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-1 mb-2">{g}</h3>
             <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {COLUMNS.filter((c) => c.group === g).map((c) => {
+              {visibleColumns.filter((c) => c.group === g).map((c) => {
                 const val = row[c.key];
                 const isUrl = typeof val === "string" && (val.startsWith("http://") || val.startsWith("https://"));
                 return (
@@ -490,7 +517,9 @@ function ViewDialog({ row, onClose }: { row: Row; onClose: () => void }) {
 function EditDialog({ row, onClose, onSaved }: { row: Row; onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState<Record<string, unknown>>({ ...row });
   const [busy, setBusy] = useState(false);
-  const groups = [...new Set(COLUMNS.filter((c) => c.key !== "created_at").map((c) => c.group))];
+
+  const visibleColumns = COLUMNS.filter((c) => c.key !== "created_at" && shouldShowField(c.key, form as Row));
+  const groups = [...new Set(visibleColumns.map((c) => c.group))];
 
   const save = async () => {
     const first = String(form["first_name"] ?? "").trim();
@@ -536,9 +565,9 @@ function EditDialog({ row, onClose, onSaved }: { row: Row; onClose: () => void; 
       <div className="mt-3 max-h-[65vh] space-y-4 overflow-y-auto pr-1">
         {groups.map((g) => (
           <div key={g}>
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{g}</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-1 mb-2">{g}</h3>
             <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {COLUMNS.filter((c) => c.group === g && c.key !== "created_at").map((c) => {
+              {visibleColumns.filter((c) => c.group === g).map((c) => {
                 const raw = form[c.key];
                 const value = Array.isArray(raw) ? raw.join(", ") : raw == null ? "" : String(raw);
                 return (
