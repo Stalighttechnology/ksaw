@@ -215,47 +215,62 @@ function AdminPage() {
             </div>
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
-            <span className="text-muted-foreground">
-              {listQuery.isLoading ? "Loading…" : `${total} record${total === 1 ? "" : "s"} found`}
-            </span>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-4 text-sm">
             <div className="flex items-center gap-2">
-              <button type="button" className="btn-kk btn-cancel-kk" onClick={() => setSortDesc((v) => !v)}>
-                Sort: {sortDesc ? "Newest first" : "Oldest first"}
-              </button>
-              <select
-                className="form-ctrl w-auto"
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setPage(0);
-                }}
-              >
-                {PAGE_SIZES.map((n) => (
-                  <option key={n} value={n}>
-                    {n} / page
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                className="btn-kk btn-cancel-kk"
-                disabled={page === 0}
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-              >
-                Prev
-              </button>
-              <span>
-                Page {page + 1} of {pageCount}
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary shadow-xs">
+                {listQuery.isLoading ? "Loading…" : `${total} Record${total === 1 ? "" : "s"} Found`}
               </span>
-              <button
-                type="button"
-                className="btn-kk btn-cancel-kk"
-                disabled={page + 1 >= pageCount}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next
-              </button>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-1.5 bg-muted/40 p-1 rounded-lg border border-border/80">
+                <button
+                  type="button"
+                  onClick={() => setSortDesc((v) => !v)}
+                  className="px-3 py-1.5 text-xs font-medium rounded-md bg-card border border-border/60 hover:bg-muted/80 text-foreground transition-colors shadow-xs cursor-pointer"
+                >
+                  Sort: <span className="font-semibold text-primary">{sortDesc ? "Newest" : "Oldest"}</span>
+                </button>
+                
+                <span className="text-border px-1">|</span>
+                
+                <select
+                  className="bg-transparent border-0 py-1 pl-2 pr-6 text-xs font-medium text-foreground focus:outline-hidden focus:ring-0 cursor-pointer"
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPage(0);
+                  }}
+                >
+                  {PAGE_SIZES.map((n) => (
+                    <option key={n} value={n}>
+                      {n} / page
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-lg border border-border/80">
+                <button
+                  type="button"
+                  disabled={page === 0}
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  className="inline-flex items-center justify-center h-8 px-2.5 text-xs font-medium rounded-md bg-card border border-border/60 text-foreground hover:bg-muted/80 disabled:opacity-50 disabled:pointer-events-none transition-colors shadow-xs cursor-pointer"
+                >
+                  ← Prev
+                </button>
+                <span className="px-3 text-xs font-medium text-muted-foreground whitespace-nowrap">
+                  Page <strong className="text-foreground">{page + 1}</strong> of <strong className="text-foreground">{pageCount}</strong>
+                </span>
+                <button
+                  type="button"
+                  disabled={page + 1 >= pageCount}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="inline-flex items-center justify-center h-8 px-2.5 text-xs font-medium rounded-md bg-card border border-border/60 text-foreground hover:bg-muted/80 disabled:opacity-50 disabled:pointer-events-none transition-colors shadow-xs cursor-pointer"
+                >
+                  Next →
+                </button>
+              </div>
             </div>
           </div>
 
@@ -269,9 +284,9 @@ function AdminPage() {
             <table className="w-full min-w-[1600px] border-collapse text-sm">
               <thead className="bg-muted">
                 <tr>
-                  <th className="sticky left-0 z-10 bg-muted px-3 py-2 text-left font-semibold">Actions</th>
+                  <th className="sticky left-0 z-10 bg-muted px-3 py-2.5 text-left font-semibold border-r border-border">Actions</th>
                   {COLUMNS.map((c) => (
-                    <th key={c.key} className="whitespace-nowrap px-3 py-2 text-left font-semibold">
+                    <th key={c.key} className="whitespace-nowrap px-3 py-2.5 text-left font-semibold">
                       {c.label}
                     </th>
                   ))}
@@ -279,22 +294,31 @@ function AdminPage() {
               </thead>
               <tbody>
                 {(listQuery.data?.rows ?? []).map((r) => (
-                  <tr key={r.id} className="border-t border-border odd:bg-background even:bg-muted/30">
-                    <td className="sticky left-0 z-10 whitespace-nowrap bg-inherit px-3 py-2">
-                      <div className="flex gap-2">
-                        <button className="text-primary underline" onClick={() => setViewing(r)}>
+                  <tr key={r.id} className="border-t border-border odd:bg-background even:bg-muted/30 hover:bg-muted/10 transition-colors">
+                    <td className="sticky left-0 z-10 whitespace-nowrap bg-card px-3 py-2 border-r border-border shadow-[2px_0_4px_rgba(0,0,0,0.03)]">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => setViewing(r)}
+                          className="inline-flex items-center justify-center rounded bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors cursor-pointer"
+                        >
                           View
                         </button>
-                        <button className="text-primary underline" onClick={() => setEditing(r)}>
+                        <button
+                          onClick={() => setEditing(r)}
+                          className="inline-flex items-center justify-center rounded bg-amber-500/10 px-2.5 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                        >
                           Edit
                         </button>
-                        <button className="text-destructive underline" onClick={() => void remove(r)}>
+                        <button
+                          onClick={() => void remove(r)}
+                          className="inline-flex items-center justify-center rounded bg-red-500/10 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-500/20 transition-colors cursor-pointer"
+                        >
                           Delete
                         </button>
                       </div>
                     </td>
                     {COLUMNS.map((c) => (
-                      <td key={c.key} className="whitespace-nowrap px-3 py-2">
+                      <td key={c.key} className="whitespace-nowrap px-3 py-2 text-foreground">
                         {formatCell(r[c.key], c.type)}
                       </td>
                     ))}
@@ -409,17 +433,52 @@ function ViewDialog({ row, onClose }: { row: Row; onClose: () => void }) {
   const groups = [...new Set(COLUMNS.map((c) => c.group))];
   return (
     <Dialog title={`${row["first_name"]} ${row["last_name"]}`} onClose={onClose}>
-      <div className="mt-3 space-y-4">
+      <div className="mt-3 space-y-4 max-h-[70vh] overflow-y-auto pr-1">
         {groups.map((g) => (
           <div key={g}>
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{g}</h3>
-            <dl className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {COLUMNS.filter((c) => c.group === g).map((c) => (
-                <div key={c.key} className="rounded border border-border p-2">
-                  <dt className="text-xs text-muted-foreground">{c.label}</dt>
-                  <dd className="break-words text-sm text-foreground">{formatCell(row[c.key], c.type)}</dd>
-                </div>
-              ))}
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-1 mb-2">{g}</h3>
+            <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {COLUMNS.filter((c) => c.group === g).map((c) => {
+                const val = row[c.key];
+                const isUrl = typeof val === "string" && (val.startsWith("http://") || val.startsWith("https://"));
+                return (
+                  <div key={c.key} className="rounded border border-border bg-muted/10 p-2.5 flex flex-col justify-between min-h-[64px]">
+                    <div>
+                      <dt className="text-xs font-medium text-muted-foreground">{c.label}</dt>
+                      <dd className="break-words text-sm text-foreground mt-1 font-normal">
+                        {isUrl ? (
+                          val.toLowerCase().match(/\.(jpeg|jpg|gif|png|webp)/) ? (
+                            <div className="flex flex-col gap-2 mt-1">
+                              <img src={val} alt={c.label} className="h-16 w-16 object-cover rounded border border-border bg-card shadow-sm" />
+                              <a
+                                href={val}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center justify-center rounded bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors w-max"
+                              >
+                                View Image
+                              </a>
+                            </div>
+                          ) : (
+                            <div className="mt-1">
+                              <a
+                                href={val}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 justify-center rounded border border-input bg-background px-3 py-1.5 text-xs font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+                              >
+                                📄 View PDF Document
+                              </a>
+                            </div>
+                          )
+                        ) : (
+                          formatCell(val, c.type)
+                        )}
+                      </dd>
+                    </div>
+                  </div>
+                );
+              })}
             </dl>
           </div>
         ))}

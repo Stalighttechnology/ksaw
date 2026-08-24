@@ -149,6 +149,7 @@ function RegistrationPage() {
 
   const [errors, setErrors] = useState<Errors>({});
   const [submitted, setSubmitted] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
@@ -235,14 +236,69 @@ function RegistrationPage() {
     return e;
   };
 
+  const resetForm = () => {
+    setFirstName("");
+    setLastName("");
+    setPhone("");
+    setEmail("");
+    setDob("");
+    setGender("Male");
+    setMarital("Single");
+    setSpeciallyAbled("No");
+    setSaTypes([]);
+    setSaSubTypes([]);
+    setSaProof("");
+    setReligion("");
+    setCategory("General");
+    setCaste("");
+    setCasteSubCategory("");
+    setRdNumber("");
+    setCasteProof("");
+    setAadhaarNumber("");
+    setGuardianship("Father");
+    setSalutation("Mr.");
+    setGFirstName("");
+    setGLastName("");
+    setCurrent(emptyAddress());
+    setSameAddress("No");
+    setPermanent(emptyAddress());
+    setEducation("");
+    setStream("");
+    setSubject("");
+    setLangInstruction("English");
+    setOtherLanguage("");
+    setYearOfPassing("");
+    setLanguagesKnown([]);
+    setPastSkillExp("No");
+    setSkillExpProof("");
+    setSkills([]);
+    setTrainingDuration("");
+    setApprenticeship("No");
+    setCurrentlyEmployed("No");
+    setEmployedFrom("");
+    setCurrentEmployer("");
+    setCurrentDesignation("");
+    setPreviouslyEmployed("No");
+    setWorkExperience("");
+    setLastEmployer("");
+    setLastDesignation("");
+    setLastSalary("");
+    setLastEmployerAddress("");
+    setEmpProof("");
+    setEduProof("");
+    setAgeProof("");
+    setProfileImg("");
+    setDeclaration(true);
+    setErrors({});
+  };
+
   const onSubmit = async (ev: React.FormEvent) => {
     ev.preventDefault();
     const e = validate();
     setErrors(e);
     if (Object.keys(e).length > 0) {
-      setSubmitted(false);
-      const first = document.querySelector(".is-invalid");
-      first?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setSubmitError("Please fill all mandatory fields correctly.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
@@ -264,7 +320,7 @@ function RegistrationPage() {
           specially_abled: speciallyAbled,
           sa_types: saTypes,
           sa_sub_types: saSubTypes,
-          sa_proof: saProof || null,
+          sa_proof: speciallyAbled === "Yes" ? saProof || null : null,
           religion: religion,
           category: category,
           caste: caste || null,
@@ -328,6 +384,7 @@ function RegistrationPage() {
 
       if (dbError) throw dbError;
 
+      setShowSuccessDialog(true);
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err: any) {
@@ -998,6 +1055,31 @@ function RegistrationPage() {
           </form>
         </div>
       </main>
+
+      {showSuccessDialog && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-xl border border-border text-center flex flex-col items-center">
+            <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-4">
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-foreground">Submission Successful</h3>
+            <p className="text-sm text-muted-foreground mt-2">
+              Your registration details have been submitted successfully.
+            </p>
+            <button
+              onClick={() => {
+                setShowSuccessDialog(false);
+                resetForm();
+              }}
+              className="mt-5 btn-kk btn-primary-kk w-full py-2.5 font-medium rounded-lg text-center"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
