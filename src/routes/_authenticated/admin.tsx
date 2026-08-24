@@ -462,7 +462,7 @@ function EditDialog({ row, onClose, onSaved }: { row: Row; onClose: () => void; 
       payload[c.key] = v;
     }
     setBusy(true);
-    const { error } = await supabase.from("registrations").update(payload).eq("id", row.id);
+    const { error } = await supabase.from("registrations").update(payload as never).eq("id", row.id);
     setBusy(false);
     if (error) {
       toast.error(error.message);
