@@ -598,7 +598,7 @@ function RegistrationPage() {
                       <SelectField
                         label="Nigama"
                         value={casteInfo?.nigama ?? ""}
-                        onChange={() => {}}
+                        onChange={() => { }}
                         options={NIGAMAS}
                         placeholder="Auto-filled from caste"
                         disabled
@@ -943,24 +943,24 @@ function RegistrationPage() {
               ) : null}
               <Row>
                 <FileField
-                  label="Proof of Education"
+                  label="Proof of Education (Highest Qualification Marksheet Or Convocation Certificate)"
                   required
                   value={eduProof}
                   onChange={setEduProof}
                   error={errors["eduProof"]}
                 />
-                 <FileField
-                   label="Proof of Age (Upload Aadhaar Photo)"
-                   required
-                   hint="PDF or Image, max 1 MB"
-                   accept="application/pdf,image/*"
-                   maxSizeMb={1}
-                   value={ageProof}
-                   onChange={setAgeProof}
-                   error={errors["ageProof"]}
-                 />
                 <FileField
-                  label="Profile image"
+                  label="Proof of Age (Upload Aadhaar Photo)"
+                  required
+                  hint="PDF only, max 1 MB"
+                  accept="application/pdf"
+                  maxSizeMb={1}
+                  value={ageProof}
+                  onChange={setAgeProof}
+                  error={errors["ageProof"]}
+                />
+                <FileField
+                  label="Profile Image (Upload Latest Passport Image)"
                   required
                   accept="image/*"
                   hint="Image, max 1 MB"
