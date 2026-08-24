@@ -101,7 +101,6 @@ function RegistrationPage() {
   const [rdNumber, setRdNumber] = useState("");
   const [casteProof, setCasteProof] = useState("");
   const [aadhaarNumber, setAadhaarNumber] = useState("");
-  const [aadhaarProof, setAadhaarProof] = useState("");
 
 
   // Guardian
@@ -187,9 +186,6 @@ function RegistrationPage() {
     }
     if (!/^\d{12}$/.test(aadhaarNumber)) {
       e["aadhaarNumber"] = "Enter a valid 12 digit Aadhaar number";
-    }
-    if (!aadhaarProof) {
-      e["aadhaarProof"] = "Aadhaar photo upload is required";
     }
     if (category !== "General") {
       if (category === "OBC") {
@@ -277,7 +273,7 @@ function RegistrationPage() {
           rd_number: rdNumber || null,
           caste_proof: casteProof || null,
           aadhaar_number: aadhaarNumber,
-          aadhaar_proof: aadhaarProof,
+          aadhaar_proof: ageProof,
           guardianship: guardianship,
           guardian_salutation: salutation,
           guardian_first_name: gFirstName,
@@ -563,16 +559,6 @@ function RegistrationPage() {
                   onChange={(v) => setAadhaarNumber(v.replace(/\D/g, ""))}
                   error={errors["aadhaarNumber"]}
                 />
-                <FileField
-                  label="Aadhaar Photo Upload"
-                  required
-                  hint="PDF or Image, max 1 MB"
-                  accept="application/pdf,image/*"
-                  maxSizeMb={1}
-                  value={aadhaarProof}
-                  onChange={setAadhaarProof}
-                  error={errors["aadhaarProof"]}
-                />
               </Row>
               <Row>
                 <div className="fcol fcol-12" style={{ marginBottom: -8 }}>
@@ -639,7 +625,7 @@ function RegistrationPage() {
                   <FileField
                     label="Proof of Caste"
                     required
-                    hint="Upload a valid certificate valid up to 2027"
+                    hint="Upload a valid caste certificate (caste certificate should be valid up to 2027)"
                     value={casteProof}
                     onChange={setCasteProof}
                     error={errors["casteProof"]}
@@ -963,7 +949,16 @@ function RegistrationPage() {
                   onChange={setEduProof}
                   error={errors["eduProof"]}
                 />
-                <FileField label="Proof of Age" required value={ageProof} onChange={setAgeProof} error={errors["ageProof"]} />
+                 <FileField
+                   label="Proof of Age (Upload Aadhaar Photo)"
+                   required
+                   hint="PDF or Image, max 1 MB"
+                   accept="application/pdf,image/*"
+                   maxSizeMb={1}
+                   value={ageProof}
+                   onChange={setAgeProof}
+                   error={errors["ageProof"]}
+                 />
                 <FileField
                   label="Profile image"
                   required

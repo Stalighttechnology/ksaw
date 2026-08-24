@@ -38,12 +38,12 @@ export function Field({
       {label ? (
         <label className="ctrl-label" htmlFor={htmlFor}>
           {label} {required ? <span className="req">*</span> : null}
-          {info ? (
-            <span className="info-i" title={info} aria-label={info}>
-              i
-            </span>
-          ) : null}
         </label>
+      ) : null}
+      {info ? (
+        <p style={{ fontSize: "11px", color: "#b91c1c", marginTop: "-4px", marginBottom: "6px", fontWeight: 500 }}>
+          {info}
+        </p>
       ) : null}
       {children}
       {error ? <p className="err-msg">{error}</p> : null}
@@ -320,7 +320,7 @@ export function FileField({
   return (
     <Field label={label} required={required} error={shownError} span={span} info={hint}>
       <div className="file-input">
-        <input className={`form-ctrl file-name${shownError ? " is-invalid" : ""}`} readOnly value={getDisplayValue()} placeholder={hint} />
+        <input className={`form-ctrl file-name${shownError ? " is-invalid" : ""}`} readOnly value={getDisplayValue()} placeholder="No file selected" />
         <label className={`file-btn${uploading ? " disabled" : ""}`} htmlFor={uploading ? undefined : id}>
           {uploading ? "..." : "Browse"}
         </label>
