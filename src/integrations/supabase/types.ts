@@ -18,8 +18,11 @@ export type Database = {
         Row: {
           admin_notes: string | null
           age_proof: string | null
+          aadhaar_number: string | null
+          aadhaar_proof: string | null
           apprenticeship: string | null
           caste: string | null
+          caste_sub_category: string | null
           caste_cert_type: string | null
           caste_proof: string | null
           category: string | null
@@ -93,8 +96,11 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           age_proof?: string | null
+          aadhaar_number?: string | null
+          aadhaar_proof?: string | null
           apprenticeship?: string | null
           caste?: string | null
+          caste_sub_category?: string | null
           caste_cert_type?: string | null
           caste_proof?: string | null
           category?: string | null
@@ -168,8 +174,11 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           age_proof?: string | null
+          aadhaar_number?: string | null
+          aadhaar_proof?: string | null
           apprenticeship?: string | null
           caste?: string | null
+          caste_sub_category?: string | null
           caste_cert_type?: string | null
           caste_proof?: string | null
           category?: string | null

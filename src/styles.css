@@ -404,3 +404,17 @@ select.form-ctrl { appearance: auto; }
   background: oklch(0.42 0.09 250);
   color: #fff; font-weight: 700;
 }
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.1; }
+  100% { opacity: 1; }
+}
+
+.blink-text {
+  animation: blink 1.5s infinite;
+  color: #b91c1c;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+}

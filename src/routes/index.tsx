@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 import { PageBanner, SiteHeader } from "@/components/reg/SiteChrome";
 import {
@@ -96,9 +97,11 @@ function RegistrationPage() {
   const [category, setCategory] = useState("General");
   const [caste, setCaste] = useState("");
   const casteInfo = CASTES.find((c) => c.name === caste);
-  const [casteCertType, setCasteCertType] = useState("");
+  const [casteSubCategory, setCasteSubCategory] = useState("");
   const [rdNumber, setRdNumber] = useState("");
   const [casteProof, setCasteProof] = useState("");
+  const [aadhaarNumber, setAadhaarNumber] = useState("");
+  const [aadhaarProof, setAadhaarProof] = useState("");
 
 
   // Guardian
@@ -147,6 +150,8 @@ function RegistrationPage() {
 
   const [errors, setErrors] = useState<Errors>({});
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const streamOptions = useMemo(() => STREAMS[education] ?? [], [education]);
   const subjectOptions = useMemo(() => SUBJECTS[stream] ?? [], [stream]);
@@ -180,11 +185,19 @@ function RegistrationPage() {
       if (saTypes.length === 0) e["saTypes"] = "Select at least one type";
       if (saSubTypes.length === 0) e["saSubTypes"] = "Select at least one sub type";
     }
+    if (!/^\d{12}$/.test(aadhaarNumber)) {
+      e["aadhaarNumber"] = "Enter a valid 12 digit Aadhaar number";
+    }
+    if (!aadhaarProof) {
+      e["aadhaarProof"] = "Aadhaar photo upload is required";
+    }
     if (category !== "General") {
-      if (category === "OBC" && !caste) e["caste"] = "Caste is required";
-      if (!casteCertType) e["casteCertType"] = "Caste certificate is required";
-      if (casteCertType === "RD Number" && !rdNumber.trim()) e["rdNumber"] = "RD number is required";
-      if (casteCertType === "Upload Physical Document" && !casteProof) e["casteProof"] = "Caste proof is required";
+      if (category === "OBC") {
+        if (!caste) e["caste"] = "Caste is required";
+        if (!casteSubCategory) e["casteSubCategory"] = "Category is required";
+      }
+      if (!rdNumber.trim()) e["rdNumber"] = "RD number is required";
+      if (!casteProof) e["casteProof"] = "Caste proof document upload is required";
     }
     if (!gFirstName.trim()) e["gFirstName"] = "First name is required";
     if (!gLastName.trim()) e["gLastName"] = "Last name is required";
@@ -194,8 +207,10 @@ function RegistrationPage() {
     if (sameAddress === "No") validateAddress("per", permanent, e);
 
     if (!education) e["education"] = "Education is required";
-    if (streamOptions.length > 0 && !stream) e["stream"] = "Stream is required";
-    if (subjectOptions.length > 0 && !subject) e["subject"] = "Subject is required";
+    if (education !== "10th") {
+      if (streamOptions.length > 0 && !stream) e["stream"] = "Stream is required";
+      if (subjectOptions.length > 0 && !subject) e["subject"] = "Subject is required";
+    }
     if (langInstruction === "Other" && !otherLanguage.trim()) e["otherLanguage"] = "Other language is required";
     if (!yearOfPassing) e["yearOfPassing"] = "Year of passing is required";
     if (languagesKnown.length === 0) e["languagesKnown"] = "Select at least one language";
@@ -224,16 +239,107 @@ function RegistrationPage() {
     return e;
   };
 
-  const onSubmit = (ev: React.FormEvent) => {
+  const onSubmit = async (ev: React.FormEvent) => {
     ev.preventDefault();
     const e = validate();
     setErrors(e);
-    setSubmitted(Object.keys(e).length === 0);
     if (Object.keys(e).length > 0) {
+      setSubmitted(false);
       const first = document.querySelector(".is-invalid");
       first?.scrollIntoView({ behavior: "smooth", block: "center" });
-    } else {
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitError("");
+    setSubmitted(false);
+
+    try {
+      const { error: dbError } = await supabase
+        .from("registrations")
+        .insert({
+          first_name: firstName,
+          last_name: lastName,
+          phone: phone,
+          email: email,
+          dob: dob || null,
+          gender: gender,
+          marital_status: marital,
+          specially_abled: speciallyAbled,
+          sa_types: saTypes,
+          sa_sub_types: saSubTypes,
+          sa_proof: saProof || null,
+          religion: religion,
+          category: category,
+          caste: caste || null,
+          caste_sub_category: casteSubCategory || null,
+          nigama: casteInfo?.nigama || null,
+          rd_number: rdNumber || null,
+          caste_proof: casteProof || null,
+          aadhaar_number: aadhaarNumber,
+          aadhaar_proof: aadhaarProof,
+          guardianship: guardianship,
+          guardian_salutation: salutation,
+          guardian_first_name: gFirstName,
+          guardian_last_name: gLastName,
+          cur_location: current.location,
+          cur_street1: current.street1,
+          cur_street2: current.street2 || null,
+          cur_state: current.state,
+          cur_district: current.district,
+          cur_taluk: current.taluk,
+          cur_city: current.location === "Urban" ? current.city : null,
+          cur_village: current.location === "Rural" ? current.village : null,
+          cur_zip: current.zip,
+          same_address: sameAddress,
+          per_location: sameAddress === "Yes" ? current.location : permanent.location,
+          per_street1: sameAddress === "Yes" ? current.street1 : permanent.street1,
+          per_street2: (sameAddress === "Yes" ? current.street2 : permanent.street2) || null,
+          per_state: sameAddress === "Yes" ? current.state : permanent.state,
+          per_district: sameAddress === "Yes" ? current.district : permanent.district,
+          per_taluk: sameAddress === "Yes" ? current.taluk : permanent.taluk,
+          per_city: sameAddress === "Yes" ? (current.location === "Urban" ? current.city : null) : (permanent.location === "Urban" ? permanent.city : null),
+          per_village: sameAddress === "Yes" ? (current.location === "Rural" ? current.village : null) : (permanent.location === "Rural" ? permanent.village : null),
+          per_zip: sameAddress === "Yes" ? current.zip : permanent.zip,
+          education: education,
+          stream: stream,
+          subject: subject || null,
+          language_of_instruction: langInstruction,
+          other_language: langInstruction === "Other" ? otherLanguage : null,
+          year_of_passing: yearOfPassing,
+          languages_known: languagesKnown,
+          past_skill_experience: pastSkillExp,
+          skill_experience_proof: pastSkillExp === "Yes" ? skillExpProof : null,
+          skill_sought: skills[0] || "",
+          training_duration: trainingDuration,
+          apprenticeship: apprenticeship,
+          currently_employed: currentlyEmployed,
+          employed_from: currentlyEmployed === "Yes" ? employedFrom || null : null,
+          current_employer: currentlyEmployed === "Yes" ? currentEmployer : null,
+          current_designation: currentlyEmployed === "Yes" ? currentDesignation : null,
+          previously_employed: previouslyEmployed,
+          work_experience: previouslyEmployed === "Yes" ? workExperience : null,
+          last_employer: previouslyEmployed === "Yes" ? lastEmployer : null,
+          last_designation: previouslyEmployed === "Yes" ? lastDesignation : null,
+          last_salary: previouslyEmployed === "Yes" ? lastSalary : null,
+          last_employer_address: previouslyEmployed === "Yes" ? lastEmployerAddress : null,
+          employment_proof: previouslyEmployed === "Yes" ? empProof : null,
+          education_proof: eduProof,
+          age_proof: ageProof,
+          profile_image: profileImg,
+          declaration_accepted: declaration,
+        });
+
+      if (dbError) throw dbError;
+
+      setSubmitted(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err: any) {
+      console.error("Submission error:", err);
+      setSubmitError(err.message || "Failed to submit registration. Please try again.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -338,7 +444,13 @@ function RegistrationPage() {
         <div className="kk-wrap">
           {submitted ? (
             <div className="kk-alert" role="status">
-              Your registration details have been validated successfully.
+              Your registration details have been submitted successfully.
+            </div>
+          ) : null}
+
+          {submitError ? (
+            <div className="kk-alert" role="status" style={{ backgroundColor: "#fee2e2", color: "#991b1b", borderColor: "#fecaca" }}>
+              Error submitting form: {submitError}
             </div>
           ) : null}
 
@@ -440,8 +552,32 @@ function RegistrationPage() {
                   options={RELIGIONS}
                   error={errors["religion"]}
                 />
+                <TextField
+                  label="Aadhaar Number"
+                  required
+                  info="Enter 12 digit Aadhaar number"
+                  placeholder="12 Digit Aadhaar Number"
+                  inputMode="numeric"
+                  maxLength={12}
+                  value={aadhaarNumber}
+                  onChange={(v) => setAadhaarNumber(v.replace(/\D/g, ""))}
+                  error={errors["aadhaarNumber"]}
+                />
+                <FileField
+                  label="Aadhaar Photo Upload"
+                  required
+                  hint="PDF or Image, max 1 MB"
+                  accept="application/pdf,image/*"
+                  maxSizeMb={1}
+                  value={aadhaarProof}
+                  onChange={setAadhaarProof}
+                  error={errors["aadhaarProof"]}
+                />
               </Row>
               <Row>
+                <div className="fcol fcol-12" style={{ marginBottom: -8 }}>
+                  <span className="blink-text">⚠️ Please refer to your caste certificate and select the correct caste and category.</span>
+                </div>
                 <RadioGroup
                   label="Category"
                   required
@@ -463,55 +599,51 @@ function RegistrationPage() {
                         single
                         options={CASTE_NAMES}
                         value={caste ? [caste] : []}
-                        onChange={(v) => setCaste(v[0] ?? "")}
+                        onChange={(v) => {
+                          const selectedCaste = v[0] ?? "";
+                          setCaste(selectedCaste);
+                          const info = CASTES.find((c) => c.name === selectedCaste);
+                          if (info) {
+                            setCasteSubCategory(info.category);
+                          }
+                        }}
                         error={errors["caste"]}
                       />
                       <SelectField
-                        label="Category (Auto)"
-                        value={casteInfo?.category ?? ""}
-                        onChange={() => {}}
-                        options={CASTE_CATEGORIES}
-                        placeholder="Auto-filled from caste"
-                        disabled
-                      />
-                      <SelectField
-                        label="Nigama (Auto)"
+                        label="Nigama"
                         value={casteInfo?.nigama ?? ""}
                         onChange={() => {}}
                         options={NIGAMAS}
                         placeholder="Auto-filled from caste"
                         disabled
                       />
+                      <SelectField
+                        label="Category"
+                        value={casteSubCategory}
+                        onChange={setCasteSubCategory}
+                        options={CASTE_CATEGORIES}
+                        placeholder="Select Category"
+                        error={errors["casteSubCategory"]}
+                      />
                     </>
                   ) : null}
 
-                  <SelectField
-                    label="Upload caste certificate"
+                  <TextField
+                    label="RD Number"
                     required
-                    value={casteCertType}
-                    onChange={setCasteCertType}
-                    options={CASTE_CERTIFICATE_TYPES}
-                    error={errors["casteCertType"]}
+                    placeholder="Rd Number"
+                    value={rdNumber}
+                    onChange={setRdNumber}
+                    error={errors["rdNumber"]}
                   />
-                  {casteCertType === "RD Number" ? (
-                    <TextField
-                      label="RD Number"
-                      required
-                      placeholder="Rd Number"
-                      value={rdNumber}
-                      onChange={setRdNumber}
-                      error={errors["rdNumber"]}
-                    />
-                  ) : null}
-                  {casteCertType === "Upload Physical Document" ? (
-                    <FileField
-                      label="Proof of Caste"
-                      required
-                      value={casteProof}
-                      onChange={setCasteProof}
-                      error={errors["casteProof"]}
-                    />
-                  ) : null}
+                  <FileField
+                    label="Proof of Caste"
+                    required
+                    hint="Upload a valid certificate valid up to 2027"
+                    value={casteProof}
+                    onChange={setCasteProof}
+                    error={errors["casteProof"]}
+                  />
                 </Row>
               ) : null}
             </Section>
@@ -602,26 +734,30 @@ function RegistrationPage() {
                   options={EDUCATION_LEVELS}
                   error={errors["education"]}
                 />
-                <SelectField
-                  label="Stream"
-                  required
-                  value={stream}
-                  onChange={(v) => {
-                    setStream(v);
-                    setSubject("");
-                  }}
-                  options={streamOptions}
-                  error={errors["stream"]}
-                />
-                <SelectField
-                  label="Subject"
-                  required
-                  value={subject}
-                  onChange={setSubject}
-                  options={subjectOptions}
-                  placeholder={subjectOptions.length ? "Select" : "N/A"}
-                  error={errors["subject"]}
-                />
+                {education !== "10th" ? (
+                  <>
+                    <SelectField
+                      label="Stream"
+                      required
+                      value={stream}
+                      onChange={(v) => {
+                        setStream(v);
+                        setSubject("");
+                      }}
+                      options={streamOptions}
+                      error={errors["stream"]}
+                    />
+                    <SelectField
+                      label="Subject"
+                      required
+                      value={subject}
+                      onChange={setSubject}
+                      options={subjectOptions}
+                      placeholder={subjectOptions.length ? "Select" : "N/A"}
+                      error={errors["subject"]}
+                    />
+                  </>
+                ) : null}
               </Row>
               <Row>
                 <RadioGroup
@@ -685,7 +821,12 @@ function RegistrationPage() {
                   required
                   searchable
                   single
-                  options={SKILLS}
+                  options={useMemo(() => {
+                    if (stream === "Commerce") {
+                      return SKILLS;
+                    }
+                    return SKILLS.filter((s) => s !== "Accounts Executive - Tally ERP 9");
+                  }, [stream])}
                   value={skills}
                   onChange={setSkills}
                   error={errors["skills"]}
@@ -847,13 +988,15 @@ function RegistrationPage() {
                 </label>
               </div>
               {errors["declaration"] ? <p className="err-msg">{errors["declaration"]}</p> : null}
+              {submitError && <p className="err-msg">{submitError}</p>}
+              {submitted && <p className="success-msg">Registration submitted successfully!</p>}
 
               <div className="kk-actions">
                 <button type="button" className="btn-kk btn-cancel-kk" onClick={onCancel}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-kk btn-primary-kk">
-                  Submit
+                <button type="submit" className="btn-kk btn-primary-kk" disabled={submitting}>
+                  {submitting ? "Submitting..." : "Submit"}
                 </button>
               </div>
             </Section>

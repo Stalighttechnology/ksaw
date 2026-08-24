@@ -1,13 +1,13 @@
-import univLogo from "@/assets/akkamahadevi-logo.jpeg.asset.json";
-import govLogo from "@/assets/karnataka-govt-emblem.png.asset.json";
+import univLogo from "@/assets/image.png";
+import govLogo from "@/assets/image copy.png";
 
 export function SiteHeader() {
   return (
     <header className="kk-header">
       <div className="kk-wrap kk-header-in">
         <div className="kk-logo">
-          <img src={govLogo.url} alt="Government of Karnataka emblem" width={58} height={58} />
-          <img src={univLogo.url} alt="Karnataka State Akkamahadevi Women's University logo" width={58} height={58} />
+          <img src={govLogo} alt="Government of Karnataka emblem" width={58} height={58} />
+          <img src={univLogo} alt="Karnataka State Akkamahadevi Women's University logo" width={58} height={58} />
         </div>
         <div className="kk-header-titles">
           <p className="kk-header-title">Karnataka State Akkamahadevi Women&apos;s University</p>
@@ -25,7 +25,7 @@ export function PageBanner() {
       <div className="kk-wrap">
         <h1>Registration Form</h1>
         <p>
-          For any clarifications please, email: <a href="mailto:info@kaushalkar.com">info@kaushalkar.com</a>
+          For any clarifications please, email: <a href="mailto:skills@kswu.ac.in">skills@kswu.ac.in</a>
         </p>
       </div>
     </section>

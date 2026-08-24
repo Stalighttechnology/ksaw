@@ -230,6 +230,8 @@ export function MultiSelect({
   );
 }
 
+import { supabase } from "@/integrations/supabase/client";
+
 export function FileField({
   label,
   required,
@@ -249,9 +251,10 @@ export function FileField({
 }) {
   const id = useId();
   const [localError, setLocalError] = useState("");
+  const [uploading, setUploading] = useState(false);
   const shownError = localError || error;
 
-  const handle = (file: File | undefined) => {
+  const handle = async (file: File | undefined) => {
     if (!file) {
       setLocalError("");
       onChange("");
@@ -272,17 +275,56 @@ export function FileField({
       return;
     }
     setLocalError("");
-    onChange(file.name);
+    setUploading(true);
+
+    try {
+      const fileExt = file.name.split(".").pop();
+      const randomId = Math.random().toString(36).substring(2, 15);
+      const safeName = file.name.replace(/[^a-zA-Z0-9]/g, "_");
+      const fileName = `${randomId}_${Date.now()}_${safeName}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("registrations")
+        .upload(fileName, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("registrations")
+        .getPublicUrl(fileName);
+
+      onChange(publicUrl);
+    } catch (err: any) {
+      console.error("Error uploading file:", err);
+      setLocalError(err.message || "Failed to upload file");
+      onChange("");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const getDisplayValue = () => {
+    if (uploading) return "Uploading...";
+    if (!value) return "";
+    if (value.startsWith("http")) {
+      const parts = value.split("/");
+      const name = parts[parts.length - 1] || "";
+      const cleanName = name.replace(/^[a-z0-9]+_\d+_/, "");
+      return cleanName || "Uploaded File";
+    }
+    return value;
   };
 
   return (
     <Field label={label} required={required} error={shownError} span={span} info={hint}>
       <div className="file-input">
-        <input className={`form-ctrl file-name${shownError ? " is-invalid" : ""}`} readOnly value={value} placeholder={hint} />
-        <label className="file-btn" htmlFor={id}>
-          Browse
+        <input className={`form-ctrl file-name${shownError ? " is-invalid" : ""}`} readOnly value={getDisplayValue()} placeholder={hint} />
+        <label className={`file-btn${uploading ? " disabled" : ""}`} htmlFor={uploading ? undefined : id}>
+          {uploading ? "..." : "Browse"}
         </label>
-        <input id={id} type="file" accept={accept} className="sr-only" onChange={(e) => handle(e.target.files?.[0])} />
+        {!uploading && <input id={id} type="file" accept={accept} className="sr-only" onChange={(e) => handle(e.target.files?.[0])} />}
       </div>
     </Field>
   );
