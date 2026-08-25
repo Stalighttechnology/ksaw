@@ -203,7 +203,7 @@ function AdminPage() {
             <FilterSelect label="Status" value={status} onChange={resetPage(setStatus)} options={STATUS_OPTIONS} />
             <FilterSelect label="Course" value={course} onChange={resetPage(setCourse)} options={SKILLS} />
             <FilterSelect label="Category" value={category} onChange={resetPage(setCategory)} options={CATEGORIES} />
-            <FilterSelect label="District" value={district} onChange={resetPage(setDistrict)} options={DISTRICTS.KARNATAKA} />
+            <FilterSelect label="District" value={district} onChange={resetPage(setDistrict)} options={DISTRICTS["KARNATAKA"] || []} />
             <FilterSelect label="Nigama" value={nigama} onChange={resetPage(setNigama)} options={NIGAMAS} />
           </div>
 
