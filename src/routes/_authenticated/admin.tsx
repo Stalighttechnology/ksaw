@@ -5,7 +5,8 @@ import { toast } from "sonner";
 
 import { SiteHeader } from "@/components/reg/SiteChrome";
 import { COLUMNS, STATUS_OPTIONS, formatCell } from "@/lib/registrationColumns";
-import { SKILLS, CATEGORIES } from "@/components/reg/options";
+import { SKILLS, CATEGORIES, DISTRICTS } from "@/components/reg/options";
+import { NIGAMAS } from "@/components/reg/castes";
 import { supabase } from "@/integrations/supabase/client";
 
 const title = "Registrations Dashboard | Admin";
@@ -39,13 +40,14 @@ function AdminPage() {
   const [course, setCourse] = useState("");
   const [category, setCategory] = useState("");
   const [district, setDistrict] = useState("");
+  const [nigama, setNigama] = useState("");
   const [sortDesc, setSortDesc] = useState(true);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
   const [editing, setEditing] = useState<Row | null>(null);
   const [viewing, setViewing] = useState<Row | null>(null);
 
-  const filters = { search: search.trim(), status, course, category, district };
+  const filters = { search: search.trim(), status, course, category, district, nigama };
 
   const listQuery = useQuery({
     queryKey: ["registrations", filters, page, pageSize, sortDesc],
@@ -185,7 +187,7 @@ function AdminPage() {
         </section>
 
         <section className="mt-5 rounded-lg border border-border bg-card p-3 sm:p-4">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
             <div className="xl:col-span-2">
               <label className="ctrl-label" htmlFor="q">
                 Search
@@ -201,18 +203,8 @@ function AdminPage() {
             <FilterSelect label="Status" value={status} onChange={resetPage(setStatus)} options={STATUS_OPTIONS} />
             <FilterSelect label="Course" value={course} onChange={resetPage(setCourse)} options={SKILLS} />
             <FilterSelect label="Category" value={category} onChange={resetPage(setCategory)} options={CATEGORIES} />
-            <div>
-              <label className="ctrl-label" htmlFor="district">
-                District
-              </label>
-              <input
-                id="district"
-                className="form-ctrl"
-                placeholder="District"
-                value={district}
-                onChange={(e) => resetPage(setDistrict)(e.target.value)}
-              />
-            </div>
+            <FilterSelect label="District" value={district} onChange={resetPage(setDistrict)} options={DISTRICTS.KARNATAKA} />
+            <FilterSelect label="Nigama" value={nigama} onChange={resetPage(setNigama)} options={NIGAMAS} />
           </div>
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-4 text-sm">
