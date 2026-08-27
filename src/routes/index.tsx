@@ -820,6 +820,7 @@ function RegistrationPage() {
                     setEducation(v);
                     setStream("");
                     setSubject("");
+                    setSkills([]);
                   }}
                   options={EDUCATION_LEVELS}
                   error={errors["education"]}
@@ -912,11 +913,18 @@ function RegistrationPage() {
                   searchable
                   single
                   options={useMemo(() => {
+                    if (education === "10th") {
+                      return SKILLS.filter((s) =>
+                        s === "Cisco IT Essentials" ||
+                        s === "Computer Hardware and Networking" ||
+                        s === "Computer Programming"
+                      );
+                    }
                     if (stream === "Commerce") {
                       return SKILLS;
                     }
                     return SKILLS.filter((s) => s !== "Accounts Executive - Tally ERP 9");
-                  }, [stream])}
+                  }, [education, stream])}
                   value={skills}
                   onChange={setSkills}
                   error={errors["skills"]}
