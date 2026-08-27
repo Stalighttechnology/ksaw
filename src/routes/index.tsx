@@ -215,12 +215,8 @@ function RegistrationPage() {
         if (!casteSubCategory) e["casteSubCategory"] = "Category is required";
       }
       if (!rdNumber.trim()) e["rdNumber"] = "RD number is required";
-      if (!casteCertIssueDate) {
-        e["casteCertIssueDate"] = "Certificate issue date is required";
-      } else if (!isCertValid) {
-        e["casteCertIssueDate"] = "Your caste certificate has expired. Please provide a valid caste certificate.";
-      }
-      if (isCertValid && !casteProof) e["casteProof"] = "Caste proof document upload is required";
+      if (!casteCertIssueDate) e["casteCertIssueDate"] = "Certificate issue date is required";
+      if (!casteProof) e["casteProof"] = "Caste proof document upload is required";
     }
     if (!gFirstName.trim()) e["gFirstName"] = "First name is required";
     if (!gLastName.trim()) e["gLastName"] = "Last name is required";
@@ -764,16 +760,16 @@ function RegistrationPage() {
                       )}
                     </div>
                   )}
-                  {isCertValid && (
-                    <FileField
-                      label="Proof of Caste"
-                      required
-                      hint={`Upload a valid caste certificate (expires: ${certExpiryDate?.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })})`}
-                      value={casteProof}
-                      onChange={setCasteProof}
-                      error={errors["casteProof"]}
-                    />
-                  )}
+                  <FileField
+                    label="Proof of Caste"
+                    required
+                    hint={casteCertIssueDate && certExpiryDate
+                      ? `Upload your caste certificate (Issue: ${new Date(casteCertIssueDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} — Expiry: ${certExpiryDate.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })})`
+                      : "Upload your caste certificate"}
+                    value={casteProof}
+                    onChange={setCasteProof}
+                    error={errors["casteProof"]}
+                  />
                 </Row>
               ) : null}
             </Section>
