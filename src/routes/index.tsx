@@ -180,7 +180,22 @@ function RegistrationPage() {
     if (!marital) e["marital"] = "Marital status is required";
     if (!/^[6-9]\d{9}$/.test(phone)) e["phone"] = "Enter a valid 10 digit phone number";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e["email"] = "Enter a valid email address";
-    if (!dob) e["dob"] = "Date of birth is required";
+    if (!dob) {
+      e["dob"] = "Date of birth is required";
+    } else {
+      const today = new Date();
+      const birthDate = new Date(dob);
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      if (age < 18) {
+        e["dob"] = "Applicant must be at least 18 years old";
+      } else if (age > 25) {
+        e["dob"] = "Applicant must be 25 years old or younger";
+      }
+    }
     if (!religion) e["religion"] = "Religion is required";
     if (speciallyAbled === "Yes") {
       if (saTypes.length === 0) e["saTypes"] = "Select at least one type";
@@ -550,7 +565,22 @@ function RegistrationPage() {
                   onChange={setEmail}
                   error={errors["email"]}
                 />
-                <DateField label="Date of Birth" required value={dob} onChange={setDob} error={errors["dob"]} />
+                {(() => {
+                  const today = new Date();
+                  const maxDob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()).toISOString().split("T")[0];
+                  const minDob = new Date(today.getFullYear() - 25, today.getMonth(), today.getDate() + 1).toISOString().split("T")[0];
+                  return (
+                    <DateField
+                      label="Date of Birth"
+                      required
+                      value={dob}
+                      onChange={setDob}
+                      error={errors["dob"]}
+                      min={minDob}
+                      max={maxDob}
+                    />
+                  );
+                })()}
                 <RadioGroup
                   label="Gender"
                   required

@@ -412,7 +412,9 @@ export function DateField({
   value,
   onChange,
   placeholder,
-}: BaseInput & { value: string; onChange: (v: string) => void; placeholder?: string | undefined }) {
+  min,
+  max,
+}: BaseInput & { value: string; onChange: (v: string) => void; placeholder?: string | undefined; min?: string; max?: string }) {
   const id = useId();
   return (
     <Field label={label} required={required} error={error} htmlFor={id} span={span}>
@@ -423,6 +425,8 @@ export function DateField({
           className={`form-ctrl${error ? " is-invalid" : ""}`}
           value={value}
           placeholder={placeholder}
+          min={min}
+          max={max}
           onChange={(e) => onChange(e.target.value)}
         />
       </div>
