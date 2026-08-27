@@ -303,14 +303,14 @@ export const CASTES: readonly CasteEntry[] = [
   { name: "Gounder - ಗೌಂಡರ್", category: "3A", nigama: "Vokkaliga" },
   { name: "Namadhari Gowda - ನಾಮಧಾರಿ ಗೌಡ", category: "3A", nigama: "Vokkaliga" },
   { name: "Uppina Kolaga/ Uttama Kolaga - ಉಪ್ಪಿನ ಕೊಳಗ/ಉತ್ತಮ ಕೊಳಗ", category: "3A", nigama: "Vokkaliga" },
-  { name: "Veerashaiva Lingayat - ವೀರಶೈವ ಲಿಂಗಾಯತ", category: "Veerashaiva Lingayata (3B)", nigama: "Lingayath" },
-  { name: "Panchamasali Lingayat - ಪಂಚಮಸಾಲಿ ಲಿಂಗಾಯತ", category: "3B", nigama: "Lingayath" },
-  { name: "Maratha/Marata - ಮರಾತ/ಮರಾಠ", category: "Maratha", nigama: "Maratha" },
-  { name: "Are-Kshatriya/Are-Maratha/Aramarata - ಅರೆ ಕ್ಷತ್ರಿ/ಅರೆ ಮರಾಠ/ಅರಮರಾಠ", category: "Maratha", nigama: "Maratha" },
-  { name: "Arya/Aryaru - ಆರ್ಯ/ಆರ್ಯರು", category: "Maratha", nigama: "Maratha" },
-  { name: "Konkana Maratha - ಕೊಂಕಣ ಮರಾಠ", category: "Maratha", nigama: "Maratha" },
-  { name: "Kshatriya Maratha - ಕ್ಷತ್ರಿಯ ಮರಾಠ", category: "Maratha", nigama: "Maratha" },
-  { name: "Kulwadi - ಕುಳವಾಡಿ", category: "Maratha", nigama: "Maratha" },
+  { name: "Veerashaiva Lingayat - ವೀರಶೈವ ಲಿಂಗಾಯತ", category: "3B", nigama: "Veerashaiva Lingayat" },
+  { name: "Panchamasali Lingayat - ಪಂಚಮಸಾಲಿ ಲಿಂಗಾಯತ", category: "3B", nigama: "Veerashaiva Lingayat" },
+  { name: "Maratha/Marata - ಮರಾತ/ಮರಾಠ", category: "3B", nigama: "Maratha" },
+  { name: "Are-Kshatriya/Are-Maratha/Aramarata - ಅರೆ ಕ್ಷತ್ರಿ/ಅರೆ ಮರಾಠ/ಅರಮರಾಠ", category: "3B", nigama: "Maratha" },
+  { name: "Arya/Aryaru - ಆರ್ಯ/ಆರ್ಯರು", category: "3B", nigama: "Maratha" },
+  { name: "Konkana Maratha - ಕೊಂಕಣ ಮರಾಠ", category: "3B", nigama: "Maratha" },
+  { name: "Kshatriya Maratha - ಕ್ಷತ್ರಿಯ ಮರಾಠ", category: "3B", nigama: "Maratha" },
+  { name: "Kulwadi - ಕುಳವಾಡಿ", category: "3B", nigama: "Maratha" },
 ] as const;
 
 export const CASTE_NAMES = CASTES.map((c) => c.name);
