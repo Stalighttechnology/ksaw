@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useId, useState } from "react";
+import { useId, useState, useEffect, useRef, useMemo } from "react";
 
 export function Section({ title, variant = "sub", children }: { title: string; variant?: "main" | "sub"; children?: ReactNode }) {
   return (
@@ -188,7 +188,49 @@ export function MultiSelect({
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
-  const shown = q ? options.filter((o) => o.toLowerCase().includes(q.toLowerCase())) : options;
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Clear query when menu opens/closes
+  useEffect(() => {
+    if (!open) {
+      setQ("");
+    }
+  }, [open]);
+
+  // Priority filtering: typed matches should rank matches starting with the typed query higher, followed by general inclusion.
+  // Search matches only against the English part (text before the hyphen " - ") of each option.
+  const shown = useMemo(() => {
+    if (!q) return options;
+    const query = q.toLowerCase();
+    
+    const startsWithMatches: string[] = [];
+    const containsMatches: string[] = [];
+
+    options.forEach((o) => {
+      // Split by hyphen to isolate the English text
+      const englishPart = o.split(" - ")[0] || "";
+      const englishLower = englishPart.toLowerCase();
+      
+      if (englishLower.startsWith(query)) {
+        startsWithMatches.push(o);
+      } else if (englishLower.includes(query)) {
+        containsMatches.push(o);
+      }
+    });
+
+    return [...startsWithMatches, ...containsMatches];
+  }, [q, options]);
 
   const toggle = (o: string) => {
     if (single) {
@@ -202,7 +244,7 @@ export function MultiSelect({
 
   return (
     <Field label={label} required={required} error={error} span={span}>
-      <div className="ms">
+      <div className="ms" ref={containerRef}>
         <button type="button" className={`form-ctrl ms-btn${error ? " is-invalid" : ""}`} onClick={() => setOpen((v) => !v)}>
           <span className="ms-btn-text">{value.length ? value.join(", ") : "None selected"}</span>
           <span className="caret" aria-hidden />
@@ -210,18 +252,50 @@ export function MultiSelect({
         {open ? (
           <div className="ms-menu">
             {searchable ? (
-              <input className="form-ctrl ms-search" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} />
+              <div className="ms-search-container" style={{ position: 'relative' }}>
+                <input 
+                  className="form-ctrl ms-search" 
+                  placeholder="Search" 
+                  value={q} 
+                  onChange={(e) => setQ(e.target.value)} 
+                  autoFocus
+                />
+                {q ? (
+                  <button 
+                    type="button" 
+                    className="ms-clear-btn" 
+                    onClick={() => setQ("")}
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      border: 'none',
+                      background: 'none',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      color: '#999',
+                      padding: '4px'
+                    }}
+                  >
+                    ✕
+                  </button>
+                ) : null}
+              </div>
             ) : null}
             <ul>
-              {shown.map((o) => (
-                <li key={o}>
-                  <label>
-                    <input type={single ? "radio" : "checkbox"} checked={value.includes(o)} onChange={() => toggle(o)} />
-                    <span>{o}</span>
-                  </label>
-                </li>
-              ))}
-              {shown.length === 0 ? <li className="ms-empty">No results</li> : null}
+              {shown.length > 0 ? (
+                shown.map((o, idx) => (
+                  <li key={`${o}-${idx}`}>
+                    <label>
+                      <input type={single ? "radio" : "checkbox"} checked={value.includes(o)} onChange={() => toggle(o)} />
+                      <span>{o}</span>
+                    </label>
+                  </li>
+                ))
+              ) : (
+                <li className="ms-empty">No results</li>
+              )}
             </ul>
           </div>
         ) : null}
