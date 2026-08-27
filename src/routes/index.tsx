@@ -99,8 +99,13 @@ function RegistrationPage() {
   const casteInfo = CASTES.find((c) => c.name === caste);
   const [casteSubCategory, setCasteSubCategory] = useState("");
   const [rdNumber, setRdNumber] = useState("");
-  const [casteCertValidYear, setCasteCertValidYear] = useState("");
+  const [casteCertIssueDate, setCasteCertIssueDate] = useState("");
   const [casteProof, setCasteProof] = useState("");
+
+  const certExpiryDate = casteCertIssueDate
+    ? new Date(new Date(casteCertIssueDate).setFullYear(new Date(casteCertIssueDate).getFullYear() + 6))
+    : null;
+  const isCertValid = certExpiryDate ? certExpiryDate >= new Date() : false;
   const [aadhaarNumber, setAadhaarNumber] = useState("");
 
 
@@ -210,7 +215,12 @@ function RegistrationPage() {
         if (!casteSubCategory) e["casteSubCategory"] = "Category is required";
       }
       if (!rdNumber.trim()) e["rdNumber"] = "RD number is required";
-      if (!casteProof) e["casteProof"] = "Caste proof document upload is required";
+      if (!casteCertIssueDate) {
+        e["casteCertIssueDate"] = "Certificate issue date is required";
+      } else if (!isCertValid) {
+        e["casteCertIssueDate"] = "Your caste certificate has expired. Please provide a valid caste certificate.";
+      }
+      if (isCertValid && !casteProof) e["casteProof"] = "Caste proof document upload is required";
     }
     if (!gFirstName.trim()) e["gFirstName"] = "First name is required";
     if (!gLastName.trim()) e["gLastName"] = "Last name is required";
@@ -343,7 +353,8 @@ function RegistrationPage() {
           caste_sub_category: casteSubCategory || null,
           nigama: casteInfo?.nigama || null,
           rd_number: rdNumber || null,
-          caste_cert_valid_year: casteCertValidYear || null,
+          caste_cert_issue_date: casteCertIssueDate || null,
+          caste_cert_expiry_date: certExpiryDate ? certExpiryDate.toISOString().split("T")[0] : null,
           caste_proof: casteProof || null,
           aadhaar_number: aadhaarNumber,
           aadhaar_proof: ageProof,
@@ -711,23 +722,58 @@ function RegistrationPage() {
                     onChange={setRdNumber}
                     error={errors["rdNumber"]}
                   />
-                  <SelectField
-                    label="Caste Certificate Valid Up To"
+                  <DateField
+                    label="Caste Certificate Issue Date"
                     required
-                    value={casteCertValidYear}
-                    onChange={setCasteCertValidYear}
-                    options={["2025", "2026", "2027", "2028", "2029", "2030", "2031"]}
-                    placeholder="Select Year"
-                    error={errors["casteCertValidYear"]}
+                    value={casteCertIssueDate}
+                    onChange={setCasteCertIssueDate}
+                    error={errors["casteCertIssueDate"]}
+                    max={new Date().toISOString().split("T")[0]}
                   />
-                  <FileField
-                    label="Proof of Caste"
-                    required
-                    hint={`Upload a valid caste certificate (caste certificate should be valid up to ${casteCertValidYear || "selected year"})`}
-                    value={casteProof}
-                    onChange={setCasteProof}
-                    error={errors["casteProof"]}
-                  />
+                  {casteCertIssueDate && (
+                    <div style={{
+                      gridColumn: "1 / -1",
+                      padding: "10px 14px",
+                      borderRadius: "8px",
+                      fontSize: "0.875rem",
+                      fontWeight: 500,
+                      background: isCertValid ? "#e6f9f0" : "#fef2f2",
+                      border: `1px solid ${isCertValid ? "#22c55e" : "#f87171"}`,
+                      color: isCertValid ? "#15803d" : "#b91c1c",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}>
+                      {isCertValid ? (
+                        <>
+                          <span>✅</span>
+                          <span>
+                            Certificate is <strong>Valid</strong> — Expiry Date:{" "}
+                            <strong>{certExpiryDate?.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</strong>
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span>❌</span>
+                          <span>
+                            Certificate <strong>Expired</strong> on{" "}
+                            <strong>{certExpiryDate?.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</strong>.
+                            Your caste certificate has expired. Please provide a valid caste certificate.
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {isCertValid && (
+                    <FileField
+                      label="Proof of Caste"
+                      required
+                      hint={`Upload a valid caste certificate (expires: ${certExpiryDate?.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })})`}
+                      value={casteProof}
+                      onChange={setCasteProof}
+                      error={errors["casteProof"]}
+                    />
+                  )}
                 </Row>
               ) : null}
             </Section>
