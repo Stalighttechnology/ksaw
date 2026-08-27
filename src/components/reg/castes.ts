@@ -304,6 +304,7 @@ export const CASTES: readonly CasteEntry[] = [
   { name: "Namadhari Gowda - ನಾಮಧಾರಿ ಗೌಡ", category: "3A", nigama: "Vokkaliga" },
   { name: "Uppina Kolaga/ Uttama Kolaga - ಉಪ್ಪಿನ ಕೊಳಗ/ಉತ್ತಮ ಕೊಳಗ", category: "3A", nigama: "Vokkaliga" },
   { name: "Veerashaiva Lingayat - ವೀರಶೈವ ಲಿಂಗಾಯತ", category: "Veerashaiva Lingayata (3B)", nigama: "Lingayath" },
+  { name: "Panchamasali Lingayats - ಪಂಚಮಸಾಲಿ ಲಿಂಗಾಯತರು", category: "3B", nigama: "Lingayath" },
   { name: "Maratha/Marata - ಮರಾತ/ಮರಾಠ", category: "Maratha", nigama: "Maratha" },
   { name: "Are-Kshatriya/Are-Maratha/Aramarata - ಅರೆ ಕ್ಷತ್ರಿ/ಅರೆ ಮರಾಠ/ಅರಮರಾಠ", category: "Maratha", nigama: "Maratha" },
   { name: "Arya/Aryaru - ಆರ್ಯ/ಆರ್ಯರು", category: "Maratha", nigama: "Maratha" },
