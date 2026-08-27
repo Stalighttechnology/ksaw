@@ -24,9 +24,6 @@ export function PageBanner() {
     <section className="kk-banner">
       <div className="kk-wrap">
         <h1>Registration Form</h1>
-        <p>
-          For any clarifications please, email: <a href="mailto:skills@kswu.ac.in">skills@kswu.ac.in</a>
-        </p>
       </div>
     </section>
   );
