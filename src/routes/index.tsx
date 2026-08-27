@@ -726,46 +726,10 @@ function RegistrationPage() {
                     error={errors["casteCertIssueDate"]}
                     max={new Date().toISOString().split("T")[0]}
                   />
-                  {casteCertIssueDate && (
-                    <div style={{
-                      gridColumn: "1 / -1",
-                      padding: "10px 14px",
-                      borderRadius: "8px",
-                      fontSize: "0.875rem",
-                      fontWeight: 500,
-                      background: isCertValid ? "#e6f9f0" : "#fef2f2",
-                      border: `1px solid ${isCertValid ? "#22c55e" : "#f87171"}`,
-                      color: isCertValid ? "#15803d" : "#b91c1c",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}>
-                      {isCertValid ? (
-                        <>
-                          <span>✅</span>
-                          <span>
-                            Certificate is <strong>Valid</strong> — Expiry Date:{" "}
-                            <strong>{certExpiryDate?.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</strong>
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <span>❌</span>
-                          <span>
-                            Certificate <strong>Expired</strong> on{" "}
-                            <strong>{certExpiryDate?.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</strong>.
-                            Your caste certificate has expired. Please provide a valid caste certificate.
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  )}
                   <FileField
                     label="Proof of Caste"
                     required
-                    hint={casteCertIssueDate && certExpiryDate
-                      ? `Upload your caste certificate (Issue: ${new Date(casteCertIssueDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} — Expiry: ${certExpiryDate.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })})`
-                      : "Upload your caste certificate"}
+                    hint="Upload your caste certificate"
                     value={casteProof}
                     onChange={setCasteProof}
                     error={errors["casteProof"]}
