@@ -99,6 +99,7 @@ function RegistrationPage() {
   const casteInfo = CASTES.find((c) => c.name === caste);
   const [casteSubCategory, setCasteSubCategory] = useState("");
   const [rdNumber, setRdNumber] = useState("");
+  const [casteCertValidYear, setCasteCertValidYear] = useState("");
   const [casteProof, setCasteProof] = useState("");
   const [aadhaarNumber, setAadhaarNumber] = useState("");
 
@@ -327,6 +328,7 @@ function RegistrationPage() {
           caste_sub_category: casteSubCategory || null,
           nigama: casteInfo?.nigama || null,
           rd_number: rdNumber || null,
+          caste_cert_valid_year: casteCertValidYear || null,
           caste_proof: casteProof || null,
           aadhaar_number: aadhaarNumber,
           aadhaar_proof: ageProof,
@@ -679,10 +681,19 @@ function RegistrationPage() {
                     onChange={setRdNumber}
                     error={errors["rdNumber"]}
                   />
+                  <SelectField
+                    label="Caste Certificate Valid Up To"
+                    required
+                    value={casteCertValidYear}
+                    onChange={setCasteCertValidYear}
+                    options={["2025", "2026", "2027", "2028", "2029", "2030", "2031"]}
+                    placeholder="Select Year"
+                    error={errors["casteCertValidYear"]}
+                  />
                   <FileField
                     label="Proof of Caste"
                     required
-                    hint="Upload a valid caste certificate (caste certificate should be valid up to 2027)"
+                    hint={`Upload a valid caste certificate (caste certificate should be valid up to ${casteCertValidYear || "selected year"})`}
                     value={casteProof}
                     onChange={setCasteProof}
                     error={errors["casteProof"]}
