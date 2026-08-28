@@ -24,6 +24,8 @@ export type Database = {
           caste: string | null
           caste_sub_category: string | null
           caste_cert_type: string | null
+          caste_cert_issue_date?: string | null
+          caste_cert_expiry_date?: string | null
           caste_proof: string | null
           category: string | null
           created_at: string
@@ -104,6 +106,8 @@ export type Database = {
           caste?: string | null
           caste_sub_category?: string | null
           caste_cert_type?: string | null
+          caste_cert_issue_date?: string | null
+          caste_cert_expiry_date?: string | null
           caste_proof?: string | null
           category?: string | null
           created_at?: string
@@ -184,6 +188,8 @@ export type Database = {
           caste?: string | null
           caste_sub_category?: string | null
           caste_cert_type?: string | null
+          caste_cert_issue_date?: string | null
+          caste_cert_expiry_date?: string | null
           caste_proof?: string | null
           category?: string | null
           created_at?: string

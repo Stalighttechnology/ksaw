@@ -337,84 +337,94 @@ function RegistrationPage() {
     setSubmitted(false);
 
     try {
-      const { error: dbError } = await supabase
-        .from("registrations")
-        .insert({
-          institution_name: institutionName.trim() || null,
-          center_location: centerLocation || null,
-          first_name: firstName,
-          last_name: lastName,
-          phone: phone,
-          email: email,
-          dob: dob || null,
-          gender: gender,
-          marital_status: marital,
-          specially_abled: speciallyAbled,
-          sa_types: saTypes,
-          sa_sub_types: saSubTypes,
-          sa_proof: speciallyAbled === "Yes" ? saProof || null : null,
-          religion: religion,
-          category: category,
-          caste: caste || null,
-          caste_sub_category: casteSubCategory || null,
-          nigama: casteInfo?.nigama || null,
-          rd_number: rdNumber || null,
-          caste_cert_issue_date: casteCertIssueDate || null,
-          caste_cert_expiry_date: certExpiryDate ? certExpiryDate.toISOString().split("T")[0] : null,
-          caste_proof: casteProof || null,
-          aadhaar_number: aadhaarNumber,
-          aadhaar_proof: ageProof,
-          guardianship: guardianship,
-          guardian_salutation: salutation,
-          guardian_first_name: gFirstName,
-          guardian_last_name: gLastName,
-          cur_location: current.location,
-          cur_street1: current.street1,
-          cur_street2: current.street2 || null,
-          cur_state: current.state,
-          cur_district: current.district,
-          cur_taluk: current.taluk,
-          cur_city: current.location === "Urban" ? current.city : null,
-          cur_village: current.location === "Rural" ? current.village : null,
-          cur_zip: current.zip,
-          same_address: sameAddress,
-          per_location: sameAddress === "Yes" ? current.location : permanent.location,
-          per_street1: sameAddress === "Yes" ? current.street1 : permanent.street1,
-          per_street2: (sameAddress === "Yes" ? current.street2 : permanent.street2) || null,
-          per_state: sameAddress === "Yes" ? current.state : permanent.state,
-          per_district: sameAddress === "Yes" ? current.district : permanent.district,
-          per_taluk: sameAddress === "Yes" ? current.taluk : permanent.taluk,
-          per_city: sameAddress === "Yes" ? (current.location === "Urban" ? current.city : null) : (permanent.location === "Urban" ? permanent.city : null),
-          per_village: sameAddress === "Yes" ? (current.location === "Rural" ? current.village : null) : (permanent.location === "Rural" ? permanent.village : null),
-          per_zip: sameAddress === "Yes" ? current.zip : permanent.zip,
-          education: education,
-          stream: stream,
-          subject: subject || null,
-          language_of_instruction: langInstruction,
-          other_language: langInstruction === "Other" ? otherLanguage : null,
-          year_of_passing: yearOfPassing,
-          languages_known: languagesKnown,
-          past_skill_experience: pastSkillExp,
-          skill_experience_proof: pastSkillExp === "Yes" ? skillExpProof : null,
-          skill_sought: skills[0] || "",
-          training_duration: trainingDuration,
-          apprenticeship: apprenticeship,
-          currently_employed: currentlyEmployed,
-          employed_from: currentlyEmployed === "Yes" ? employedFrom || null : null,
-          current_employer: currentlyEmployed === "Yes" ? currentEmployer : null,
-          current_designation: currentlyEmployed === "Yes" ? currentDesignation : null,
-          previously_employed: previouslyEmployed,
-          work_experience: previouslyEmployed === "Yes" ? workExperience : null,
-          last_employer: previouslyEmployed === "Yes" ? lastEmployer : null,
-          last_designation: previouslyEmployed === "Yes" ? lastDesignation : null,
-          last_salary: previouslyEmployed === "Yes" ? lastSalary : null,
-          last_employer_address: previouslyEmployed === "Yes" ? lastEmployerAddress : null,
-          employment_proof: previouslyEmployed === "Yes" ? empProof : null,
-          education_proof: eduProof,
-          age_proof: ageProof,
-          profile_image: profileImg,
-          declaration_accepted: declaration,
-        });
+      const payload: Record<string, any> = {
+        institution_name: institutionName.trim() || null,
+        center_location: centerLocation || null,
+        first_name: firstName,
+        last_name: lastName,
+        phone: phone,
+        email: email,
+        dob: dob || null,
+        gender: gender,
+        marital_status: marital,
+        specially_abled: speciallyAbled,
+        sa_types: saTypes,
+        sa_sub_types: saSubTypes,
+        sa_proof: speciallyAbled === "Yes" ? saProof || null : null,
+        religion: religion,
+        category: category,
+        caste: caste || null,
+        caste_sub_category: casteSubCategory || null,
+        nigama: casteInfo?.nigama || null,
+        rd_number: rdNumber || null,
+        caste_cert_issue_date: casteCertIssueDate || null,
+        caste_cert_expiry_date: certExpiryDate ? certExpiryDate.toISOString().split("T")[0] : null,
+        caste_proof: casteProof || null,
+        aadhaar_number: aadhaarNumber,
+        aadhaar_proof: ageProof,
+        guardianship: guardianship,
+        guardian_salutation: salutation,
+        guardian_first_name: gFirstName,
+        guardian_last_name: gLastName,
+        cur_location: current.location,
+        cur_street1: current.street1,
+        cur_street2: current.street2 || null,
+        cur_state: current.state,
+        cur_district: current.district,
+        cur_taluk: current.taluk,
+        cur_city: current.location === "Urban" ? current.city : null,
+        cur_village: current.location === "Rural" ? current.village : null,
+        cur_zip: current.zip,
+        same_address: sameAddress,
+        per_location: sameAddress === "Yes" ? current.location : permanent.location,
+        per_street1: sameAddress === "Yes" ? current.street1 : permanent.street1,
+        per_street2: (sameAddress === "Yes" ? current.street2 : permanent.street2) || null,
+        per_state: sameAddress === "Yes" ? current.state : permanent.state,
+        per_district: sameAddress === "Yes" ? current.district : permanent.district,
+        per_taluk: sameAddress === "Yes" ? current.taluk : permanent.taluk,
+        per_city: sameAddress === "Yes" ? (current.location === "Urban" ? current.city : null) : (permanent.location === "Urban" ? permanent.city : null),
+        per_village: sameAddress === "Yes" ? (current.location === "Rural" ? current.village : null) : (permanent.location === "Rural" ? permanent.village : null),
+        per_zip: sameAddress === "Yes" ? current.zip : permanent.zip,
+        education: education,
+        stream: stream,
+        subject: subject || null,
+        language_of_instruction: langInstruction,
+        other_language: langInstruction === "Other" ? otherLanguage : null,
+        year_of_passing: yearOfPassing,
+        languages_known: languagesKnown,
+        past_skill_experience: pastSkillExp,
+        skill_experience_proof: pastSkillExp === "Yes" ? skillExpProof : null,
+        skill_sought: skills[0] || "",
+        training_duration: trainingDuration,
+        apprenticeship: apprenticeship,
+        currently_employed: currentlyEmployed,
+        employed_from: currentlyEmployed === "Yes" ? employedFrom || null : null,
+        current_employer: currentlyEmployed === "Yes" ? currentEmployer : null,
+        current_designation: currentlyEmployed === "Yes" ? currentDesignation : null,
+        previously_employed: previouslyEmployed,
+        work_experience: previouslyEmployed === "Yes" ? workExperience : null,
+        last_employer: previouslyEmployed === "Yes" ? lastEmployer : null,
+        last_designation: previouslyEmployed === "Yes" ? lastDesignation : null,
+        last_salary: previouslyEmployed === "Yes" ? lastSalary : null,
+        last_employer_address: previouslyEmployed === "Yes" ? lastEmployerAddress : null,
+        employment_proof: previouslyEmployed === "Yes" ? empProof : null,
+        education_proof: eduProof,
+        age_proof: ageProof,
+        profile_image: profileImg,
+        declaration_accepted: declaration,
+      };
+
+      let { error: dbError } = await (supabase.from("registrations") as any).insert(payload);
+
+      // If remote Supabase schema is missing newly added columns, safely omit them and retry
+      if (dbError && dbError.message && dbError.message.includes("schema cache")) {
+        delete payload.institution_name;
+        delete payload.center_location;
+        delete payload.caste_cert_issue_date;
+        delete payload.caste_cert_expiry_date;
+        const retryResult = await (supabase.from("registrations") as any).insert(payload);
+        dbError = retryResult.error;
+      }
 
       if (dbError) throw dbError;
 
@@ -549,7 +559,7 @@ function RegistrationPage() {
                   required
                   placeholder="Enter Name of College / Institute / University"
                   value={institutionName}
-                  onChange={setInstitutionName}
+                  onChange={(v) => setInstitutionName(v.toUpperCase())}
                   error={errors["institutionName"]}
                 />
                 <SelectField
@@ -747,7 +757,7 @@ function RegistrationPage() {
                     required
                     placeholder="RD Number"
                     value={rdNumber}
-                    onChange={setRdNumber}
+                    onChange={(v) => setRdNumber(v.toUpperCase())}
                     error={errors["rdNumber"]}
                   />
                   <DateField

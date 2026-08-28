@@ -31,8 +31,9 @@ export const COLUMNS: ColumnDef[] = [
   { key: "category", label: "Category", group: "Personal" },
   { key: "caste", label: "Caste", group: "Personal" },
   { key: "nigama", label: "Nigama", group: "Personal" },
-  { key: "caste_cert_type", label: "Caste Certificate Type", group: "Personal" },
   { key: "rd_number", label: "RD Number", group: "Personal" },
+  { key: "caste_cert_issue_date", label: "Caste Certificate Issue Date", group: "Personal", type: "date" },
+  { key: "caste_cert_expiry_date", label: "Caste Certificate Expiry Date", group: "Personal", type: "date" },
   { key: "caste_proof", label: "Caste Proof", group: "Personal" },
   { key: "aadhaar_number", label: "Aadhaar Number", group: "Personal" },
 

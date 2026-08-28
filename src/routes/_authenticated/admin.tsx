@@ -46,6 +46,8 @@ function AdminPage() {
   const [pageSize, setPageSize] = useState(25);
   const [editing, setEditing] = useState<Row | null>(null);
   const [viewing, setViewing] = useState<Row | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<{ ids: string[]; name: string } | null>(null);
 
   const filters = { search: search.trim(), status, course, category, district, nigama };
 
@@ -120,14 +122,32 @@ function AdminPage() {
     navigate({ to: "/auth", replace: true });
   };
 
-  const remove = async (row: Row) => {
-    if (!window.confirm(`Delete registration of ${row["first_name"]} ${row["last_name"]}? This cannot be undone.`)) return;
-    const { error } = await supabase.from("registrations").delete().eq("id", row.id);
+  const remove = (row: Row) => {
+    setDeleteTarget({
+      ids: [row.id],
+      name: `${row["first_name"] || ""} ${row["last_name"] || ""}`.trim() || "this record",
+    });
+  };
+
+  const removeSelected = () => {
+    if (selectedIds.length === 0) return;
+    setDeleteTarget({
+      ids: selectedIds,
+      name: `${selectedIds.length} selected applicant record${selectedIds.length === 1 ? "" : "s"}`,
+    });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const { ids } = deleteTarget;
+    const { error } = await supabase.from("registrations").delete().in("id", ids);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Registration deleted");
+    toast.success(`Deleted ${ids.length} record${ids.length === 1 ? "" : "s"}`);
+    setSelectedIds((prev) => prev.filter((id) => !ids.includes(id)));
+    setDeleteTarget(null);
     void qc.invalidateQueries();
   };
 
@@ -143,13 +163,31 @@ function AdminPage() {
         COLUMNS.map((c) => `"${String(formatCell(r[c.key], c.type)).replace(/"/g, '""')}"`).join(","),
       )
       .join("\n");
-    const blob = new Blob([`${head}\n${body}`], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob([`${head}\n${body}`], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `registrations-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const allRowIds = useMemo(() => (listQuery.data?.rows ?? []).map((r) => r.id), [listQuery.data?.rows]);
+  const isAllSelected = allRowIds.length > 0 && allRowIds.every((id) => selectedIds.includes(id));
+  const isSomeSelected = allRowIds.some((id) => selectedIds.includes(id)) && !isAllSelected;
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !allRowIds.includes(id)));
+    } else {
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...allRowIds])));
+    }
+  };
+
+  const toggleSelectRow = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
   };
 
   return (
@@ -208,10 +246,24 @@ function AdminPage() {
           </div>
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-4 text-sm">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary shadow-xs">
                 {listQuery.isLoading ? "Loading…" : `${total} Record${total === 1 ? "" : "s"} Found`}
               </span>
+              {selectedIds.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    ({selectedIds.length} selected)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={removeSelected}
+                    className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors shadow-xs cursor-pointer"
+                  >
+                    🗑️ Delete Selected ({selectedIds.length})
+                  </button>
+                </div>
+              )}
             </div>
             
             <div className="flex flex-wrap items-center gap-3">
@@ -276,7 +328,19 @@ function AdminPage() {
             <table className="w-full min-w-[1600px] border-collapse text-sm">
               <thead className="bg-muted">
                 <tr>
-                  <th className="sticky left-0 z-10 bg-muted px-3 py-2.5 text-left font-semibold border-r border-border">Actions</th>
+                  <th className="sticky left-0 z-20 bg-muted px-3 py-2.5 text-center font-semibold border-r border-border w-12">
+                    <input
+                      type="checkbox"
+                      checked={isAllSelected}
+                      ref={(el) => {
+                        if (el) el.indeterminate = isSomeSelected;
+                      }}
+                      onChange={toggleSelectAll}
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer align-middle"
+                      title="Select all on this page"
+                    />
+                  </th>
+                  <th className="sticky left-12 z-10 bg-muted px-3 py-2.5 text-left font-semibold border-r border-border">Actions</th>
                   {COLUMNS.map((c) => (
                     <th key={c.key} className="whitespace-nowrap px-3 py-2.5 text-left font-semibold">
                       {c.label}
@@ -285,40 +349,51 @@ function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {(listQuery.data?.rows ?? []).map((r) => (
-                  <tr key={r.id} className="border-t border-border odd:bg-background even:bg-muted/30 hover:bg-muted/10 transition-colors">
-                    <td className="sticky left-0 z-10 whitespace-nowrap bg-card px-3 py-2 border-r border-border shadow-[2px_0_4px_rgba(0,0,0,0.03)]">
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => setViewing(r)}
-                          className="inline-flex items-center justify-center rounded bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors cursor-pointer"
-                        >
-                          View
-                        </button>
-                        <button
-                          onClick={() => setEditing(r)}
-                          className="inline-flex items-center justify-center rounded bg-amber-500/10 px-2.5 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-500/20 transition-colors cursor-pointer"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => void remove(r)}
-                          className="inline-flex items-center justify-center rounded bg-red-500/10 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-500/20 transition-colors cursor-pointer"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                    {COLUMNS.map((c) => (
-                      <td key={c.key} className="whitespace-nowrap px-3 py-2 text-foreground">
-                        {formatCell(r[c.key], c.type)}
+                {(listQuery.data?.rows ?? []).map((r) => {
+                  const isChecked = selectedIds.includes(r.id);
+                  return (
+                    <tr key={r.id} className={`border-t border-border transition-colors ${isChecked ? "bg-primary/5" : "odd:bg-background even:bg-muted/30 hover:bg-muted/10"}`}>
+                      <td className="sticky left-0 z-20 whitespace-nowrap bg-card px-3 py-2 text-center border-r border-border">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleSelectRow(r.id)}
+                          className="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer align-middle"
+                        />
                       </td>
-                    ))}
-                  </tr>
-                ))}
+                      <td className="sticky left-12 z-10 whitespace-nowrap bg-card px-3 py-2 border-r border-border shadow-[2px_0_4px_rgba(0,0,0,0.03)]">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => setViewing(r)}
+                            className="inline-flex items-center justify-center rounded bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors cursor-pointer"
+                          >
+                            View
+                          </button>
+                          <button
+                            onClick={() => setEditing(r)}
+                            className="inline-flex items-center justify-center rounded bg-amber-500/10 px-2.5 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => remove(r)}
+                            className="inline-flex items-center justify-center rounded bg-red-500/10 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-500/20 transition-colors cursor-pointer"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                      {COLUMNS.map((c) => (
+                        <td key={c.key} className="whitespace-nowrap px-3 py-2 text-foreground">
+                          {formatCell(r[c.key], c.type)}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
                 {!listQuery.isLoading && (listQuery.data?.rows.length ?? 0) === 0 ? (
                   <tr>
-                    <td className="px-3 py-6 text-center text-muted-foreground" colSpan={COLUMNS.length + 1}>
+                    <td className="px-3 py-6 text-center text-muted-foreground" colSpan={COLUMNS.length + 2}>
                       No registrations match your filters.
                     </td>
                   </tr>
@@ -339,6 +414,43 @@ function AdminPage() {
             void qc.invalidateQueries();
           }}
         />
+      ) : null}
+
+      {deleteTarget ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-2xl border border-border">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive text-xl">
+                ⚠️
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-foreground">Confirm Delete</h3>
+                <p className="text-xs text-muted-foreground">This action cannot be undone.</p>
+              </div>
+            </div>
+
+            <p className="mt-4 text-sm text-foreground">
+              Are you sure you want to delete <strong className="text-destructive font-semibold">{deleteTarget.name}</strong>? All associated application details will be permanently removed.
+            </p>
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="px-4 py-2 text-xs font-semibold rounded-md border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmDelete()}
+                className="px-4 py-2 text-xs font-semibold rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors cursor-pointer shadow-xs"
+              >
+                Yes, Delete Permanently
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   );
@@ -425,7 +537,7 @@ function shouldShowField(key: string, row: Row): boolean {
   if (["sa_types", "sa_sub_types", "sa_proof"].includes(key)) {
     return row["specially_abled"] === "Yes";
   }
-  if (["caste", "caste_sub_category", "nigama", "caste_cert_type", "rd_number", "caste_proof"].includes(key)) {
+  if (["caste", "caste_sub_category", "nigama", "caste_cert_type", "rd_number", "caste_cert_issue_date", "caste_cert_expiry_date", "caste_proof"].includes(key)) {
     return row["category"] !== "General";
   }
   if (["stream", "subject"].includes(key)) {
