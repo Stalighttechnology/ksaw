@@ -191,25 +191,25 @@ function AdminPage() {
   };
 
   return (
-    <div className="kk-page min-h-screen bg-muted/30">
+    <div className="kk-page min-h-screen bg-muted/20">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-[1400px] px-3 py-6 sm:px-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <main className="mx-auto w-full max-w-[1600px] px-3 py-4 sm:px-6 sm:py-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-foreground sm:text-2xl">Registrations Dashboard</h1>
-            <p className="text-sm text-muted-foreground">All submitted registration forms with full details.</p>
+            <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">Registrations Dashboard</h1>
+            <p className="text-xs text-muted-foreground sm:text-sm">Manage and inspect all applicant registrations.</p>
           </div>
-          <div className="flex gap-2">
-            <button type="button" className="btn-kk btn-cancel-kk" onClick={exportCsv}>
-              Export CSV
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" className="btn-kk btn-cancel-kk text-xs sm:text-sm py-1.5 px-3 sm:py-2 sm:px-4" onClick={exportCsv}>
+              📥 Export CSV
             </button>
-            <button type="button" className="btn-kk btn-primary-kk" onClick={signOut}>
+            <button type="button" className="btn-kk btn-primary-kk text-xs sm:text-sm py-1.5 px-3 sm:py-2 sm:px-4" onClick={signOut}>
               Sign Out
             </button>
           </div>
         </div>
 
-        <section className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">
+        <section className="mt-4 grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7">
           <StatCard label="Total Registrations" value={stats.total} />
           <StatCard label="Today" value={stats.today} />
           <StatCard label="Last 7 Days" value={stats.week} />
@@ -218,22 +218,24 @@ function AdminPage() {
           ))}
         </section>
 
-        <section className="mt-4 grid gap-3 lg:grid-cols-3">
+        <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Breakdown title="By Course" data={stats.byCourse} />
           <Breakdown title="By Gender" data={stats.byGender} />
-          <Breakdown title="Top Districts" data={stats.byDistrict} limit={6} />
+          <div className="sm:col-span-2 lg:col-span-1">
+            <Breakdown title="Top Districts" data={stats.byDistrict} limit={6} />
+          </div>
         </section>
 
-        <section className="mt-5 rounded-lg border border-border bg-card p-3 sm:p-4">
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
-            <div className="xl:col-span-2">
-              <label className="ctrl-label" htmlFor="q">
-                Search
+        <section className="mt-5 rounded-xl border border-border bg-card p-3 shadow-xs sm:p-5">
+          <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+            <div className="sm:col-span-2 xl:col-span-2">
+              <label className="ctrl-label text-xs" htmlFor="q">
+                Search Applicants
               </label>
               <input
                 id="q"
-                className="form-ctrl"
-                placeholder="Name, email, phone, city, district"
+                className="form-ctrl text-xs sm:text-sm h-9"
+                placeholder="Name, email, phone, city, district..."
                 value={search}
                 onChange={(e) => resetPage(setSearch)(e.target.value)}
               />
@@ -245,9 +247,9 @@ function AdminPage() {
             <FilterSelect label="Nigama" value={nigama} onChange={resetPage(setNigama)} options={NIGAMAS} />
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-4 text-sm">
-            <div className="flex items-center gap-3">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary shadow-xs">
+          <div className="mt-4 flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary">
                 {listQuery.isLoading ? "Loading…" : `${total} Record${total === 1 ? "" : "s"} Found`}
               </span>
               {selectedIds.length > 0 && (
@@ -258,28 +260,28 @@ function AdminPage() {
                   <button
                     type="button"
                     onClick={removeSelected}
-                    className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors shadow-xs cursor-pointer"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors shadow-xs cursor-pointer"
                   >
-                    🗑️ Delete Selected ({selectedIds.length})
+                    🗑️ Delete ({selectedIds.length})
                   </button>
                 </div>
               )}
             </div>
             
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-1.5 bg-muted/40 p-1 rounded-lg border border-border/80">
+            <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 sm:gap-3">
+              <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border/80 text-xs">
                 <button
                   type="button"
                   onClick={() => setSortDesc((v) => !v)}
-                  className="px-3 py-1.5 text-xs font-medium rounded-md bg-card border border-border/60 hover:bg-muted/80 text-foreground transition-colors shadow-xs cursor-pointer"
+                  className="px-2.5 py-1 text-xs font-medium rounded-md bg-card border border-border/60 hover:bg-muted text-foreground transition-colors shadow-2xs cursor-pointer"
                 >
                   Sort: <span className="font-semibold text-primary">{sortDesc ? "Newest" : "Oldest"}</span>
                 </button>
                 
-                <span className="text-border px-1">|</span>
+                <span className="text-border px-0.5">|</span>
                 
                 <select
-                  className="bg-transparent border-0 py-1 pl-2 pr-6 text-xs font-medium text-foreground focus:outline-hidden focus:ring-0 cursor-pointer"
+                  className="bg-transparent border-0 py-1 pl-1 pr-5 text-xs font-medium text-foreground focus:outline-hidden focus:ring-0 cursor-pointer"
                   value={pageSize}
                   onChange={(e) => {
                     setPageSize(Number(e.target.value));
@@ -294,23 +296,23 @@ function AdminPage() {
                 </select>
               </div>
 
-              <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-lg border border-border/80">
+              <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border/80 text-xs">
                 <button
                   type="button"
                   disabled={page === 0}
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  className="inline-flex items-center justify-center h-8 px-2.5 text-xs font-medium rounded-md bg-card border border-border/60 text-foreground hover:bg-muted/80 disabled:opacity-50 disabled:pointer-events-none transition-colors shadow-xs cursor-pointer"
+                  className="inline-flex items-center justify-center h-7 px-2 text-xs font-medium rounded-md bg-card border border-border/60 text-foreground hover:bg-muted disabled:opacity-50 disabled:pointer-events-none transition-colors shadow-2xs cursor-pointer"
                 >
                   ← Prev
                 </button>
-                <span className="px-3 text-xs font-medium text-muted-foreground whitespace-nowrap">
+                <span className="px-2 text-xs font-medium text-muted-foreground whitespace-nowrap">
                   Page <strong className="text-foreground">{page + 1}</strong> of <strong className="text-foreground">{pageCount}</strong>
                 </span>
                 <button
                   type="button"
                   disabled={page + 1 >= pageCount}
                   onClick={() => setPage((p) => p + 1)}
-                  className="inline-flex items-center justify-center h-8 px-2.5 text-xs font-medium rounded-md bg-card border border-border/60 text-foreground hover:bg-muted/80 disabled:opacity-50 disabled:pointer-events-none transition-colors shadow-xs cursor-pointer"
+                  className="inline-flex items-center justify-center h-7 px-2 text-xs font-medium rounded-md bg-card border border-border/60 text-foreground hover:bg-muted disabled:opacity-50 disabled:pointer-events-none transition-colors shadow-2xs cursor-pointer"
                 >
                   Next →
                 </button>
@@ -319,16 +321,16 @@ function AdminPage() {
           </div>
 
           {listQuery.isError ? (
-            <p className="mt-4 text-sm text-destructive">
+            <p className="mt-3 text-xs sm:text-sm text-destructive">
               Could not load records. Your account may not have admin access yet.
             </p>
           ) : null}
 
-          <div className="mt-3 overflow-x-auto rounded border border-border">
-            <table className="w-full min-w-[1600px] border-collapse text-sm">
-              <thead className="bg-muted">
+          <div className="mt-3 overflow-x-auto rounded-lg border border-border shadow-2xs bg-card">
+            <table className="w-full min-w-[1700px] border-collapse text-xs sm:text-sm">
+              <thead className="bg-muted/70 text-muted-foreground">
                 <tr>
-                  <th className="sticky left-0 z-20 bg-muted px-3 py-2.5 text-center font-semibold border-r border-border w-12">
+                  <th className="sticky left-0 z-20 bg-muted px-3 py-3 text-center font-semibold border-r border-border w-12 shadow-[1px_0_0_rgba(0,0,0,0.06)]">
                     <input
                       type="checkbox"
                       checked={isAllSelected}
@@ -340,20 +342,22 @@ function AdminPage() {
                       title="Select all on this page"
                     />
                   </th>
-                  <th className="sticky left-12 z-10 bg-muted px-3 py-2.5 text-left font-semibold border-r border-border">Actions</th>
+                  <th className="sticky left-12 z-10 bg-muted px-3 py-3 text-left font-semibold border-r border-border min-w-[150px] shadow-[2px_0_4px_rgba(0,0,0,0.04)]">
+                    Actions
+                  </th>
                   {COLUMNS.map((c) => (
-                    <th key={c.key} className="whitespace-nowrap px-3 py-2.5 text-left font-semibold">
+                    <th key={c.key} className="whitespace-nowrap px-3 py-3 text-left font-semibold">
                       {c.label}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-border">
                 {(listQuery.data?.rows ?? []).map((r) => {
                   const isChecked = selectedIds.includes(r.id);
                   return (
-                    <tr key={r.id} className={`border-t border-border transition-colors ${isChecked ? "bg-primary/5" : "odd:bg-background even:bg-muted/30 hover:bg-muted/10"}`}>
-                      <td className="sticky left-0 z-20 whitespace-nowrap bg-card px-3 py-2 text-center border-r border-border">
+                    <tr key={r.id} className={`transition-colors ${isChecked ? "bg-primary/5" : "odd:bg-background even:bg-muted/20 hover:bg-muted/40"}`}>
+                      <td className="sticky left-0 z-20 whitespace-nowrap bg-card px-3 py-2.5 text-center border-r border-border">
                         <input
                           type="checkbox"
                           checked={isChecked}
@@ -361,39 +365,54 @@ function AdminPage() {
                           className="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer align-middle"
                         />
                       </td>
-                      <td className="sticky left-12 z-10 whitespace-nowrap bg-card px-3 py-2 border-r border-border shadow-[2px_0_4px_rgba(0,0,0,0.03)]">
-                        <div className="flex items-center gap-1.5">
+                      <td className="sticky left-12 z-10 whitespace-nowrap bg-card px-3 py-2.5 border-r border-border shadow-[2px_0_4px_rgba(0,0,0,0.04)]">
+                        <div className="flex items-center gap-1">
                           <button
                             onClick={() => setViewing(r)}
-                            className="inline-flex items-center justify-center rounded bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors cursor-pointer"
+                            className="inline-flex items-center justify-center rounded bg-primary/10 px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors cursor-pointer"
                           >
                             View
                           </button>
                           <button
                             onClick={() => setEditing(r)}
-                            className="inline-flex items-center justify-center rounded bg-amber-500/10 px-2.5 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                            className="inline-flex items-center justify-center rounded bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-500/20 transition-colors cursor-pointer"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => remove(r)}
-                            className="inline-flex items-center justify-center rounded bg-red-500/10 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-500/20 transition-colors cursor-pointer"
+                            className="inline-flex items-center justify-center rounded bg-red-500/10 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-500/20 transition-colors cursor-pointer"
                           >
                             Delete
                           </button>
                         </div>
                       </td>
-                      {COLUMNS.map((c) => (
-                        <td key={c.key} className="whitespace-nowrap px-3 py-2 text-foreground">
-                          {formatCell(r[c.key], c.type)}
-                        </td>
-                      ))}
+                      {COLUMNS.map((c) => {
+                        const cellVal = r[c.key];
+                        const isUrl = typeof cellVal === "string" && cellVal.startsWith("http");
+                        return (
+                          <td key={c.key} className="whitespace-nowrap px-3 py-2.5 text-foreground max-w-[280px] truncate">
+                            {isUrl ? (
+                              <a
+                                href={cellVal}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-primary underline hover:text-primary/80 font-medium inline-flex items-center gap-1"
+                              >
+                                📎 View File
+                              </a>
+                            ) : (
+                              formatCell(cellVal, c.type)
+                            )}
+                          </td>
+                        );
+                      })}
                     </tr>
                   );
                 })}
                 {!listQuery.isLoading && (listQuery.data?.rows.length ?? 0) === 0 ? (
                   <tr>
-                    <td className="px-3 py-6 text-center text-muted-foreground" colSpan={COLUMNS.length + 2}>
+                    <td className="px-3 py-8 text-center text-muted-foreground" colSpan={COLUMNS.length + 2}>
                       No registrations match your filters.
                     </td>
                   </tr>
