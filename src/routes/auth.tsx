@@ -124,6 +124,7 @@ function AuthPage() {
             </button>
           </form>
 
+          {/*
           <button type="button" onClick={google} className="btn-kk btn-cancel-kk mt-3 w-full">
             Continue with Google
           </button>
@@ -135,6 +136,7 @@ function AuthPage() {
           >
             {mode === "signin" ? "Need an account? Sign up" : "Already have an account? Sign in"}
           </button>
+          */}
         </div>
       </main>
     </div>
