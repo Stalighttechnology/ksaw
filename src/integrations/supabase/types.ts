@@ -53,6 +53,8 @@ export type Database = {
           guardian_salutation: string | null
           guardianship: string | null
           id: string
+          institution_name?: string | null
+          center_location?: string | null
           language_of_instruction: string | null
           languages_known: string[]
           last_designation: string | null
@@ -131,6 +133,8 @@ export type Database = {
           guardian_salutation?: string | null
           guardianship?: string | null
           id?: string
+          institution_name?: string | null
+          center_location?: string | null
           language_of_instruction?: string | null
           languages_known?: string[]
           last_designation?: string | null
@@ -209,6 +213,8 @@ export type Database = {
           guardian_salutation?: string | null
           guardianship?: string | null
           id?: string
+          institution_name?: string | null
+          center_location?: string | null
           language_of_instruction?: string | null
           languages_known?: string[]
           last_designation?: string | null

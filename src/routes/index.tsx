@@ -81,6 +81,10 @@ const emptyAddress = (): Address => ({
 type Errors = Record<string, string>;
 
 function RegistrationPage() {
+  // Center / Institution
+  const [institutionName, setInstitutionName] = useState("");
+  const [centerLocation, setCenterLocation] = useState("");
+
   // Personal
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -179,6 +183,8 @@ function RegistrationPage() {
 
   const validate = (): Errors => {
     const e: Errors = {};
+    if (!institutionName.trim()) e["institutionName"] = "Name of College / Institute / University is required";
+    if (!centerLocation) e["centerLocation"] = "Center location is required";
     if (!firstName.trim()) e["firstName"] = "First name is required";
     if (!lastName.trim()) e["lastName"] = "Last name is required";
     if (!gender) e["gender"] = "Gender is required";
@@ -259,6 +265,8 @@ function RegistrationPage() {
   };
 
   const resetForm = () => {
+    setInstitutionName("");
+    setCenterLocation("");
     setFirstName("");
     setLastName("");
     setPhone("");
@@ -332,6 +340,8 @@ function RegistrationPage() {
       const { error: dbError } = await supabase
         .from("registrations")
         .insert({
+          institution_name: institutionName.trim() || null,
+          center_location: centerLocation || null,
           first_name: firstName,
           last_name: lastName,
           phone: phone,
@@ -532,6 +542,28 @@ function RegistrationPage() {
           ) : null}
 
           <form onSubmit={onSubmit} noValidate>
+            <Section title="Center / Institute Details">
+              <Row>
+                <TextField
+                  label="Name of College / Institute / University"
+                  required
+                  placeholder="Enter Name of College / Institute / University"
+                  value={institutionName}
+                  onChange={setInstitutionName}
+                  error={errors["institutionName"]}
+                />
+                <SelectField
+                  label="Center Location"
+                  required
+                  value={centerLocation}
+                  onChange={setCenterLocation}
+                  options={DISTRICTS.KARNATAKA}
+                  placeholder="Select District"
+                  error={errors["centerLocation"]}
+                />
+              </Row>
+            </Section>
+
             <Section title="Personal Details">
               <Row>
                 <TextField

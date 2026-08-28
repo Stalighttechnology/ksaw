@@ -13,6 +13,9 @@ export const COLUMNS: ColumnDef[] = [
   { key: "status", label: "Status", group: "Meta", type: "select", options: STATUS_OPTIONS },
   { key: "admin_notes", label: "Admin Notes", group: "Meta" },
 
+  { key: "institution_name", label: "College / Institute / University", group: "Institution" },
+  { key: "center_location", label: "Center Location", group: "Institution" },
+
   { key: "first_name", label: "First Name", group: "Personal" },
   { key: "last_name", label: "Last Name", group: "Personal" },
   { key: "phone", label: "Phone", group: "Personal" },
