@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-import { PageBanner, SiteHeader } from "@/components/reg/SiteChrome";
+import { PageBanner, SiteHeader, SiteFooter } from "@/components/reg/SiteChrome";
 import {
   DateField,
   Field,
@@ -160,8 +160,38 @@ function RegistrationPage() {
   const [errors, setErrors] = useState<Errors>({});
   const [submitted, setSubmitted] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [generatedRefId, setGeneratedRefId] = useState("");
+  const [copied, setCopied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+
+  // Password Protection for Edit and Link Actions
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authTargetAction, setAuthTargetAction] = useState<"edit" | "link" | null>(null);
+  const [enteredPassword, setEnteredPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [isActionAuthenticated, setIsActionAuthenticated] = useState(false);
+
+  // Edit Existing Application States
+  const [isEditing, setIsEditing] = useState(false);
+  const [activeEditingRef, setActiveEditingRef] = useState("");
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [inputLookupRef, setInputLookupRef] = useState("");
+  const [editSearchResults, setEditSearchResults] = useState<any[]>([]);
+  const [editSearching, setEditSearching] = useState(false);
+  const [editLookupLoading, setEditLookupLoading] = useState(false);
+  const [editLookupError, setEditLookupError] = useState("");
+
+  // Link SAF Number States
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkSearchInput, setLinkSearchInput] = useState("");
+  const [linkSearchResults, setLinkSearchResults] = useState<any[]>([]);
+  const [selectedLinkRecord, setSelectedLinkRecord] = useState<any | null>(null);
+  const [inputSafDigits, setInputSafDigits] = useState("");
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [linkSearching, setLinkSearching] = useState(false);
+  const [linkError, setLinkError] = useState("");
+  const [linkSuccessMessage, setLinkSuccessMessage] = useState("");
 
   const streamOptions = useMemo(() => STREAMS[education] ?? [], [education]);
   const subjectOptions = useMemo(() => SUBJECTS[stream] ?? [], [stream]);
@@ -318,8 +348,319 @@ function RegistrationPage() {
     setEduProof("");
     setAgeProof("");
     setProfileImg("");
-    setDeclaration(true);
+    setIsEditing(false);
+    setActiveEditingRef("");
     setErrors({});
+  };
+
+  const handleSearchForEdit = async (term: string) => {
+    setInputLookupRef(term);
+    const clean = term.trim().toUpperCase();
+    if (!clean) {
+      setEditSearchResults([]);
+      return;
+    }
+
+    setEditSearching(true);
+    setEditLookupError("");
+
+    try {
+      const { data: rpcData, error: rpcErr } = await supabase.rpc("search_registrations_for_link", {
+        search_term: clean,
+      });
+
+      if (!rpcErr && rpcData) {
+        setEditSearchResults(rpcData);
+      } else {
+        const { data: directData } = await supabase
+          .from("registrations")
+          .select("reference_number, first_name, last_name, phone, email")
+          .not("reference_number", "is", null)
+          .or(`reference_number.ilike.%${clean}%,first_name.ilike.%${clean}%,last_name.ilike.%${clean}%,phone.ilike.%${clean}%`)
+          .limit(10);
+        setEditSearchResults(directData || []);
+      }
+    } catch (err: any) {
+      console.error("Edit search error:", err);
+    } finally {
+      setEditSearching(false);
+    }
+  };
+
+  const loadByReferenceId = async (refOverride?: string) => {
+    const targetRef = (refOverride || inputLookupRef).trim().toUpperCase();
+    if (!targetRef) {
+      setEditLookupError("Please enter or select a Reference ID (e.g. KSAW 001)");
+      return;
+    }
+    setEditLookupLoading(true);
+    setEditLookupError("");
+
+    try {
+      // 1. Try querying via RPC or direct select
+      let rowData: any = null;
+
+      const { data: rpcData, error: rpcError } = await supabase.rpc("get_registration_by_ref", {
+        ref_id: targetRef,
+      });
+
+      if (!rpcError && rpcData && rpcData.length > 0) {
+        rowData = rpcData[0];
+      } else {
+        const { data: directData, error: directError } = await supabase
+          .from("registrations")
+          .select("*")
+          .ilike("reference_number", targetRef)
+          .maybeSingle();
+
+        if (!directError && directData) {
+          rowData = directData;
+        }
+      }
+
+      if (!rowData) {
+        setEditLookupError(`No application found with Reference ID "${targetRef}". Please check and try again.`);
+        return;
+      }
+
+      // Prefill form states
+      setInstitutionName(rowData.institution_name || "");
+      setCenterLocation(rowData.center_location || "");
+      setFirstName(rowData.first_name || "");
+      setLastName(rowData.last_name || "");
+      setPhone(rowData.phone || "");
+      setEmail(rowData.email || "");
+      setDob(rowData.dob ? String(rowData.dob).split("T")[0] : "");
+      setGender(rowData.gender || "Male");
+      setMarital(rowData.marital_status || "Single");
+      setSpeciallyAbled(rowData.specially_abled || "No");
+      setSaTypes(rowData.sa_types || []);
+      setSaSubTypes(rowData.sa_sub_types || []);
+      setSaProof(rowData.sa_proof || "");
+      setReligion(rowData.religion || "");
+      setCategory(rowData.category || "General");
+      setCaste(rowData.caste || "");
+      setCasteSubCategory(rowData.caste_sub_category || "");
+      setRdNumber(rowData.rd_number || "");
+      setCasteCertIssueDate(rowData.caste_cert_issue_date ? String(rowData.caste_cert_issue_date).split("T")[0] : "");
+      setCasteProof(rowData.caste_proof || "");
+      setAadhaarNumber(rowData.aadhaar_number || "");
+      setAgeProof(rowData.aadhaar_proof || rowData.age_proof || "");
+      setGuardianship(rowData.guardianship || "Father");
+      setSalutation(rowData.guardian_salutation || "Mr.");
+      setGFirstName(rowData.guardian_first_name || "");
+      setGLastName(rowData.guardian_last_name || "");
+
+      setCurrent({
+        location: rowData.cur_location || "Urban",
+        street1: rowData.cur_street1 || "",
+        street2: rowData.cur_street2 || "",
+        state: rowData.cur_state || "",
+        district: rowData.cur_district || "",
+        taluk: rowData.cur_taluk || "",
+        city: rowData.cur_city || "",
+        village: rowData.cur_village || "",
+        zip: rowData.cur_zip || "",
+      });
+
+      setSameAddress(rowData.same_address || "No");
+
+      setPermanent({
+        location: rowData.per_location || "Urban",
+        street1: rowData.per_street1 || "",
+        street2: rowData.per_street2 || "",
+        state: rowData.per_state || "",
+        district: rowData.per_district || "",
+        taluk: rowData.per_taluk || "",
+        city: rowData.per_city || "",
+        village: rowData.per_village || "",
+        zip: rowData.per_zip || "",
+      });
+
+      setEducation(rowData.education || "");
+      setStream(rowData.stream || "");
+      setSubject(rowData.subject || "");
+      setLangInstruction(rowData.language_of_instruction || "English");
+      setOtherLanguage(rowData.other_language || "");
+      setYearOfPassing(rowData.year_of_passing || "");
+      setLanguagesKnown(rowData.languages_known || []);
+      setPastSkillExp(rowData.past_skill_experience || "No");
+      setSkillExpProof(rowData.skill_experience_proof || "");
+      setSkills(rowData.skill_sought ? [rowData.skill_sought] : []);
+      setTrainingDuration(rowData.training_duration || "");
+      setApprenticeship(rowData.apprenticeship || "No");
+      setCurrentlyEmployed(rowData.currently_employed || "No");
+      setEmployedFrom(rowData.employed_from ? String(rowData.employed_from).split("T")[0] : "");
+      setCurrentEmployer(rowData.current_employer || "");
+      setCurrentDesignation(rowData.current_designation || "");
+      setPreviouslyEmployed(rowData.previously_employed || "No");
+      setWorkExperience(rowData.work_experience || "");
+      setLastEmployer(rowData.last_employer || "");
+      setLastDesignation(rowData.last_designation || "");
+      setLastSalary(rowData.last_salary || "");
+      setLastEmployerAddress(rowData.last_employer_address || "");
+      setEmpProof(rowData.employment_proof || "");
+      setEduProof(rowData.education_proof || "");
+      setProfileImg(rowData.profile_image || "");
+      setDeclaration(true);
+
+      setIsEditing(true);
+      setActiveEditingRef(targetRef);
+      setShowEditModal(false);
+      setInputLookupRef("");
+      setEditSearchResults([]);
+      setSubmitError("");
+      setSubmitted(false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err: any) {
+      console.error("Lookup error:", err);
+      setEditLookupError(err.message || "Failed to load application data");
+    } finally {
+      setEditLookupLoading(false);
+    }
+  };
+
+  const handleSearchForLink = async (term: string) => {
+    setLinkSearchInput(term);
+    const clean = term.trim().toUpperCase();
+    if (!clean) {
+      setLinkSearchResults([]);
+      return;
+    }
+
+    setLinkSearching(true);
+    setLinkError("");
+
+    try {
+      // Search via RPC function or direct select
+      const { data: rpcData, error: rpcErr } = await supabase.rpc("search_registrations_for_link", {
+        search_term: clean,
+      });
+
+      if (!rpcErr && rpcData) {
+        setLinkSearchResults(rpcData);
+      } else {
+        const { data: directData } = await supabase
+          .from("registrations")
+          .select("reference_number, first_name, last_name, phone, email, saf_number")
+          .not("reference_number", "is", null)
+          .or(`reference_number.ilike.%${clean}%,first_name.ilike.%${clean}%,last_name.ilike.%${clean}%,phone.ilike.%${clean}%`)
+          .limit(10);
+        setLinkSearchResults(directData || []);
+      }
+    } catch (err: any) {
+      console.error("SAF Link search error:", err);
+      setLinkError(err.message || "Error searching applications");
+    } finally {
+      setLinkSearching(false);
+    }
+  };
+
+  const handleSelectForLink = (rec: any) => {
+    setSelectedLinkRecord(rec);
+    setLinkSearchResults([]);
+    setLinkSearchInput(rec.reference_number || "");
+    // If it already had a SAF number (e.g. SAF1477116), strip 'SAF' prefix for the numeric field
+    if (rec.saf_number) {
+      const digits = rec.saf_number.replace(/^SAF/i, "").trim();
+      setInputSafDigits(digits);
+    } else {
+      setInputSafDigits("");
+    }
+    setLinkError("");
+    setLinkSuccessMessage("");
+  };
+
+  const triggerProtectedAction = (action: "edit" | "link") => {
+    if (isActionAuthenticated) {
+      if (action === "edit") {
+        setEditLookupError("");
+        setInputLookupRef("");
+        setEditSearchResults([]);
+        setShowEditModal(true);
+      } else {
+        setLinkSearchInput("");
+        setLinkSearchResults([]);
+        setSelectedLinkRecord(null);
+        setInputSafDigits("");
+        setLinkError("");
+        setLinkSuccessMessage("");
+        setShowLinkModal(true);
+      }
+      return;
+    }
+
+    setAuthTargetAction(action);
+    setEnteredPassword("");
+    setAuthError("");
+    setShowAuthModal(true);
+  };
+
+  const verifyActionPassword = () => {
+    if (enteredPassword.trim() === "Gleamator@2025") {
+      setIsActionAuthenticated(true);
+      setShowAuthModal(false);
+      const action = authTargetAction;
+      setAuthTargetAction(null);
+      setEnteredPassword("");
+      setAuthError("");
+
+      if (action === "edit") {
+        setEditLookupError("");
+        setInputLookupRef("");
+        setEditSearchResults([]);
+        setShowEditModal(true);
+      } else if (action === "link") {
+        setLinkSearchInput("");
+        setLinkSearchResults([]);
+        setSelectedLinkRecord(null);
+        setInputSafDigits("");
+        setLinkError("");
+        setLinkSuccessMessage("");
+        setShowLinkModal(true);
+      }
+    } else {
+      setAuthError("Incorrect password. Please try again.");
+    }
+  };
+
+  const handleSaveSafLink = async () => {
+    if (!selectedLinkRecord || !selectedLinkRecord.reference_number) {
+      setLinkError("Please select a valid application Reference ID first.");
+      return;
+    }
+    const cleanDigits = inputSafDigits.trim().replace(/^SAF/i, "");
+    if (!cleanDigits) {
+      setLinkError("Please enter the SAF number digits.");
+      return;
+    }
+
+    const fullSafNumber = `SAF${cleanDigits}`;
+    setLinkLoading(true);
+    setLinkError("");
+    setLinkSuccessMessage("");
+
+    try {
+      const { error: rpcErr } = await supabase.rpc("link_saf_number", {
+        ref_id: selectedLinkRecord.reference_number,
+        saf_num: fullSafNumber,
+      });
+
+      if (rpcErr) {
+        const { error: directErr } = await (supabase.from("registrations") as any)
+          .update({ saf_number: fullSafNumber })
+          .ilike("reference_number", selectedLinkRecord.reference_number);
+        if (directErr) throw directErr;
+      }
+
+      setLinkSuccessMessage(`Reference ID ${selectedLinkRecord.reference_number} has been successfully linked with ${fullSafNumber}!`);
+      setSelectedLinkRecord((prev: any) => prev ? { ...prev, saf_number: fullSafNumber } : null);
+    } catch (err: any) {
+      console.error("Link save error:", err);
+      setLinkError(err.message || "Failed to link SAF number. Please try again.");
+    } finally {
+      setLinkLoading(false);
+    }
   };
 
   const onSubmit = async (ev: React.FormEvent) => {
@@ -337,7 +678,76 @@ function RegistrationPage() {
     setSubmitted(false);
 
     try {
+      // Check for duplicate Aadhaar registration
+      const cleanAadhaar = aadhaarNumber.trim();
+      let existingRecord: any = null;
+
+      const { data: dupCheckData, error: dupCheckErr } = await supabase.rpc("check_aadhaar_registered", {
+        aadhaar_num: cleanAadhaar,
+        exclude_ref: isEditing ? activeEditingRef : null,
+      });
+
+      if (!dupCheckErr && dupCheckData && dupCheckData.length > 0) {
+        existingRecord = dupCheckData[0];
+      } else {
+        let q = supabase
+          .from("registrations")
+          .select("reference_number, first_name, last_name")
+          .eq("aadhaar_number", cleanAadhaar);
+        
+        if (isEditing && activeEditingRef) {
+          q = q.neq("reference_number", activeEditingRef);
+        }
+        const { data: directDup } = await q.maybeSingle();
+        if (directDup) existingRecord = directDup;
+      }
+
+      if (existingRecord) {
+        setSubmitError("Already submitted this application.");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setSubmitting(false);
+        return;
+      }
+
+      let refId = activeEditingRef;
+
+      if (!isEditing) {
+        // Try atomic sequence generator from database first
+        try {
+          const { data: seqData, error: seqErr } = await supabase.rpc("get_next_ksaw_reference_id");
+          if (!seqErr && seqData) {
+            refId = seqData;
+          }
+        } catch (_) {
+          // ignore RPC fallback
+        }
+
+        // Robust client-side fallback if RPC is not run yet: find highest numeric ID in DB + 1
+        if (!refId) {
+          const { data: rows } = await supabase
+            .from("registrations")
+            .select("reference_number")
+            .not("reference_number", "is", null);
+
+          let maxNum = 0;
+          if (rows && rows.length > 0) {
+            for (const item of rows) {
+              if (item.reference_number) {
+                const digits = item.reference_number.replace(/\D/g, "");
+                const parsed = parseInt(digits, 10);
+                if (!isNaN(parsed) && parsed > maxNum) {
+                  maxNum = parsed;
+                }
+              }
+            }
+          }
+          const nextNum = maxNum + 1;
+          refId = `KSAW ${String(nextNum).padStart(3, "0")}`;
+        }
+      }
+
       const payload: Record<string, any> = {
+        reference_number: refId,
         institution_name: institutionName.trim() || null,
         center_location: centerLocation || null,
         first_name: firstName,
@@ -414,26 +824,41 @@ function RegistrationPage() {
         declaration_accepted: declaration,
       };
 
-      let { error: dbError } = await (supabase.from("registrations") as any).insert(payload);
+      if (isEditing) {
+        // Try updating via RPC function first
+        let { data: rpcSuccess, error: rpcErr } = await supabase.rpc("update_registration_by_ref", {
+          ref_id: refId,
+          payload: payload,
+        });
 
-      // If remote Supabase schema is missing newly added columns, safely omit them and retry
-      if (dbError && dbError.message && dbError.message.includes("schema cache")) {
-        delete payload.institution_name;
-        delete payload.center_location;
-        delete payload.caste_cert_issue_date;
-        delete payload.caste_cert_expiry_date;
-        const retryResult = await (supabase.from("registrations") as any).insert(payload);
-        dbError = retryResult.error;
+        if (rpcErr || !rpcSuccess) {
+          // Direct fallback update
+          const { error: directErr } = await (supabase.from("registrations") as any)
+            .update(payload)
+            .ilike("reference_number", refId);
+
+          if (directErr) throw directErr;
+        }
+      } else {
+        // Insert record and retrieve generated reference_number
+        const { data: insertedData, error: dbError } = await (supabase.from("registrations") as any)
+          .insert(payload)
+          .select("reference_number")
+          .single();
+
+        if (dbError) throw dbError;
+        if (insertedData?.reference_number) {
+          refId = insertedData.reference_number;
+        }
       }
 
-      if (dbError) throw dbError;
-
+      setGeneratedRefId(refId);
       setShowSuccessDialog(true);
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err: any) {
       console.error("Submission error:", err);
-      setSubmitError(err.message || "Failed to submit registration. Please try again.");
+      setSubmitError(err.message || "Failed to save registration. Please try again.");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setSubmitting(false);
@@ -533,21 +958,50 @@ function RegistrationPage() {
   );
 
   return (
-    <div className="kk-page">
-      <SiteHeader />
-      <PageBanner />
+    <div className="kk-page min-h-screen flex flex-col justify-between">
+      <div>
+        <SiteHeader />
+        <PageBanner
+          isEditing={isEditing}
+          activeRef={activeEditingRef}
+        />
 
-      <main className="kk-form">
+        <main className="kk-form">
         <div className="kk-wrap">
+          {isEditing && (
+            <div className="mb-4 rounded-xl border border-primary/30 bg-primary/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                  ✏️
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    Editing Application: <span className="font-mono text-primary">{activeEditingRef}</span>
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    You can edit any personal, address, course details, or re-upload documents.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => resetForm()}
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer w-max"
+              >
+                ✕ Cancel Edit & Clear Form
+              </button>
+            </div>
+          )}
+
           {submitted ? (
             <div className="kk-alert" role="status">
-              Your registration details have been submitted successfully.
+              Your registration details have been {isEditing ? "updated" : "submitted"} successfully.
             </div>
           ) : null}
 
           {submitError ? (
             <div className="kk-alert" role="status" style={{ backgroundColor: "#fee2e2", color: "#991b1b", borderColor: "#fecaca" }}>
-              Error submitting form: {submitError}
+              Error saving form: {submitError}
             </div>
           ) : null}
 
@@ -1145,38 +1599,399 @@ function RegistrationPage() {
                   Cancel
                 </button>
                 <button type="submit" className="btn-kk btn-primary-kk" disabled={submitting}>
-                  {submitting ? "Submitting..." : "Submit"}
+                  {submitting ? (isEditing ? "Saving Changes..." : "Submitting...") : isEditing ? "💾 Save Changes" : "Submit"}
                 </button>
               </div>
             </Section>
           </form>
         </div>
       </main>
+      </div>
 
+      {/* Password Authentication Modal for Edit & Link SAF */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 p-4 animate-in fade-in duration-200 backdrop-blur-xs">
+          <div className="w-full max-w-sm rounded-2xl bg-card p-6 shadow-2xl border border-border text-center flex flex-col items-center">
+            <div className="h-12 w-12 rounded-full bg-amber-500/15 flex items-center justify-center text-amber-600 text-xl mb-2">
+              🔒
+            </div>
+
+            <h3 className="text-lg font-bold text-foreground">
+              {authTargetAction === "edit" ? "Edit Application" : "Link SAF Number"}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Please enter the administrator access password to continue.
+            </p>
+
+            <div className="mt-4 w-full text-left">
+              <label className="text-xs font-semibold text-foreground block mb-1">
+                Access Password *
+              </label>
+              <input
+                type="password"
+                placeholder="Enter password..."
+                className="w-full form-ctrl text-sm py-2 px-3 tracking-wider"
+                value={enteredPassword}
+                onChange={(e) => {
+                  setEnteredPassword(e.target.value);
+                  setAuthError("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    verifyActionPassword();
+                  }
+                }}
+                autoFocus
+              />
+              {authError && (
+                <p className="mt-2 text-xs text-destructive bg-destructive/10 p-2 rounded border border-destructive/20 font-medium">
+                  {authError}
+                </p>
+              )}
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2.5 w-full">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAuthModal(false);
+                  setEnteredPassword("");
+                  setAuthError("");
+                  setAuthTargetAction(null);
+                }}
+                className="btn-kk btn-cancel-kk text-xs py-2 px-4"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={verifyActionPassword}
+                disabled={!enteredPassword.trim()}
+                className="btn-kk btn-primary-kk text-xs py-2 px-4 shadow-xs"
+              >
+                Verify &amp; Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reference ID Lookup Modal for Editing */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4 animate-in fade-in duration-200 backdrop-blur-xs">
+          <div className="w-full max-w-lg rounded-2xl bg-card p-6 shadow-2xl border border-border text-center flex flex-col items-center">
+            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl mb-2">
+              🔍
+            </div>
+            
+            <h3 className="text-lg font-bold text-foreground">Edit Your Application</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Search by Application Reference ID (e.g. <strong>KSAW 001</strong>), candidate name, or phone number.
+            </p>
+
+            <div className="mt-4 w-full text-left relative">
+              <label className="text-xs font-semibold text-foreground block mb-1">
+                Reference ID / Search *
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Enter Reference ID (e.g. KSAW 001) or Name..."
+                  className="w-full form-ctrl font-mono uppercase text-sm py-2 px-3 tracking-wider"
+                  value={inputLookupRef}
+                  onChange={(e) => void handleSearchForEdit(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void loadByReferenceId();
+                    }
+                  }}
+                />
+                {editSearching && (
+                  <span className="text-xs text-muted-foreground self-center">Searching...</span>
+                )}
+              </div>
+
+              {/* Dropdown list of matching results for edit */}
+              {editSearchResults.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-48 overflow-y-auto rounded-lg border border-border bg-card shadow-lg p-1">
+                  {editSearchResults.map((rec) => (
+                    <button
+                      type="button"
+                      key={rec.reference_number}
+                      onClick={() => {
+                        setInputLookupRef(rec.reference_number);
+                        setEditSearchResults([]);
+                        void loadByReferenceId(rec.reference_number);
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs rounded-md hover:bg-muted/80 flex items-center justify-between transition-colors cursor-pointer border-b border-border/50 last:border-b-0"
+                    >
+                      <div>
+                        <span className="font-bold font-mono text-primary mr-2">
+                          {rec.reference_number}
+                        </span>
+                        <span className="text-foreground font-medium">
+                          {rec.first_name} {rec.last_name}
+                        </span>
+                        <span className="text-muted-foreground ml-2">({rec.phone})</span>
+                      </div>
+                      <span className="text-[11px] font-semibold text-primary">
+                        Select &amp; Load →
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {editLookupError && (
+                <p className="mt-2 text-xs text-destructive bg-destructive/10 p-2 rounded border border-destructive/20 font-medium">
+                  {editLookupError}
+                </p>
+              )}
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2.5 w-full">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditLookupError("");
+                  setEditSearchResults([]);
+                }}
+                className="btn-kk btn-cancel-kk text-xs py-2 px-4"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void loadByReferenceId()}
+                disabled={editLookupLoading || !inputLookupRef.trim()}
+                className="btn-kk btn-primary-kk text-xs py-2 px-4 shadow-xs"
+              >
+                {editLookupLoading ? "Loading..." : "Load Application"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Dialog */}
       {showSuccessDialog && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-xl border border-border text-center flex flex-col items-center">
-            <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-4">
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4 animate-in fade-in duration-200 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl border border-border text-center flex flex-col items-center">
+            <div className="h-14 w-14 rounded-full bg-emerald-500/15 flex items-center justify-center text-emerald-600 mb-3">
+              <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-foreground">Submission Successful</h3>
-            <p className="text-sm text-muted-foreground mt-2">
-              Your registration details have been submitted successfully.
+            
+            <h3 className="text-xl font-bold text-foreground">
+              {isEditing ? "Application Updated Successfully!" : "Application Submitted Successfully!"}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Your details have been registered with Karnataka State Akkamahadevi Women's University.
             </p>
+
+            <div className="my-5 w-full rounded-xl bg-muted/40 p-4 border border-border flex flex-col items-center">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Application Reference ID
+              </span>
+              <span className="my-1.5 text-2xl font-extrabold tracking-widest text-primary font-mono select-all">
+                {generatedRefId}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (generatedRefId) {
+                    navigator.clipboard.writeText(generatedRefId);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2500);
+                  }
+                }}
+                className={`mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-xs ${
+                  copied
+                    ? "bg-emerald-600 text-white"
+                    : "bg-primary text-primary-foreground hover:bg-primary/90"
+                }`}
+              >
+                {copied ? "✓ Copied to Clipboard" : "📋 Copy Reference ID"}
+              </button>
+            </div>
+
+            {!isEditing && (
+              <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-3 text-left w-full mb-4">
+                <div className="flex gap-2">
+                  <span className="text-amber-600 text-base">⚠️</span>
+                  <p className="text-xs text-amber-800 leading-relaxed font-medium">
+                    <strong>Important:</strong> Please note down or copy this <strong>Reference ID</strong> immediately for your future reference and tracking. It will not be shown again after you close this window.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <button
+              type="button"
               onClick={() => {
                 setShowSuccessDialog(false);
                 resetForm();
               }}
-              className="mt-5 btn-kk btn-primary-kk w-full py-2.5 font-medium rounded-lg text-center"
+              className="btn-kk btn-primary-kk w-full py-2.5 font-semibold rounded-lg text-center shadow-xs"
             >
-              OK
+              Done / Close
             </button>
           </div>
         </div>
       )}
+
+      {/* Link SAF Number Modal */}
+      {showLinkModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4 animate-in fade-in duration-200 backdrop-blur-xs">
+          <div className="w-full max-w-lg rounded-2xl bg-card p-6 shadow-2xl border border-border text-center flex flex-col items-center">
+            <div className="h-12 w-12 rounded-full bg-emerald-500/15 flex items-center justify-center text-emerald-600 text-xl mb-2">
+              🔗
+            </div>
+            
+            <h3 className="text-lg font-bold text-foreground">Link Reference ID to SAF Number</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Search by Application Reference ID, candidate name, or phone number.
+            </p>
+
+            <div className="mt-4 w-full text-left space-y-4">
+              {/* Step 1: Search & Select Reference ID */}
+              <div className="relative">
+                <label className="text-xs font-semibold text-foreground block mb-1">
+                  1. Search Application Reference ID *
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Enter Reference ID (e.g. KSAW 001) or Name..."
+                    className="w-full form-ctrl font-mono uppercase text-sm py-2 px-3 tracking-wider"
+                    value={linkSearchInput}
+                    onChange={(e) => void handleSearchForLink(e.target.value)}
+                  />
+                  {linkSearching && (
+                    <span className="text-xs text-muted-foreground self-center">Searching...</span>
+                  )}
+                </div>
+
+                {/* Dropdown list of matching results */}
+                {linkSearchResults.length > 0 && (
+                  <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-48 overflow-y-auto rounded-lg border border-border bg-card shadow-lg p-1">
+                    {linkSearchResults.map((rec) => (
+                      <button
+                        type="button"
+                        key={rec.reference_number}
+                        onClick={() => handleSelectForLink(rec)}
+                        className="w-full text-left px-3 py-2 text-xs rounded-md hover:bg-muted/80 flex items-center justify-between transition-colors cursor-pointer border-b border-border/50 last:border-b-0"
+                      >
+                        <div>
+                          <span className="font-bold font-mono text-primary mr-2">
+                            {rec.reference_number}
+                          </span>
+                          <span className="text-foreground font-medium">
+                            {rec.first_name} {rec.last_name}
+                          </span>
+                          <span className="text-muted-foreground ml-2">({rec.phone})</span>
+                        </div>
+                        {rec.saf_number && (
+                          <span className="text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 px-2 py-0.5 rounded border border-emerald-500/30">
+                            Linked: {rec.saf_number}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Step 2: Selected Record Details & SAF Number Input */}
+              {selectedLinkRecord && (
+                <div className="rounded-xl bg-muted/40 p-3.5 border border-border space-y-3 animate-in fade-in duration-150">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs text-muted-foreground block">Selected Candidate</span>
+                      <strong className="text-sm font-semibold text-foreground">
+                        {selectedLinkRecord.first_name} {selectedLinkRecord.last_name}
+                      </strong>
+                    </div>
+                    <span className="px-2.5 py-1 rounded bg-primary/10 text-primary font-mono text-xs font-bold">
+                      {selectedLinkRecord.reference_number}
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-foreground block mb-1">
+                      2. Enter SAF Number *
+                    </label>
+                    <div className="flex items-center rounded-lg border border-border bg-card overflow-hidden focus-within:ring-2 focus-within:ring-primary">
+                      <span className="bg-muted px-3 py-2 font-bold font-mono text-sm text-muted-foreground border-r border-border select-none">
+                        SAF
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="1477116"
+                        className="w-full bg-transparent px-3 py-2 text-sm font-mono text-foreground outline-none font-semibold"
+                        value={inputSafDigits}
+                        onChange={(e) => setInputSafDigits(e.target.value.replace(/\D/g, ""))}
+                      />
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Full SAF ID will be formatted as: <strong className="text-foreground font-mono">SAF{inputSafDigits || "XXXXXXX"}</strong>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {linkError && (
+                <p className="text-xs text-destructive bg-destructive/10 p-2 rounded border border-destructive/20 font-medium">
+                  {linkError}
+                </p>
+              )}
+
+              {linkSuccessMessage && (
+                <p className="text-xs text-emerald-700 bg-emerald-500/15 p-2 rounded border border-emerald-500/30 font-medium">
+                  ✓ {linkSuccessMessage}
+                </p>
+              )}
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2.5 w-full">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLinkModal(false);
+                  setSelectedLinkRecord(null);
+                  setInputSafDigits("");
+                  setLinkError("");
+                  setLinkSuccessMessage("");
+                }}
+                className="btn-kk btn-cancel-kk text-xs py-2 px-4"
+              >
+                Close
+              </button>
+              {selectedLinkRecord && (
+                <button
+                  type="button"
+                  onClick={() => void handleSaveSafLink()}
+                  disabled={linkLoading || !inputSafDigits.trim()}
+                  className="btn-kk btn-primary-kk text-xs py-2 px-4 shadow-xs"
+                >
+                  {linkLoading ? "Saving..." : "🔗 Link & Save SAF Number"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Site Footer with Password Protected Actions */}
+      <SiteFooter
+        onEdit={() => triggerProtectedAction("edit")}
+        onLinkSAF={() => triggerProtectedAction("link")}
+        isEditing={isEditing}
+      />
     </div>
   );
 }

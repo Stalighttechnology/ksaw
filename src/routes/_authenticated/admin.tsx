@@ -62,7 +62,7 @@ function AdminPage() {
       if (filters.search) {
         const s = filters.search.replace(/[%,()]/g, "");
         q = q.or(
-          `first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%`,
+          `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%`,
         );
       }
       const from = page * pageSize;
@@ -122,6 +122,53 @@ function AdminPage() {
     navigate({ to: "/auth", replace: true });
   };
 
+  const [exportStatusFilter, setExportStatusFilter] = useState<string>("");
+  const [statusTarget, setStatusTarget] = useState<{ id: string; name: string; status: string; reason: string; customNote: string } | null>(null);
+
+  const REASON_OPTIONS = [
+    "Wrong document",
+    "Document not clear",
+    "Document expired",
+    "Wrong details entered",
+    "Other / Custom Note",
+  ] as const;
+
+  const requestStatusChange = (row: Row, newStatus: string) => {
+    setStatusTarget({
+      id: row.id,
+      name: `${row["first_name"] || ""} ${row["last_name"] || ""}`.trim() || "this applicant",
+      status: newStatus,
+      reason: newStatus === "Pending Document" || newStatus === "Rejected" ? "Wrong document" : "",
+      customNote: "",
+    });
+  };
+
+  const confirmStatusChange = async () => {
+    if (!statusTarget) return;
+    const { id, status: newStatus, reason, customNote } = statusTarget;
+    const noteText = customNote.trim()
+      ? customNote.trim()
+      : reason
+      ? reason
+      : "";
+
+    const { error } = await supabase
+      .from("registrations")
+      .update({
+        status: newStatus,
+        ...(noteText ? { admin_notes: noteText } : {}),
+      })
+      .eq("id", id);
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Status updated to ${newStatus}${noteText ? ` (${noteText})` : ""}`);
+    setStatusTarget(null);
+    void qc.invalidateQueries();
+  };
+
   const remove = (row: Row) => {
     setDeleteTarget({
       ids: [row.id],
@@ -152,9 +199,12 @@ function AdminPage() {
   };
 
   const exportCsv = () => {
-    const rows = listQuery.data?.rows ?? [];
+    let rows = listQuery.data?.rows ?? [];
+    if (exportStatusFilter) {
+      rows = rows.filter((r) => (r.status || "Pending") === exportStatusFilter);
+    }
     if (!rows.length) {
-      toast.error("Nothing to export");
+      toast.error(`No records found to export${exportStatusFilter ? ` with status "${exportStatusFilter}"` : ""}`);
       return;
     }
     const head = COLUMNS.map((c) => c.label).join(",");
@@ -167,9 +217,11 @@ function AdminPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `registrations-${new Date().toISOString().slice(0, 10)}.csv`;
+    const filterSuffix = exportStatusFilter ? `-${exportStatusFilter.toLowerCase().replace(/\s+/g, "_")}` : "";
+    a.download = `registrations${filterSuffix}-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+    toast.success(`Exported ${rows.length} record${rows.length === 1 ? "" : "s"} to CSV`);
   };
 
   const allRowIds = useMemo(() => (listQuery.data?.rows ?? []).map((r) => r.id), [listQuery.data?.rows]);
@@ -200,6 +252,21 @@ function AdminPage() {
             <p className="text-xs text-muted-foreground sm:text-sm">Manage and inspect all applicant registrations.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5 bg-card border border-border px-2 py-1 rounded-md shadow-xs">
+              <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">Export:</label>
+              <select
+                className="bg-transparent border-0 text-xs font-semibold text-foreground focus:outline-hidden cursor-pointer"
+                value={exportStatusFilter}
+                onChange={(e) => setExportStatusFilter(e.target.value)}
+              >
+                <option value="">All Statuses</option>
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
             <button type="button" className="btn-kk btn-cancel-kk text-xs sm:text-sm py-1.5 px-3 sm:py-2 sm:px-4" onClick={exportCsv}>
               📥 Export CSV
             </button>
@@ -350,11 +417,15 @@ function AdminPage() {
                       {c.label}
                     </th>
                   ))}
+                  <th className="whitespace-nowrap px-3 py-3 text-left font-semibold min-w-[240px] bg-muted/90">
+                    Decision / Review
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {(listQuery.data?.rows ?? []).map((r) => {
                   const isChecked = selectedIds.includes(r.id);
+                  const curStatus = r.status || "Pending";
                   return (
                     <tr key={r.id} className={`transition-colors ${isChecked ? "bg-primary/5" : "odd:bg-background even:bg-muted/20 hover:bg-muted/40"}`}>
                       <td className="sticky left-0 z-20 whitespace-nowrap bg-card px-3 py-2.5 text-center border-r border-border">
@@ -407,12 +478,63 @@ function AdminPage() {
                           </td>
                         );
                       })}
+                      <td className="whitespace-nowrap px-3 py-2.5 bg-muted/10">
+                        {curStatus !== "Pending" ? (
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold shadow-2xs ${
+                                curStatus === "Approved"
+                                  ? "bg-emerald-600 text-white"
+                                  : curStatus === "Rejected"
+                                  ? "bg-red-600 text-white"
+                                  : "bg-amber-600 text-white"
+                              }`}
+                            >
+                              {curStatus === "Approved" ? "✓ Approved" : curStatus === "Rejected" ? "✕ Rejected" : "📄 Pending Doc"}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => requestStatusChange(r, curStatus === "Approved" ? "Pending Document" : "Approved")}
+                              className="text-xs text-muted-foreground hover:text-foreground underline transition-colors cursor-pointer"
+                            >
+                              Change
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => requestStatusChange(r, "Approved")}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 border border-emerald-500/30 transition-colors cursor-pointer"
+                              title="Set status to Approved"
+                            >
+                              ✓ Approve
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => requestStatusChange(r, "Rejected")}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-red-500/15 text-red-700 hover:bg-red-500/25 border border-red-500/30 transition-colors cursor-pointer"
+                              title="Set status to Rejected"
+                            >
+                              ✕ Reject
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => requestStatusChange(r, "Pending Document")}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 border border-amber-500/30 transition-colors cursor-pointer"
+                              title="Set status to Pending Document"
+                            >
+                              📄 Pending Doc
+                            </button>
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
                 {!listQuery.isLoading && (listQuery.data?.rows.length ?? 0) === 0 ? (
                   <tr>
-                    <td className="px-3 py-8 text-center text-muted-foreground" colSpan={COLUMNS.length + 2}>
+                    <td className="px-3 py-8 text-center text-muted-foreground" colSpan={COLUMNS.length + 3}>
                       No registrations match your filters.
                     </td>
                   </tr>
@@ -423,7 +545,13 @@ function AdminPage() {
         </section>
       </main>
 
-      {viewing ? <ViewDialog row={viewing} onClose={() => setViewing(null)} /> : null}
+      {viewing ? (
+        <ViewDialog
+          row={viewing}
+          onClose={() => setViewing(null)}
+          onAction={(r, s) => requestStatusChange(r, s)}
+        />
+      ) : null}
       {editing ? (
         <EditDialog
           row={editing}
@@ -433,6 +561,92 @@ function AdminPage() {
             void qc.invalidateQueries();
           }}
         />
+      ) : null}
+
+      {statusTarget ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-2xl border border-border">
+            <div className="flex items-center gap-3">
+              <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl ${
+                statusTarget.status === "Approved"
+                  ? "bg-emerald-500/15 text-emerald-600"
+                  : statusTarget.status === "Rejected"
+                  ? "bg-red-500/15 text-red-600"
+                  : "bg-amber-500/15 text-amber-600"
+              }`}>
+                {statusTarget.status === "Approved" ? "✓" : statusTarget.status === "Rejected" ? "✕" : "📄"}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-foreground">Confirm Status Change</h3>
+                <p className="text-xs text-muted-foreground">Application verification and review</p>
+              </div>
+            </div>
+
+            <p className="mt-4 text-sm text-foreground">
+              Are you sure you want to mark the application for <strong className="font-semibold text-primary">{statusTarget.name}</strong> as <strong className="font-bold">{statusTarget.status}</strong>?
+            </p>
+
+            {(statusTarget.status === "Pending Document" || statusTarget.status === "Rejected") && (
+              <div className="mt-4 space-y-2 rounded-lg bg-muted/40 p-3 border border-border">
+                <label className="text-xs font-semibold text-foreground block">
+                  Select Reason / Note:
+                </label>
+                <select
+                  className="w-full form-ctrl text-xs bg-card"
+                  value={statusTarget.reason}
+                  onChange={(e) =>
+                    setStatusTarget((prev) =>
+                      prev ? { ...prev, reason: e.target.value } : null,
+                    )
+                  }
+                >
+                  {REASON_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+
+                {statusTarget.reason === "Other / Custom Note" && (
+                  <input
+                    type="text"
+                    placeholder="Enter custom admin note..."
+                    className="w-full form-ctrl text-xs mt-2"
+                    value={statusTarget.customNote}
+                    onChange={(e) =>
+                      setStatusTarget((prev) =>
+                        prev ? { ...prev, customNote: e.target.value } : null,
+                      )
+                    }
+                  />
+                )}
+              </div>
+            )}
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setStatusTarget(null)}
+                className="px-4 py-2 text-xs font-semibold rounded-md border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmStatusChange()}
+                className={`px-4 py-2 text-xs font-semibold rounded-md text-white transition-colors cursor-pointer shadow-xs ${
+                  statusTarget.status === "Approved"
+                    ? "bg-emerald-600 hover:bg-emerald-700"
+                    : statusTarget.status === "Rejected"
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-amber-600 hover:bg-amber-700"
+                }`}
+              >
+                Yes, Set to {statusTarget.status}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
 
       {deleteTarget ? (
@@ -577,13 +791,76 @@ function shouldShowField(key: string, row: Row): boolean {
   return true;
 }
 
-function ViewDialog({ row, onClose }: { row: Row; onClose: () => void }) {
+function ViewDialog({
+  row,
+  onClose,
+  onAction,
+}: {
+  row: Row;
+  onClose: () => void;
+  onAction: (row: Row, status: string) => void;
+}) {
   const visibleColumns = COLUMNS.filter((c) => shouldShowField(c.key, row));
   const groups = [...new Set(visibleColumns.map((c) => c.group))];
+  const curStatus = row.status || "Pending";
 
   return (
     <Dialog title={`${row["first_name"]} ${row["last_name"]}`} onClose={onClose}>
-      <div className="mt-3 space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border py-2.5 bg-muted/20 px-3 rounded-md mt-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground">Current Status:</span>
+          <span
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+              curStatus === "Approved"
+                ? "bg-emerald-500/15 text-emerald-700 border border-emerald-500/30"
+                : curStatus === "Rejected"
+                ? "bg-red-500/15 text-red-700 border border-red-500/30"
+                : curStatus === "Pending Document"
+                ? "bg-amber-500/15 text-amber-700 border border-amber-500/30"
+                : "bg-primary/10 text-primary border border-primary/20"
+            }`}
+          >
+            {curStatus}
+          </span>
+          {row["admin_notes"] && (
+            <span className="text-xs text-muted-foreground italic truncate max-w-[200px]" title={row["admin_notes"]}>
+              ({row["admin_notes"]})
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          {curStatus !== "Approved" && (
+            <button
+              type="button"
+              onClick={() => onAction(row, "Approved")}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 border border-emerald-500/30 transition-colors cursor-pointer"
+            >
+              ✓ Approve
+            </button>
+          )}
+          {curStatus !== "Rejected" && (
+            <button
+              type="button"
+              onClick={() => onAction(row, "Rejected")}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-red-500/15 text-red-700 hover:bg-red-500/25 border border-red-500/30 transition-colors cursor-pointer"
+            >
+              ✕ Reject
+            </button>
+          )}
+          {curStatus !== "Pending Document" && (
+            <button
+              type="button"
+              onClick={() => onAction(row, "Pending Document")}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 border border-amber-500/30 transition-colors cursor-pointer"
+            >
+              📄 Pending Document
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-3 space-y-4 max-h-[65vh] overflow-y-auto pr-1">
         {groups.map((g) => (
           <div key={g}>
             <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-1 mb-2">{g}</h3>

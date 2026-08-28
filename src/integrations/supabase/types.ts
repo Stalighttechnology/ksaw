@@ -55,6 +55,8 @@ export type Database = {
           guardian_salutation: string | null
           guardianship: string | null
           id: string
+          reference_number?: string | null
+          saf_number?: string | null
           institution_name?: string | null
           center_location?: string | null
           language_of_instruction: string | null

@@ -6,9 +6,11 @@ export type ColumnDef = {
   options?: readonly string[];
 };
 
-export const STATUS_OPTIONS = ["Pending", "Verified", "Approved", "Rejected"] as const;
+export const STATUS_OPTIONS = ["Pending", "Approved", "Rejected", "Pending Document"] as const;
 
 export const COLUMNS: ColumnDef[] = [
+  { key: "reference_number", label: "Reference ID", group: "Meta" },
+  { key: "saf_number", label: "SAF Number", group: "Meta" },
   { key: "created_at", label: "Submitted On", group: "Meta", type: "date" },
   { key: "status", label: "Status", group: "Meta", type: "select", options: STATUS_OPTIONS },
   { key: "admin_notes", label: "Admin Notes", group: "Meta" },
