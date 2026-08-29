@@ -668,20 +668,8 @@ function RegistrationPage() {
     const e = validate();
     setErrors(e);
     if (Object.keys(e).length > 0) {
-      const errorCount = Object.keys(e).length;
-      setSubmitError(`Please correct the ${errorCount} highlighted field${errorCount > 1 ? "s" : ""} marked in red below.`);
-      
-      setTimeout(() => {
-        const firstErrorEl = document.querySelector(".form-ctrl.is-invalid, .err-msg, .fcol:has(.err-msg)");
-        if (firstErrorEl) {
-          firstErrorEl.scrollIntoView({ behavior: "smooth", block: "center" });
-          if ((firstErrorEl as HTMLElement).focus) {
-            (firstErrorEl as HTMLElement).focus();
-          }
-        } else {
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-      }, 50);
+      setSubmitError("Please fill all mandatory fields correctly.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
