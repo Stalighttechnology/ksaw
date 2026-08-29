@@ -54,7 +54,7 @@ function AdminPage() {
   const listQuery = useQuery({
     queryKey: ["registrations", filters, page, pageSize, sortDesc],
     queryFn: async () => {
-      let q = supabase.from("vtu-ksaw-application").select("*", { count: "exact" });
+      let q = supabase.from("registrations").select("*", { count: "exact" });
       if (filters.status) q = q.eq("status", filters.status);
       if (filters.course) q = q.eq("skill_sought", filters.course);
       if (filters.category) q = q.eq("category", filters.category);
@@ -78,7 +78,7 @@ function AdminPage() {
     queryKey: ["registration-stats"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("vtu-ksaw-application")
+        .from("registrations")
         .select("status, skill_sought, gender, category, created_at, cur_district")
         .limit(10000);
       if (error) throw error;
@@ -149,11 +149,11 @@ function AdminPage() {
     const noteText = customNote.trim()
       ? customNote.trim()
       : reason
-        ? reason
-        : "";
+      ? reason
+      : "";
 
     const { error } = await supabase
-      .from("vtu-ksaw-application")
+      .from("registrations")
       .update({
         status: newStatus,
         ...(noteText ? { admin_notes: noteText } : {}),
@@ -187,7 +187,7 @@ function AdminPage() {
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     const { ids } = deleteTarget;
-    const { error } = await supabase.from("vtu-ksaw-application").delete().in("id", ids);
+    const { error } = await supabase.from("registrations").delete().in("id", ids);
     if (error) {
       toast.error(error.message);
       return;
@@ -334,7 +334,7 @@ function AdminPage() {
                 </div>
               )}
             </div>
-
+            
             <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 sm:gap-3">
               <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border/80 text-xs">
                 <button
@@ -344,9 +344,9 @@ function AdminPage() {
                 >
                   Sort: <span className="font-semibold text-primary">{sortDesc ? "Newest" : "Oldest"}</span>
                 </button>
-
+                
                 <span className="text-border px-0.5">|</span>
-
+                
                 <select
                   className="bg-transparent border-0 py-1 pl-1 pr-5 text-xs font-medium text-foreground focus:outline-hidden focus:ring-0 cursor-pointer"
                   value={pageSize}
@@ -482,12 +482,13 @@ function AdminPage() {
                         {curStatus !== "Pending" ? (
                           <div className="flex items-center gap-2">
                             <span
-                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold shadow-2xs ${curStatus === "Approved"
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold shadow-2xs ${
+                                curStatus === "Approved"
                                   ? "bg-emerald-600 text-white"
                                   : curStatus === "Rejected"
-                                    ? "bg-red-600 text-white"
-                                    : "bg-amber-600 text-white"
-                                }`}
+                                  ? "bg-red-600 text-white"
+                                  : "bg-amber-600 text-white"
+                              }`}
                             >
                               {curStatus === "Approved" ? "✓ Approved" : curStatus === "Rejected" ? "✕ Rejected" : "📄 Pending Doc"}
                             </span>
@@ -566,12 +567,13 @@ function AdminPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4">
           <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-2xl border border-border">
             <div className="flex items-center gap-3">
-              <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl ${statusTarget.status === "Approved"
+              <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl ${
+                statusTarget.status === "Approved"
                   ? "bg-emerald-500/15 text-emerald-600"
                   : statusTarget.status === "Rejected"
-                    ? "bg-red-500/15 text-red-600"
-                    : "bg-amber-500/15 text-amber-600"
-                }`}>
+                  ? "bg-red-500/15 text-red-600"
+                  : "bg-amber-500/15 text-amber-600"
+              }`}>
                 {statusTarget.status === "Approved" ? "✓" : statusTarget.status === "Rejected" ? "✕" : "📄"}
               </div>
               <div>
@@ -632,12 +634,13 @@ function AdminPage() {
               <button
                 type="button"
                 onClick={() => void confirmStatusChange()}
-                className={`px-4 py-2 text-xs font-semibold rounded-md text-white transition-colors cursor-pointer shadow-xs ${statusTarget.status === "Approved"
+                className={`px-4 py-2 text-xs font-semibold rounded-md text-white transition-colors cursor-pointer shadow-xs ${
+                  statusTarget.status === "Approved"
                     ? "bg-emerald-600 hover:bg-emerald-700"
                     : statusTarget.status === "Rejected"
-                      ? "bg-red-600 hover:bg-red-700"
-                      : "bg-amber-600 hover:bg-amber-700"
-                  }`}
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-amber-600 hover:bg-amber-700"
+                }`}
               >
                 Yes, Set to {statusTarget.status}
               </button>
@@ -807,14 +810,15 @@ function ViewDialog({
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Current Status:</span>
           <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${curStatus === "Approved"
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+              curStatus === "Approved"
                 ? "bg-emerald-500/15 text-emerald-700 border border-emerald-500/30"
                 : curStatus === "Rejected"
-                  ? "bg-red-500/15 text-red-700 border border-red-500/30"
-                  : curStatus === "Pending Document"
-                    ? "bg-amber-500/15 text-amber-700 border border-amber-500/30"
-                    : "bg-primary/10 text-primary border border-primary/20"
-              }`}
+                ? "bg-red-500/15 text-red-700 border border-red-500/30"
+                : curStatus === "Pending Document"
+                ? "bg-amber-500/15 text-amber-700 border border-amber-500/30"
+                : "bg-primary/10 text-primary border border-primary/20"
+            }`}
           >
             {curStatus}
           </span>
@@ -946,7 +950,7 @@ function EditDialog({ row, onClose, onSaved }: { row: Row; onClose: () => void; 
       payload[c.key] = v;
     }
     setBusy(true);
-    const { error } = await supabase.from("vtu-ksaw-application").update(payload as never).eq("id", row.id);
+    const { error } = await supabase.from("registrations").update(payload as never).eq("id", row.id);
     setBusy(false);
     if (error) {
       toast.error(error.message);
