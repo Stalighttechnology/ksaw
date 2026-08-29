@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Anek+Kannada:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
@@ -215,31 +216,92 @@
   padding: 10px 0;
 }
 .kk-logo { display: flex; min-width: 0; align-items: center; gap: 14px; }
-.kk-logo img { height: 58px; width: 58px; object-fit: contain; }
-.kk-header-titles { text-align: center; min-width: 0; }
-.kk-header-title {
-  font-weight: 800;
-  font-size: 21px;
-  line-height: 1.25;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--kk-navy, #123a6b);
+.kk-logo img { height: 72px; width: 72px; object-fit: contain; }
+.kk-header-titles {
+  text-align: center;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3.5px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
-.kk-header-sub {
-  margin-top: 3px;
-  font-size: 12.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #6b7280;
+.kk-header-kn {
+  font-family: 'Anek Kannada', 'Noto Sans Kannada', sans-serif;
+  font-size: 21.5px;
+  line-height: 1.3;
+  color: #0f172a;
+  margin: 0;
+}
+.kk-header-kn-main {
+  font-weight: 800;
+  color: #090e17;
+  letter-spacing: -0.01em;
+}
+.kk-header-kn-sub {
+  font-weight: 500;
+  color: #334155;
+  font-size: 16px;
+  letter-spacing: 0;
+}
+.kk-header-en {
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
+  font-size: 17.5px;
+  line-height: 1.3;
+  color: #0f172a;
+  margin: 0;
+}
+.kk-header-en-main {
+  font-weight: 800;
+  color: #090e17;
+  letter-spacing: -0.015em;
+}
+.kk-header-en-sub {
+  font-weight: 600;
+  color: #3b628c;
+  font-size: 14.5px;
+  letter-spacing: -0.01em;
 }
 .kk-header-spacer { width: 130px; }
+.kk-header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.kk-header-right img {
+  height: 68px;
+  width: auto;
+  max-width: 300px;
+  object-fit: contain;
+}
+@media (max-width: 1200px) {
+  .kk-logo img { height: 62px; width: 62px; }
+  .kk-header-right img { height: 58px; max-width: 250px; }
+  .kk-header-kn { font-size: 18.5px; }
+  .kk-header-kn-sub { font-size: 14px; }
+  .kk-header-en { font-size: 15px; }
+  .kk-header-en-sub { font-size: 12.5px; }
+}
 @media (max-width: 900px) {
-  .kk-header-title { font-size: 14px; letter-spacing: 0.02em; }
-  .kk-header-sub { font-size: 10.5px; }
-  .kk-logo img { height: 40px; width: 40px; }
+  .kk-header-titles { text-align: center; }
+  .kk-header-kn { font-size: 14.5px; }
+  .kk-header-kn-sub { font-size: 11.5px; }
+  .kk-header-en { font-size: 12.5px; }
+  .kk-header-en-sub { font-size: 10.5px; }
+  .kk-logo img { height: 48px; width: 48px; }
+  .kk-header-right img { height: 44px; max-width: 170px; }
   .kk-header-spacer { display: none; }
-  .kk-header-in { grid-template-columns: auto minmax(0, 1fr); min-height: 72px; gap: 12px; }
-  .kk-header-titles { text-align: left; }
+  .kk-header-in { grid-template-columns: auto minmax(0, 1fr) auto; min-height: 76px; gap: 12px; }
+}
+@media (max-width: 640px) {
+  .kk-header-kn { font-size: 11.5px; line-height: 1.25; }
+  .kk-header-kn-sub { font-size: 9.5px; }
+  .kk-header-en { font-size: 10.5px; line-height: 1.25; }
+  .kk-header-en-sub { font-size: 8.5px; }
+  .kk-logo img { height: 38px; width: 38px; }
+  .kk-header-right img { height: 34px; max-width: 120px; }
 }
 
 

@@ -373,7 +373,7 @@ function RegistrationPage() {
         setEditSearchResults(rpcData);
       } else {
         const { data: directData } = await supabase
-          .from("registrations")
+          .from("vtu-ksaw-application")
           .select("reference_number, first_name, last_name, phone, email")
           .not("reference_number", "is", null)
           .or(`reference_number.ilike.%${clean}%,first_name.ilike.%${clean}%,last_name.ilike.%${clean}%,phone.ilike.%${clean}%`)
@@ -390,7 +390,7 @@ function RegistrationPage() {
   const loadByReferenceId = async (refOverride?: string) => {
     const targetRef = (refOverride || inputLookupRef).trim().toUpperCase();
     if (!targetRef) {
-      setEditLookupError("Please enter or select a Reference ID (e.g. KSAW 001)");
+      setEditLookupError("Please enter or select a Reference ID (e.g. vtuksaw01)");
       return;
     }
     setEditLookupLoading(true);
@@ -408,7 +408,7 @@ function RegistrationPage() {
         rowData = rpcData[0];
       } else {
         const { data: directData, error: directError } = await supabase
-          .from("registrations")
+          .from("vtu-ksaw-application")
           .select("*")
           .ilike("reference_number", targetRef)
           .maybeSingle();
@@ -541,7 +541,7 @@ function RegistrationPage() {
         setLinkSearchResults(rpcData);
       } else {
         const { data: directData } = await supabase
-          .from("registrations")
+          .from("vtu-ksaw-application")
           .select("reference_number, first_name, last_name, phone, email, saf_number")
           .not("reference_number", "is", null)
           .or(`reference_number.ilike.%${clean}%,first_name.ilike.%${clean}%,last_name.ilike.%${clean}%,phone.ilike.%${clean}%`)
@@ -647,7 +647,7 @@ function RegistrationPage() {
       });
 
       if (rpcErr) {
-        const { error: directErr } = await (supabase.from("registrations") as any)
+        const { error: directErr } = await (supabase.from("vtu-ksaw-application") as any)
           .update({ saf_number: fullSafNumber })
           .ilike("reference_number", selectedLinkRecord.reference_number);
         if (directErr) throw directErr;
@@ -691,7 +691,7 @@ function RegistrationPage() {
         existingRecord = dupCheckData[0];
       } else {
         let q = supabase
-          .from("registrations")
+          .from("vtu-ksaw-application")
           .select("reference_number, first_name, last_name")
           .eq("aadhaar_number", cleanAadhaar);
         
@@ -714,9 +714,14 @@ function RegistrationPage() {
       if (!isEditing) {
         // Try atomic sequence generator from database first
         try {
-          const { data: seqData, error: seqErr } = await supabase.rpc("get_next_ksaw_reference_id");
+          const { data: seqData, error: seqErr } = await supabase.rpc("get_next_vtu_reference_id");
           if (!seqErr && seqData) {
             refId = seqData;
+          } else {
+            const { data: ksawData, error: ksawErr } = await supabase.rpc("get_next_ksaw_reference_id");
+            if (!ksawErr && ksawData) {
+              refId = ksawData;
+            }
           }
         } catch (_) {
           // ignore RPC fallback
@@ -725,7 +730,7 @@ function RegistrationPage() {
         // Robust client-side fallback if RPC is not run yet: find highest numeric ID in DB + 1
         if (!refId) {
           const { data: rows } = await supabase
-            .from("registrations")
+            .from("vtu-ksaw-application")
             .select("reference_number")
             .not("reference_number", "is", null);
 
@@ -742,7 +747,7 @@ function RegistrationPage() {
             }
           }
           const nextNum = maxNum + 1;
-          refId = `KSAW ${String(nextNum).padStart(3, "0")}`;
+          refId = `vtuksaw${String(nextNum).padStart(2, "0")}`;
         }
       }
 
@@ -833,7 +838,7 @@ function RegistrationPage() {
 
         if (rpcErr || !rpcSuccess) {
           // Direct fallback update
-          const { error: directErr } = await (supabase.from("registrations") as any)
+          const { error: directErr } = await (supabase.from("vtu-ksaw-application") as any)
             .update(payload)
             .ilike("reference_number", refId);
 
@@ -841,7 +846,7 @@ function RegistrationPage() {
         }
       } else {
         // Insert record and retrieve generated reference_number
-        const { data: insertedData, error: dbError } = await (supabase.from("registrations") as any)
+        const { data: insertedData, error: dbError } = await (supabase.from("vtu-ksaw-application") as any)
           .insert(payload)
           .select("reference_number")
           .single();
@@ -1687,7 +1692,7 @@ function RegistrationPage() {
             
             <h3 className="text-lg font-bold text-foreground">Edit Your Application</h3>
             <p className="text-xs text-muted-foreground mt-1">
-              Search by Application Reference ID (e.g. <strong>KSAW 001</strong>), candidate name, or phone number.
+              Search by Application Reference ID (e.g. <strong>vtuksaw01</strong>), candidate name, or phone number.
             </p>
 
             <div className="mt-4 w-full text-left relative">
@@ -1697,7 +1702,7 @@ function RegistrationPage() {
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Enter Reference ID (e.g. KSAW 001) or Name..."
+                  placeholder="Enter Reference ID (e.g. vtuksaw01) or Name..."
                   className="w-full form-ctrl font-mono uppercase text-sm py-2 px-3 tracking-wider"
                   value={inputLookupRef}
                   onChange={(e) => void handleSearchForEdit(e.target.value)}
@@ -1790,7 +1795,7 @@ function RegistrationPage() {
               {isEditing ? "Application Updated Successfully!" : "Application Submitted Successfully!"}
             </h3>
             <p className="text-xs text-muted-foreground mt-1">
-              Your details have been registered with Karnataka State Akkamahadevi Women's University.
+              Your details have been registered with Visvesvaraya Technological University.
             </p>
 
             <div className="my-5 w-full rounded-xl bg-muted/40 p-4 border border-border flex flex-col items-center">
@@ -1866,7 +1871,7 @@ function RegistrationPage() {
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="Enter Reference ID (e.g. KSAW 001) or Name..."
+                    placeholder="Enter Reference ID (e.g. vtuksaw01) or Name..."
                     className="w-full form-ctrl font-mono uppercase text-sm py-2 px-3 tracking-wider"
                     value={linkSearchInput}
                     onChange={(e) => void handleSearchForLink(e.target.value)}
