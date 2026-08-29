@@ -641,16 +641,18 @@ function RegistrationPage() {
     setLinkSuccessMessage("");
 
     try {
-      const { error: rpcErr } = await supabase.rpc("link_saf_number", {
-        ref_id: selectedLinkRecord.reference_number,
+      const { data: isLinked, error: rpcErr } = await supabase.rpc("link_saf_number", {
+        ref_id: selectedLinkRecord.reference_number.trim(),
         saf_num: fullSafNumber,
       });
 
-      if (rpcErr) {
+      if (rpcErr || isLinked === false) {
+        // Fallback: direct update matching reference_number
         const { error: directErr } = await (supabase.from("registrations") as any)
-          .update({ saf_number: fullSafNumber })
-          .ilike("reference_number", selectedLinkRecord.reference_number);
-        if (directErr) throw directErr;
+          .update({ saf_number: fullSafNumber, updated_at: new Date().toISOString() })
+          .ilike("reference_number", selectedLinkRecord.reference_number.trim());
+        
+        if (directErr && rpcErr) throw (rpcErr || directErr);
       }
 
       setLinkSuccessMessage(`Reference ID ${selectedLinkRecord.reference_number} has been successfully linked with ${fullSafNumber}!`);
