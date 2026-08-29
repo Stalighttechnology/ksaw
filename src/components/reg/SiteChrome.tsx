@@ -1,4 +1,4 @@
-import univLogo from "@/assets/image.png";
+import vtuLogo from "@/assets/1688801367-FGTrsAkEXl (1).png";
 import govLogo from "@/assets/image copy.png";
 
 export function SiteHeader() {
@@ -6,14 +6,21 @@ export function SiteHeader() {
     <header className="kk-header">
       <div className="kk-wrap kk-header-in">
         <div className="kk-logo">
-          <img src={govLogo} alt="Government of Karnataka emblem" width={58} height={58} />
-          <img src={univLogo} alt="Karnataka State Akkamahadevi Women's University logo" width={58} height={58} />
+          <img src={govLogo} alt="Government of Karnataka emblem" width={72} height={72} />
         </div>
         <div className="kk-header-titles">
-          <p className="kk-header-title">Karnataka State Akkamahadevi Women&apos;s University</p>
-          <p className="kk-header-sub">Vijayapura, Karnataka</p>
+          <p className="kk-header-kn">
+            <strong className="kk-header-kn-main">ವಿಶ್ವೇಶ್ವರಯ್ಯ ತಾಂತ್ರಿಕ ವಿಶ್ವವಿದ್ಯಾಲಯ, ಬೆಳಗಾವಿ</strong>{" "}
+            <span className="kk-header-kn-sub">(ಕರ್ನಾಟಕ ಸರ್ಕಾರದ ತಾಂತ್ರಿಕ ವಿಶ್ವವಿದ್ಯಾಲಯ)</span>
+          </p>
+          <p className="kk-header-en">
+            <strong className="kk-header-en-main">Visvesvaraya Technological University, Belagavi</strong>{" "}
+            <span className="kk-header-en-sub">(State Technological University, Govt. of Karnataka)</span>
+          </p>
         </div>
-        <div className="kk-logo kk-header-spacer" aria-hidden />
+        <div className="kk-header-right">
+          <img src={vtuLogo} alt="VTU Center for Online Education logo" />
+        </div>
       </div>
     </header>
   );
@@ -62,10 +69,10 @@ export function SiteFooter({
       <div className="kk-wrap flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="text-center md:text-left space-y-1">
           <p className="font-bold text-sm text-white tracking-wide">
-            Karnataka State Akkamahadevi Women&apos;s University
+            Visvesvaraya Technological University
           </p>
           <p className="text-xs text-slate-400">
-            Vijayapura, Karnataka • Skill Training &amp; Registration Portal
+            Belagavi, Karnataka • Skill Training &amp; Registration Portal
           </p>
           <p className="text-[11px] text-slate-500">
             © {new Date().getFullYear()} Government of Karnataka. All rights reserved.
