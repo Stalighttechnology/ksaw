@@ -55,7 +55,8 @@ function AdminPage() {
   const listQuery = useQuery({
     queryKey: ["registrations", filters, page, pageSize, sortDesc],
     queryFn: async () => {
-      let q = supabase.from("registrations").select("*", { count: "exact" });
+      const selectCols = ["id", ...COLUMNS.map((c) => c.key)].join(",");
+      let q = supabase.from("registrations").select(selectCols, { count: "exact" });
       if (filters.status) q = q.eq("status", filters.status);
       if (filters.course) q = q.eq("skill_sought", filters.course);
       if (filters.category) q = q.eq("category", filters.category);
@@ -75,6 +76,7 @@ function AdminPage() {
       if (error) throw error;
       return { rows: (data ?? []) as Row[], count: count ?? 0 };
     },
+    staleTime: 30_000,
   });
 
   const partnersQuery = useQuery({
@@ -96,6 +98,7 @@ function AdminPage() {
       ).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
       return list;
     },
+    staleTime: 5 * 60_000,
   });
 
   const statsQuery = useQuery({
@@ -108,6 +111,7 @@ function AdminPage() {
       if (error) throw error;
       return data ?? [];
     },
+    staleTime: 60_000,
   });
 
   const stats = useMemo(() => {
@@ -187,7 +191,8 @@ function AdminPage() {
     }
     toast.success(`Status updated to ${newStatus}${detail ? ` (${detail})` : ""}`);
     setStatusTarget(null);
-    void qc.invalidateQueries();
+    void qc.invalidateQueries({ queryKey: ["registrations"] });
+    void qc.invalidateQueries({ queryKey: ["registration-stats"] });
   };
 
   const remove = (row: Row) => {
@@ -216,7 +221,9 @@ function AdminPage() {
     toast.success(`Deleted ${ids.length} record${ids.length === 1 ? "" : "s"}`);
     setSelectedIds((prev) => prev.filter((id) => !ids.includes(id)));
     setDeleteTarget(null);
-    void qc.invalidateQueries();
+    void qc.invalidateQueries({ queryKey: ["registrations"] });
+    void qc.invalidateQueries({ queryKey: ["registration-stats"] });
+    void qc.invalidateQueries({ queryKey: ["registration-partners"] });
   };
 
   const exportCsv = () => {
@@ -589,7 +596,7 @@ function AdminPage() {
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
-            void qc.invalidateQueries();
+            void qc.invalidateQueries({ queryKey: ["registrations"] });
           }}
         />
       ) : null}
