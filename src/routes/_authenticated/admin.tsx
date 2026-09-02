@@ -41,6 +41,7 @@ function AdminPage() {
   const [category, setCategory] = useState("");
   const [district, setDistrict] = useState("");
   const [nigama, setNigama] = useState("");
+  const [partner, setPartner] = useState("");
   const [sortDesc, setSortDesc] = useState(true);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
@@ -49,7 +50,7 @@ function AdminPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<{ ids: string[]; name: string } | null>(null);
 
-  const filters = { search: search.trim(), status, course, category, district, nigama };
+  const filters = { search: search.trim(), status, course, category, district, nigama, partner };
 
   const listQuery = useQuery({
     queryKey: ["registrations", filters, page, pageSize, sortDesc],
@@ -59,10 +60,12 @@ function AdminPage() {
       if (filters.course) q = q.eq("skill_sought", filters.course);
       if (filters.category) q = q.eq("category", filters.category);
       if (filters.district) q = q.ilike("cur_district", `%${filters.district}%`);
+      if (filters.nigama) q = q.eq("nigama", filters.nigama);
+      if (filters.partner) q = q.ilike("institution_name", filters.partner);
       if (filters.search) {
         const s = filters.search.replace(/[%,()]/g, "");
         q = q.or(
-          `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%`,
+          `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,institution_name.ilike.%${s}%`,
         );
       }
       const from = page * pageSize;
@@ -71,6 +74,27 @@ function AdminPage() {
         .range(from, from + pageSize - 1);
       if (error) throw error;
       return { rows: (data ?? []) as Row[], count: count ?? 0 };
+    },
+  });
+
+  const partnersQuery = useQuery({
+    queryKey: ["registration-partners"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("registrations")
+        .select("institution_name")
+        .not("institution_name", "is", null)
+        .neq("institution_name", "")
+        .limit(10000);
+      if (error) throw error;
+      const list = Array.from(
+        new Set(
+          (data ?? [])
+            .map((r) => String(r.institution_name ?? ""))
+            .filter(Boolean)
+        )
+      ).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+      return list;
     },
   });
 
@@ -146,17 +170,14 @@ function AdminPage() {
   const confirmStatusChange = async () => {
     if (!statusTarget) return;
     const { id, status: newStatus, reason, customNote } = statusTarget;
-    const noteText = customNote.trim()
-      ? customNote.trim()
-      : reason
-      ? reason
-      : "";
+    const detail = customNote.trim() || reason || "";
+    const adminNote = detail ? `${newStatus} - ${detail}` : newStatus;
 
     const { error } = await supabase
       .from("registrations")
       .update({
         status: newStatus,
-        ...(noteText ? { admin_notes: noteText } : {}),
+        admin_notes: adminNote,
       })
       .eq("id", id);
 
@@ -164,7 +185,7 @@ function AdminPage() {
       toast.error(error.message);
       return;
     }
-    toast.success(`Status updated to ${newStatus}${noteText ? ` (${noteText})` : ""}`);
+    toast.success(`Status updated to ${newStatus}${detail ? ` (${detail})` : ""}`);
     setStatusTarget(null);
     void qc.invalidateQueries();
   };
@@ -294,7 +315,7 @@ function AdminPage() {
         </section>
 
         <section className="mt-5 rounded-xl border border-border bg-card p-3 shadow-xs sm:p-5">
-          <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+          <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
             <div className="sm:col-span-2 xl:col-span-2">
               <label className="ctrl-label text-xs" htmlFor="q">
                 Search Applicants
@@ -302,7 +323,7 @@ function AdminPage() {
               <input
                 id="q"
                 className="form-ctrl text-xs sm:text-sm h-9"
-                placeholder="Name, email, phone, city, district..."
+                placeholder="Name, email, phone, college, district..."
                 value={search}
                 onChange={(e) => resetPage(setSearch)(e.target.value)}
               />
@@ -312,6 +333,12 @@ function AdminPage() {
             <FilterSelect label="Category" value={category} onChange={resetPage(setCategory)} options={CATEGORIES} />
             <FilterSelect label="District" value={district} onChange={resetPage(setDistrict)} options={DISTRICTS["KARNATAKA"] || []} />
             <FilterSelect label="Nigama" value={nigama} onChange={resetPage(setNigama)} options={NIGAMAS} />
+            <FilterSelect
+              label="Partner"
+              value={partner}
+              onChange={resetPage(setPartner)}
+              options={partnersQuery.data ?? []}
+            />
           </div>
 
           <div className="mt-4 flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm">
@@ -459,7 +486,11 @@ function AdminPage() {
                         </div>
                       </td>
                       {COLUMNS.map((c) => {
-                        const cellVal = r[c.key];
+                        let cellVal = r[c.key];
+                        // Show status in Admin Notes when notes are empty
+                        if (c.key === "admin_notes" && (cellVal === null || cellVal === undefined || cellVal === "")) {
+                          cellVal = r["status"] || "Pending";
+                        }
                         const isUrl = typeof cellVal === "string" && cellVal.startsWith("http");
                         return (
                           <td key={c.key} className="whitespace-nowrap px-3 py-2.5 text-foreground max-w-[280px] truncate">
