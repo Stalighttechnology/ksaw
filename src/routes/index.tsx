@@ -34,6 +34,7 @@ import {
   SUBJECTS,
   TALUKS,
   TRAINING_DURATIONS,
+  normalizeCollegeName,
 } from "@/components/reg/options";
 
 
@@ -425,7 +426,7 @@ function RegistrationPage() {
       }
 
       // Prefill form states
-      setInstitutionName(rowData.institution_name || "");
+      setInstitutionName(normalizeCollegeName(rowData.institution_name) || rowData.institution_name || "");
       setCenterLocation(rowData.center_location || "");
       setFirstName(rowData.first_name || "");
       setLastName(rowData.last_name || "");

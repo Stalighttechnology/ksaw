@@ -11,8 +11,104 @@ export const COLLEGES = [
   "KSAWU VIJAYAPURA",
   "Dadapheer Huballi",
   "Hubballi Center ",
-
 ] as const;
+
+export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
+  "AVK COLLEGE HASSAN": [
+    "AVK COLLEGE HASSAN",
+    "AVK WOMENS COLLEGE",
+    "AV KANTHAMMA COLLEGE FOR WOMEN",
+    "AVK COLLEGE FOR WOMEN HASSAN",
+    "AVK COLLEGE FOR WOMEN",
+    "A V KANTHAMMA COLLEGE FOR WOMEN",
+    "A.V.K COLLEGE FOR WOMEN",
+    "AVK COLLEGE FOR WOMEN HASSA",
+    "A V KANTHAMMA COLLEGE FOR WOMEN,HASSAN",
+    "A V K COLLEGE FOR WOMEN",
+    "A.V.KCOLLEGE",
+    "A V KANTHAMMA COLLEGE FOR WOMEN HASSAN",
+    "A. V. K. FOR WOMEN HASSAN",
+    "AVK COLLLEGE FOR WOMENS HASSAN",
+    "A V KANTHAMMA COLLEG FOR WOMEN HASSAN",
+    "A V KANTHAMMA COLLEGE FOR WOMEN, HASSAN",
+    "AVKCOLLEGEFORWOMENHASSAN",
+    "A V K COLLEGE FOR WOMEN HASSAN",
+    "AVK COLLEGE FOR WOMEN, HASSAN",
+    "AVK WOMEN'S COLLAGE",
+    "AVK COLLEGE FOR WOMENS",
+    "A.V KANTHAMMA (AVK) COLLEGE FOR WOMEN",
+    "A.V KANTHAMMA COLLEGE FOR WOMEN, HASSAN",
+    "HASSAN UNIVERSITY",
+  ],
+  "TERESIAN COLLEGE MYSORE": [
+    "TERESIAN COLLEGE MYSORE",
+    "TERESIAN COLLEGE",
+  ],
+  "CENTRAL COMMERCE COLLEGE HASSAN": [
+    "CENTRAL COMMERCE COLLEGE HASSAN",
+    "CENTRAL COMMERCE COLLEGE",
+    "CENTRAL COMMERCE FIRST GRADE COLLEGE",
+    "CENTRAL COMMERCE COLLEGE,HASSAN",
+  ],
+  "MALNAD COLLEGE OF ENGINEERING HASSAN": [
+    "MALNAD COLLEGE OF ENGINEERING HASSAN",
+    "MALNAD COLLEGE OF ENGINEERING",
+    "MCE HASSAN",
+  ],
+  "KSAWU VIJAYAPURA": [
+    "KSAWU VIJAYAPURA",
+    "SHIVAKUMAR",
+    "SHIVAKUMAR E",
+    "SHIVAKUMAR. A",
+  ],
+  "PES COLLEGE MANDYA": ["PES COLLEGE MANDYA"],
+  "GOVT COLLEGE CHANNARAYAPATNA": ["GOVT COLLEGE CHANNARAYAPATNA"],
+  "GOVT FIRST GRADE WOMENS COLLEGE YADGIRI": ["GOVT FIRST GRADE WOMENS COLLEGE YADGIRI"],
+  "MARI MALLAPPA WOMENS COLLEGE MYSORE": ["MARI MALLAPPA WOMENS COLLEGE MYSORE"],
+  "SIDHARTHA COLLEGE BIDAR": ["SIDHARTHA COLLEGE BIDAR"],
+  "Dadapheer Huballi": ["Dadapheer Huballi"],
+  "Hubballi Center ": ["Hubballi Center ", "Hubballi Center"],
+};
+
+export function normalizeCollegeName(rawName?: string | null): string {
+  if (!rawName) return "";
+  const trimmed = rawName.trim();
+  if (!trimmed) return "";
+
+  for (const [canonical, aliases] of Object.entries(COLLEGE_ALIASES)) {
+    if (canonical.trim().toLowerCase() === trimmed.toLowerCase()) return canonical;
+    if (aliases.some((a) => a.trim().toLowerCase() === trimmed.toLowerCase())) {
+      return canonical;
+    }
+  }
+
+  const upper = trimmed.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (upper.includes("AVK") || upper.includes("KANTHAMMA")) return "AVK COLLEGE HASSAN";
+  if (upper.includes("TERESIAN")) return "TERESIAN COLLEGE MYSORE";
+  if (upper.includes("CENTRALCOMMERCE")) return "CENTRAL COMMERCE COLLEGE HASSAN";
+  if (upper.includes("MALNAD") || upper === "MCE" || upper.includes("MCEHASSAN")) return "MALNAD COLLEGE OF ENGINEERING HASSAN";
+  if (upper.includes("SHIVAKUMAR") || upper.includes("KSAW")) return "KSAWU VIJAYAPURA";
+  if (upper.includes("PES") && upper.includes("MANDYA")) return "PES COLLEGE MANDYA";
+  if (upper.includes("CHANNARAYAPATNA")) return "GOVT COLLEGE CHANNARAYAPATNA";
+  if (upper.includes("YADGIR")) return "GOVT FIRST GRADE WOMENS COLLEGE YADGIRI";
+  if (upper.includes("MALLAPPA")) return "MARI MALLAPPA WOMENS COLLEGE MYSORE";
+  if (upper.includes("SIDHARTHA") || upper.includes("BIDAR")) return "SIDHARTHA COLLEGE BIDAR";
+  if (upper.includes("DADAPHEER")) return "Dadapheer Huballi";
+  if (upper.includes("HUBBALLI") || upper.includes("HUBBALI")) return "Hubballi Center ";
+
+  return trimmed;
+}
+
+export function getCollegeAliases(canonicalName: string): string[] {
+  const trimmed = canonicalName.trim();
+  for (const [canonical, aliases] of Object.entries(COLLEGE_ALIASES)) {
+    if (canonical.trim().toLowerCase() === trimmed.toLowerCase()) {
+      return Array.from(new Set([canonical, ...aliases]));
+    }
+  }
+  return [canonicalName];
+}
+
 
 export const RELIGIONS = ["Buddhist", "Christian", "Hindu", "Jain", "Muslim", "Other", "Sikh"] as const;
 

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 import { SiteHeader } from "@/components/reg/SiteChrome";
 import { COLUMNS, STATUS_OPTIONS, formatCell } from "@/lib/registrationColumns";
-import { SKILLS, CATEGORIES, DISTRICTS } from "@/components/reg/options";
+import { SKILLS, CATEGORIES, DISTRICTS, COLLEGES, getCollegeAliases, normalizeCollegeName } from "@/components/reg/options";
 import { NIGAMAS } from "@/components/reg/castes";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -39,7 +39,7 @@ function AdminPage() {
   const [status, setStatus] = useState("");
   const [course, setCourse] = useState("");
   const [category, setCategory] = useState("");
-  const [district, setDistrict] = useState("");
+  const [centerLocation, setCenterLocation] = useState("");
   const [nigama, setNigama] = useState("");
   const [partner, setPartner] = useState("");
   const [sortDesc, setSortDesc] = useState(true);
@@ -50,7 +50,7 @@ function AdminPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<{ ids: string[]; name: string } | null>(null);
 
-  const filters = { search: search.trim(), status, course, category, district, nigama, partner };
+  const filters = { search: search.trim(), status, course, category, centerLocation, nigama, partner };
 
   const listQuery = useQuery({
     queryKey: ["registrations", filters, page, pageSize, sortDesc],
@@ -60,13 +60,16 @@ function AdminPage() {
       if (filters.status) q = q.eq("status", filters.status);
       if (filters.course) q = q.eq("skill_sought", filters.course);
       if (filters.category) q = q.eq("category", filters.category);
-      if (filters.district) q = q.ilike("cur_district", `%${filters.district}%`);
+      if (filters.centerLocation) q = q.ilike("center_location", `%${filters.centerLocation}%`);
       if (filters.nigama) q = q.eq("nigama", filters.nigama);
-      if (filters.partner) q = q.ilike("institution_name", filters.partner);
+      if (filters.partner) {
+        const aliases = getCollegeAliases(filters.partner);
+        q = q.in("institution_name", aliases);
+      }
       if (filters.search) {
         const s = filters.search.replace(/[%,()]/g, "");
         q = q.or(
-          `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,institution_name.ilike.%${s}%`,
+          `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,center_location.ilike.%${s}%,institution_name.ilike.%${s}%`,
         );
       }
       const from = page * pageSize;
@@ -74,31 +77,13 @@ function AdminPage() {
         .order("created_at", { ascending: !sortDesc })
         .range(from, from + pageSize - 1);
       if (error) throw error;
-      return { rows: (data ?? []) as Row[], count: count ?? 0 };
+      const rows = ((data ?? []) as Row[]).map((r) => ({
+        ...r,
+        institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
+      }));
+      return { rows, count: count ?? 0 };
     },
     staleTime: 30_000,
-  });
-
-  const partnersQuery = useQuery({
-    queryKey: ["registration-partners"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("registrations")
-        .select("institution_name")
-        .not("institution_name", "is", null)
-        .neq("institution_name", "")
-        .limit(10000);
-      if (error) throw error;
-      const list = Array.from(
-        new Set(
-          (data ?? [])
-            .map((r) => String(r.institution_name ?? ""))
-            .filter(Boolean)
-        )
-      ).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
-      return list;
-    },
-    staleTime: 5 * 60_000,
   });
 
   const statsQuery = useQuery({
@@ -106,7 +91,7 @@ function AdminPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("registrations")
-        .select("status, skill_sought, gender, category, created_at, cur_district")
+        .select("status, skill_sought, gender, category, created_at, cur_district, center_location")
         .limit(10000);
       if (error) throw error;
       return data ?? [];
@@ -123,19 +108,20 @@ function AdminPage() {
     const byStatus: Record<string, number> = {};
     const byCourse: Record<string, number> = {};
     const byGender: Record<string, number> = {};
-    const byDistrict: Record<string, number> = {};
+    const byCenter: Record<string, number> = {};
     let today = 0;
     let week = 0;
     for (const r of rows) {
       byStatus[r.status ?? "Pending"] = (byStatus[r.status ?? "Pending"] ?? 0) + 1;
       if (r.skill_sought) byCourse[r.skill_sought] = (byCourse[r.skill_sought] ?? 0) + 1;
       if (r.gender) byGender[r.gender] = (byGender[r.gender] ?? 0) + 1;
-      if (r.cur_district) byDistrict[r.cur_district] = (byDistrict[r.cur_district] ?? 0) + 1;
+      const center = r.center_location || r.cur_district;
+      if (center) byCenter[center] = (byCenter[center] ?? 0) + 1;
       const t = new Date(r.created_at).getTime();
       if (t >= startOfToday) today += 1;
       if (t >= startOfWeek) week += 1;
     }
-    return { total: rows.length, today, week, byStatus, byCourse, byGender, byDistrict };
+    return { total: rows.length, today, week, byStatus, byCourse, byGender, byCenter };
   }, [statsQuery.data]);
 
   const total = listQuery.data?.count ?? 0;
@@ -226,7 +212,6 @@ function AdminPage() {
     setDeleteTarget(null);
     void qc.invalidateQueries({ queryKey: ["registrations"] });
     void qc.invalidateQueries({ queryKey: ["registration-stats"] });
-    void qc.invalidateQueries({ queryKey: ["registration-partners"] });
   };
 
   const exportCsv = () => {
@@ -320,7 +305,7 @@ function AdminPage() {
           <Breakdown title="By Course" data={stats.byCourse} />
           <Breakdown title="By Gender" data={stats.byGender} />
           <div className="sm:col-span-2 lg:col-span-1">
-            <Breakdown title="Top Districts" data={stats.byDistrict} limit={6} />
+            <Breakdown title="Center Locations" data={stats.byCenter} limit={6} />
           </div>
         </section>
 
@@ -333,7 +318,7 @@ function AdminPage() {
               <input
                 id="q"
                 className="form-ctrl text-xs sm:text-sm h-9"
-                placeholder="Name, email, phone, college, district..."
+                placeholder="Name, email, phone, college, center..."
                 value={search}
                 onChange={(e) => resetPage(setSearch)(e.target.value)}
               />
@@ -341,13 +326,13 @@ function AdminPage() {
             <FilterSelect label="Status" value={status} onChange={resetPage(setStatus)} options={STATUS_OPTIONS} />
             <FilterSelect label="Course" value={course} onChange={resetPage(setCourse)} options={SKILLS} />
             <FilterSelect label="Category" value={category} onChange={resetPage(setCategory)} options={CATEGORIES} />
-            <FilterSelect label="District" value={district} onChange={resetPage(setDistrict)} options={DISTRICTS["KARNATAKA"] || []} />
+            <FilterSelect label="Center Location" value={centerLocation} onChange={resetPage(setCenterLocation)} options={DISTRICTS["KARNATAKA"] || []} />
             <FilterSelect label="Nigama" value={nigama} onChange={resetPage(setNigama)} options={NIGAMAS} />
             <FilterSelect
               label="Partner"
               value={partner}
               onChange={resetPage(setPartner)}
-              options={partnersQuery.data ?? []}
+              options={COLLEGES}
             />
           </div>
 
@@ -956,7 +941,10 @@ function ViewDialog({
 }
 
 function EditDialog({ row, onClose, onSaved }: { row: Row; onClose: () => void; onSaved: () => void }) {
-  const [form, setForm] = useState<Record<string, unknown>>({ ...row });
+  const [form, setForm] = useState<Record<string, unknown>>({
+    ...row,
+    institution_name: normalizeCollegeName(row["institution_name"] as string) || row["institution_name"],
+  });
   const [busy, setBusy] = useState(false);
 
   const visibleColumns = COLUMNS.filter((c) => c.key !== "created_at" && shouldShowField(c.key, form as Row));
@@ -983,6 +971,9 @@ function EditDialog({ row, onClose, onSaved }: { row: Row; onClose: () => void; 
     for (const c of COLUMNS) {
       if (c.key === "created_at") continue;
       let v = form[c.key];
+      if (c.key === "institution_name") {
+        v = normalizeCollegeName(v as string) || v;
+      }
       if (c.type === "array") {
         v = typeof v === "string" ? v.split(",").map((s) => s.trim()).filter(Boolean) : (v ?? []);
       } else if (c.type === "date") {
