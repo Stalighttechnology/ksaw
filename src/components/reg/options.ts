@@ -8,8 +8,10 @@ export const COLLEGES = [
   "GOVT FIRST GRADE WOMENS COLLEGE YADGIRI",
   "MARI MALLAPPA WOMENS COLLEGE MYSORE",
   "SIDHARTHA COLLEGE BIDAR",
-  "KSAW VIJAYAPURA",
+  "KSAWU VIJAYAPURA",
   "Dadapheer Huballi",
+  "Hubballi Center ",
+
 ] as const;
 
 export const RELIGIONS = ["Buddhist", "Christian", "Hindu", "Jain", "Muslim", "Other", "Sikh"] as const;
