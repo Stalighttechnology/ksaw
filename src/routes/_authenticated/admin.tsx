@@ -29,7 +29,13 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 type Row = Record<string, unknown> & { id: string };
 
-const PAGE_SIZES = [10, 25, 50, 100];
+const PAGE_SIZES = [
+  { label: "10 / page", value: 10 },
+  { label: "25 / page", value: 25 },
+  { label: "50 / page", value: 50 },
+  { label: "100 / page", value: 100 },
+  { label: "View All", value: -1 },
+];
 
 function AdminPage() {
   const navigate = useNavigate();
@@ -72,10 +78,14 @@ function AdminPage() {
           `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,center_location.ilike.%${s}%,institution_name.ilike.%${s}%`,
         );
       }
-      const from = page * pageSize;
-      const { data, error, count } = await q
-        .order("created_at", { ascending: !sortDesc })
-        .range(from, from + pageSize - 1);
+      let req = q.order("created_at", { ascending: !sortDesc });
+      if (pageSize > 0) {
+        const from = page * pageSize;
+        req = req.range(from, from + pageSize - 1);
+      } else {
+        req = req.limit(10000);
+      }
+      const { data, error, count } = await req;
       if (error) throw error;
       const rows = ((data ?? []) as Row[]).map((r) => ({
         ...r,
@@ -125,7 +135,7 @@ function AdminPage() {
   }, [statsQuery.data]);
 
   const total = listQuery.data?.count ?? 0;
-  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const pageCount = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
 
   const resetPage = <T,>(setter: (v: T) => void) => (v: T) => {
     setter(v);
@@ -377,9 +387,9 @@ function AdminPage() {
                     setPage(0);
                   }}
                 >
-                  {PAGE_SIZES.map((n) => (
-                    <option key={n} value={n}>
-                      {n} / page
+                  {PAGE_SIZES.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
                     </option>
                   ))}
                 </select>
@@ -388,18 +398,26 @@ function AdminPage() {
               <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border/80 text-xs">
                 <button
                   type="button"
-                  disabled={page === 0}
+                  disabled={page === 0 || pageSize === -1}
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
                   className="inline-flex items-center justify-center h-7 px-2 text-xs font-medium rounded-md bg-card border border-border/60 text-foreground hover:bg-muted disabled:opacity-50 disabled:pointer-events-none transition-colors shadow-2xs cursor-pointer"
                 >
                   ← Prev
                 </button>
                 <span className="px-2 text-xs font-medium text-muted-foreground whitespace-nowrap">
-                  Page <strong className="text-foreground">{page + 1}</strong> of <strong className="text-foreground">{pageCount}</strong>
+                  {pageSize === -1 ? (
+                    <>
+                      All <strong className="text-foreground">{total}</strong> Records
+                    </>
+                  ) : (
+                    <>
+                      Page <strong className="text-foreground">{page + 1}</strong> of <strong className="text-foreground">{pageCount}</strong>
+                    </>
+                  )}
                 </span>
                 <button
                   type="button"
-                  disabled={page + 1 >= pageCount}
+                  disabled={page + 1 >= pageCount || pageSize === -1}
                   onClick={() => setPage((p) => p + 1)}
                   className="inline-flex items-center justify-center h-7 px-2 text-xs font-medium rounded-md bg-card border border-border/60 text-foreground hover:bg-muted disabled:opacity-50 disabled:pointer-events-none transition-colors shadow-2xs cursor-pointer"
                 >

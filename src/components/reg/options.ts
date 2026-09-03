@@ -11,6 +11,7 @@ export const COLLEGES = [
   "KSAWU VIJAYAPURA",
   "Dadapheer Huballi",
   "Hubballi Center ",
+  "SJAM College Ramnagar",
 ] as const;
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
