@@ -116,7 +116,10 @@ function AdminPage() {
 
   const stats = useMemo(() => {
     const rows = statsQuery.data ?? [];
-    const now = Date.now();
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).getTime();
+
     const byStatus: Record<string, number> = {};
     const byCourse: Record<string, number> = {};
     const byGender: Record<string, number> = {};
@@ -129,8 +132,8 @@ function AdminPage() {
       if (r.gender) byGender[r.gender] = (byGender[r.gender] ?? 0) + 1;
       if (r.cur_district) byDistrict[r.cur_district] = (byDistrict[r.cur_district] ?? 0) + 1;
       const t = new Date(r.created_at).getTime();
-      if (now - t < 86400000) today += 1;
-      if (now - t < 7 * 86400000) week += 1;
+      if (t >= startOfToday) today += 1;
+      if (t >= startOfWeek) week += 1;
     }
     return { total: rows.length, today, week, byStatus, byCourse, byGender, byDistrict };
   }, [statsQuery.data]);
