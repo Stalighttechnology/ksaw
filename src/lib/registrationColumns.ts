@@ -1,3 +1,5 @@
+import { COLLEGES } from "@/components/reg/options";
+
 export type ColumnDef = {
   key: string;
   label: string;
@@ -15,7 +17,7 @@ export const COLUMNS: ColumnDef[] = [
   { key: "status", label: "Status", group: "Meta", type: "select", options: STATUS_OPTIONS },
   { key: "admin_notes", label: "Admin Notes", group: "Meta" },
 
-  { key: "institution_name", label: "College / Institute / University", group: "Institution" },
+  { key: "institution_name", label: "College / Institute / University", group: "Institution", type: "select", options: COLLEGES },
   { key: "center_location", label: "Center Location", group: "Institution" },
 
   { key: "first_name", label: "First Name", group: "Personal" },

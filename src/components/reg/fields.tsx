@@ -126,7 +126,11 @@ export function SelectField({
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
       >
-        {withPlaceholder ? <option value="">{placeholder}</option> : null}
+        {withPlaceholder ? (
+          <option value="" disabled hidden>
+            {placeholder}
+          </option>
+        ) : null}
         {options.map((o) => (
           <option key={o} value={o}>
             {o}

@@ -1,3 +1,17 @@
+export const COLLEGES = [
+  "AVK COLLEGE HASSAN",
+  "TERESIAN COLLEGE MYSORE",
+  "CENTRAL COMMERCE COLLEGE HASSAN",
+  "MALNAD COLLEGE OF ENGINEERING HASSAN",
+  "PES COLLEGE MANDYA",
+  "GOVT COLLEGE CHANNARAYAPATNA",
+  "GOVT FIRST GRADE WOMENS COLLEGE YADGIRI",
+  "MARI MALLAPPA WOMENS COLLEGE MYSORE",
+  "SIDHARTHA COLLEGE BIDAR",
+  "KSAW VIJAYAPURA",
+  "Dadapheer Huballi",
+] as const;
+
 export const RELIGIONS = ["Buddhist", "Christian", "Hindu", "Jain", "Muslim", "Other", "Sikh"] as const;
 
 export const CATEGORIES = ["General", "SC", "ST", "OBC", "Minority"] as const;

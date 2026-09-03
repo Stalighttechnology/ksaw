@@ -18,6 +18,7 @@ import { CASTES, CASTE_CATEGORIES, CASTE_NAMES, NIGAMAS } from "@/components/reg
 import {
   CASTE_CERTIFICATE_TYPES,
   CATEGORIES,
+  COLLEGES,
   DISTRICTS,
   EDUCATION_LEVELS,
   LANGUAGES_KNOWN,
@@ -1010,12 +1011,13 @@ function RegistrationPage() {
           <form onSubmit={onSubmit} noValidate>
             <Section title="Center / Institute Details">
               <Row>
-                <TextField
+                <SelectField
                   label="Name of College / Institute / University"
                   required
-                  placeholder="Enter Name of College / Institute / University"
+                  placeholder="Select College / Institute / University"
+                  options={COLLEGES}
                   value={institutionName}
-                  onChange={(v) => setInstitutionName(v.toUpperCase())}
+                  onChange={setInstitutionName}
                   error={errors["institutionName"]}
                 />
                 <SelectField
