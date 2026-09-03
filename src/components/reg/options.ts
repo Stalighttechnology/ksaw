@@ -15,7 +15,8 @@ export const COLLEGES = [
   "Dr.G Shankar Govt Women's First Grade College & PG Study Centre, Ajjarkadu",
   "Government First Grade College & Centre for Post Graduate Studies, Thenkanidiyur",
   "JPM College Channapatna ",
-  "VSMS SOMASHEKHAR R KOTHIWALE INSTITUTE OF TECHNOLOGY, NIPANI"
+  "VSMS SOMASHEKHAR R KOTHIWALE INSTITUTE OF TECHNOLOGY, NIPANI",
+  "Shivakumar",
 ] as const;
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
