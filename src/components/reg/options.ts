@@ -63,6 +63,9 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
   ],
   "KSAWU VIJAYAPURA": [
     "KSAWU VIJAYAPURA",
+  ],
+  "Shivakumar": [
+    "Shivakumar",
     "SHIVAKUMAR",
     "SHIVAKUMAR E",
     "SHIVAKUMAR. A",
@@ -93,7 +96,8 @@ export function normalizeCollegeName(rawName?: string | null): string {
   if (upper.includes("TERESIAN")) return "TERESIAN COLLEGE MYSORE";
   if (upper.includes("CENTRALCOMMERCE")) return "CENTRAL COMMERCE COLLEGE HASSAN";
   if (upper.includes("MALNAD") || upper === "MCE" || upper.includes("MCEHASSAN")) return "MALNAD COLLEGE OF ENGINEERING HASSAN";
-  if (upper.includes("SHIVAKUMAR") || upper.includes("KSAW")) return "KSAWU VIJAYAPURA";
+  if (upper.includes("SHIVAKUMAR")) return "Shivakumar";
+  if (upper.includes("KSAW")) return "KSAWU VIJAYAPURA";
   if (upper.includes("PES") && upper.includes("MANDYA")) return "PES COLLEGE MANDYA";
   if (upper.includes("CHANNARAYAPATNA")) return "GOVT COLLEGE CHANNARAYAPATNA";
   if (upper.includes("YADGIR")) return "GOVT FIRST GRADE WOMENS COLLEGE YADGIRI";
