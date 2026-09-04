@@ -101,7 +101,7 @@ function AdminPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("registrations")
-        .select("status, skill_sought, gender, category, created_at, cur_district, center_location")
+        .select("status, skill_sought, gender, category, created_at, cur_district, center_location, institution_name")
         .limit(10000);
       if (error) throw error;
       return data ?? [];
@@ -119,6 +119,7 @@ function AdminPage() {
     const byCourse: Record<string, number> = {};
     const byGender: Record<string, number> = {};
     const byCenter: Record<string, number> = {};
+    const byPartner: Record<string, number> = {};
     let today = 0;
     let week = 0;
     for (const r of rows) {
@@ -127,11 +128,13 @@ function AdminPage() {
       if (r.gender) byGender[r.gender] = (byGender[r.gender] ?? 0) + 1;
       const center = r.center_location || r.cur_district;
       if (center) byCenter[center] = (byCenter[center] ?? 0) + 1;
+      const partnerName = normalizeCollegeName(r.institution_name) || r.institution_name;
+      if (partnerName) byPartner[partnerName] = (byPartner[partnerName] ?? 0) + 1;
       const t = new Date(r.created_at).getTime();
       if (t >= startOfToday) today += 1;
       if (t >= startOfWeek) week += 1;
     }
-    return { total: rows.length, today, week, byStatus, byCourse, byGender, byCenter };
+    return { total: rows.length, today, week, byStatus, byCourse, byGender, byCenter, byPartner };
   }, [statsQuery.data]);
 
   const total = listQuery.data?.count ?? 0;
@@ -311,12 +314,28 @@ function AdminPage() {
           ))}
         </section>
 
-        <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Breakdown title="By Course" data={stats.byCourse} />
-          <Breakdown title="By Gender" data={stats.byGender} />
-          <div className="sm:col-span-2 lg:col-span-1">
-            <Breakdown title="Center Locations" data={stats.byCenter} limit={6} />
-          </div>
+        <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Breakdown
+            title="By Course"
+            data={stats.byCourse}
+            onItemClick={(selectedCourse) => resetPage(setCourse)(selectedCourse)}
+          />
+          <Breakdown
+            title="By Partner"
+            data={stats.byPartner}
+            limit={8}
+            onItemClick={(selectedPartner) => resetPage(setPartner)(selectedPartner)}
+          />
+          <Breakdown
+            title="By Gender"
+            data={stats.byGender}
+          />
+          <Breakdown
+            title="Center Locations"
+            data={stats.byCenter}
+            limit={8}
+            onItemClick={(selectedCenter) => resetPage(setCenterLocation)(selectedCenter)}
+          />
         </section>
 
         <section className="mt-5 rounded-xl border border-border bg-card p-3 shadow-xs sm:p-5">
@@ -742,28 +761,70 @@ function StatCard({ label, value }: { label: string; value: number }) {
   );
 }
 
-function Breakdown({ title, data, limit = 10 }: { title: string; data: Record<string, number>; limit?: number }) {
-  const entries = Object.entries(data)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit);
-  const max = entries[0]?.[1] ?? 1;
+function Breakdown({
+  title,
+  data,
+  limit = 10,
+  onItemClick,
+}: {
+  title: string;
+  data: Record<string, number>;
+  limit?: number;
+  onItemClick?: (key: string) => void;
+}) {
+  const [showAll, setShowAll] = useState(false);
+  const allEntries = useMemo(
+    () => Object.entries(data).sort((a, b) => b[1] - a[1]),
+    [data],
+  );
+  const entries = showAll ? allEntries : allEntries.slice(0, limit);
+  const max = allEntries[0]?.[1] ?? 1;
+
   return (
-    <div className="rounded-lg border border-border bg-card p-3">
-      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-      {entries.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">No data yet.</p> : null}
-      <ul className="mt-2 space-y-2">
-        {entries.map(([k, v]) => (
-          <li key={k}>
-            <div className="flex justify-between text-xs">
-              <span className="truncate pr-2 text-foreground">{k}</span>
-              <span className="text-muted-foreground">{v}</span>
-            </div>
-            <div className="mt-1 h-1.5 rounded bg-muted">
-              <div className="h-1.5 rounded bg-primary" style={{ width: `${(v / max) * 100}%` }} />
-            </div>
-          </li>
-        ))}
-      </ul>
+    <div className="rounded-lg border border-border bg-card p-3 flex flex-col justify-between">
+      <div>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+          <span className="text-[11px] font-medium text-muted-foreground">
+            {allEntries.length} {allEntries.length === 1 ? "entry" : "entries"}
+          </span>
+        </div>
+        {allEntries.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">No data yet.</p> : null}
+        <ul className="mt-2 space-y-2 max-h-[260px] overflow-y-auto pr-1">
+          {entries.map(([k, v]) => (
+            <li
+              key={k}
+              onClick={() => onItemClick?.(k)}
+              className={`rounded-md p-1 -mx-1 transition-colors ${
+                onItemClick ? "cursor-pointer hover:bg-muted/60" : ""
+              }`}
+              title={onItemClick ? `Filter by ${k}` : undefined}
+            >
+              <div className="flex justify-between text-xs items-center gap-2">
+                <span className="truncate pr-1 text-foreground font-medium">{k}</span>
+                <span className="shrink-0 font-semibold text-primary tabular-nums">{v}</span>
+              </div>
+              <div className="mt-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-1.5 rounded-full bg-primary transition-all duration-300"
+                  style={{ width: `${(v / max) * 100}%` }}
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+      {allEntries.length > limit ? (
+        <div className="mt-2 pt-2 border-t border-border/60 text-right">
+          <button
+            type="button"
+            onClick={() => setShowAll((prev) => !prev)}
+            className="text-[11px] font-medium text-primary hover:underline cursor-pointer"
+          >
+            {showAll ? "Show Less" : `View All (${allEntries.length})`}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
