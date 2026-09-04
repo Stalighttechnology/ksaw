@@ -16,10 +16,18 @@ export const COLLEGES = [
   "Government First Grade College & Centre for Post Graduate Studies, Thenkanidiyur",
   "JPM College Channapatna ",
   "VSMS SOMASHEKHAR R KOTHIWALE INSTITUTE OF TECHNOLOGY, NIPANI",
+  "Angadi Institute of Technology Belagavi",
   "Shivakumar",
 ] as const;
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
+  "Angadi Institute of Technology Belagavi": [
+    "Angadi Institute of Technology Belagavi",
+    "ANGADI INSTITUTE OF TECHNOLOGY BELAGAVI",
+    "Angadi Institute of Technology Management Belagavi",
+    "AITM BELAGAVI",
+    "AITM",
+  ],
   "AVK COLLEGE HASSAN": [
     "AVK COLLEGE HASSAN",
     "AVK WOMENS COLLEGE",
@@ -105,6 +113,7 @@ export function normalizeCollegeName(rawName?: string | null): string {
   if (upper.includes("SIDHARTHA") || upper.includes("BIDAR")) return "SIDHARTHA COLLEGE BIDAR";
   if (upper.includes("DADAPHEER")) return "Dadapheer Huballi";
   if (upper.includes("HUBBALLI") || upper.includes("HUBBALI")) return "Hubballi Center ";
+  if (upper.includes("ANGADI") || upper.includes("AITM")) return "Angadi Institute of Technology Belagavi";
 
   return trimmed;
 }
