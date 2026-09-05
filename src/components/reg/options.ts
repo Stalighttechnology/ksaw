@@ -18,6 +18,12 @@ export const COLLEGES = [
   "VSMS SOMASHEKHAR R KOTHIWALE INSTITUTE OF TECHNOLOGY, NIPANI",
   "Angadi Institute of Technology Belagavi",
   "Shivakumar",
+  "Pandavpura Govt College",
+  "Vijaya First Grade Co-Education College B.Ed",
+  "K R Pete Govt College Co-Education",
+  "Girls College K R Pete",
+  "Channarayapatna Govt College",
+  "BGS College Channarayapatna",
 ] as const;
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
