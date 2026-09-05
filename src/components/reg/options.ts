@@ -24,6 +24,7 @@ export const COLLEGES = [
   "Girls College K R Pete",
   "Channarayapatna Govt College",
   "BGS College Channarayapatna",
+  "KLE BCA College Athani",
 ] as const;
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
