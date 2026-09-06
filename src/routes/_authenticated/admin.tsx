@@ -112,7 +112,7 @@ function AdminPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("registrations")
-        .select("status, skill_sought, gender, category, created_at, cur_district, center_location, institution_name")
+        .select("status, skill_sought, gender, category, created_at, cur_district, center_location, institution_name, nigama")
         .limit(10000);
       if (error) throw error;
       return data ?? [];
@@ -131,6 +131,7 @@ function AdminPage() {
     const byGender: Record<string, number> = {};
     const byCenter: Record<string, number> = {};
     const byPartner: Record<string, number> = {};
+    const byNigama: Record<string, number> = {};
     let today = 0;
     let week = 0;
     for (const r of rows) {
@@ -141,11 +142,12 @@ function AdminPage() {
       if (center) byCenter[center] = (byCenter[center] ?? 0) + 1;
       const partnerName = normalizeCollegeName(r.institution_name) || r.institution_name;
       if (partnerName) byPartner[partnerName] = (byPartner[partnerName] ?? 0) + 1;
+      if (r.nigama) byNigama[r.nigama] = (byNigama[r.nigama] ?? 0) + 1;
       const t = new Date(r.created_at).getTime();
       if (t >= startOfToday) today += 1;
       if (t >= startOfWeek) week += 1;
     }
-    return { total: rows.length, today, week, byStatus, byCourse, byGender, byCenter, byPartner };
+    return { total: rows.length, today, week, byStatus, byCourse, byGender, byCenter, byPartner, byNigama };
   }, [statsQuery.data]);
 
   const total = listQuery.data?.count ?? 0;
@@ -325,11 +327,17 @@ function AdminPage() {
           ))}
         </section>
 
-        <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
           <Breakdown
             title="By Course"
             data={stats.byCourse}
             onItemClick={(selectedCourse) => resetPage(setCourse)(selectedCourse)}
+          />
+          <Breakdown
+            title="By Nigama"
+            data={stats.byNigama}
+            limit={8}
+            onItemClick={(selectedNigama) => resetPage(setNigama)(selectedNigama)}
           />
           <Breakdown
             title="By Partner"
