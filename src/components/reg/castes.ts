@@ -735,3 +735,37 @@ export const CASTE_NAMES = CASTES.map((c) => c.name);
 export const CASTE_CATEGORIES = Array.from(new Set(CASTES.map((c) => c.category))).filter((cat) => cat !== "nan" && cat !== "NaN");
 
 export const NIGAMAS = Array.from(new Set(CASTES.map((c) => c.nigama))).filter((nig) => nig !== "nan" && nig !== "NaN");
+
+export const NIGAMA_ALIASES: Record<string, readonly string[]> = {
+  "Vokkaliga": ["Vokkaliga", "VOKKALIGA", "vokkaliga"],
+  "Veerashaiva Lingayat": ["Veerashaiva Lingayat", "Veerashaiva Lingayath", "LINGAYAT", "LINGAYATH", "Lingayat", "Lingayath"],
+};
+
+export function normalizeNigamaName(rawName?: string | null): string {
+  if (!rawName) return "";
+  const trimmed = rawName.trim();
+  if (!trimmed) return "";
+
+  for (const [canonical, aliases] of Object.entries(NIGAMA_ALIASES)) {
+    if (canonical.toLowerCase() === trimmed.toLowerCase()) return canonical;
+    if (aliases.some((a) => a.toLowerCase() === trimmed.toLowerCase())) {
+      return canonical;
+    }
+  }
+
+  // Exact match with known NIGAMAS
+  const known = NIGAMAS.find((n) => n.toLowerCase() === trimmed.toLowerCase());
+  if (known) return known;
+
+  return trimmed;
+}
+
+export function getNigamaAliases(canonicalName: string): string[] {
+  const trimmed = canonicalName.trim();
+  for (const [canonical, aliases] of Object.entries(NIGAMA_ALIASES)) {
+    if (canonical.toLowerCase() === trimmed.toLowerCase()) {
+      return Array.from(new Set([canonical, ...aliases]));
+    }
+  }
+  return [canonicalName];
+}

@@ -17,7 +17,14 @@ import {
   getCollegeAliases,
   normalizeCollegeName,
 } from "@/components/reg/options";
-import { NIGAMAS, CASTES, CASTE_NAMES, CASTE_CATEGORIES } from "@/components/reg/castes";
+import {
+  NIGAMAS,
+  CASTES,
+  CASTE_NAMES,
+  CASTE_CATEGORIES,
+  normalizeNigamaName,
+  getNigamaAliases,
+} from "@/components/reg/castes";
 import { supabase } from "@/integrations/supabase/client";
 
 const title = "Registrations Dashboard | Admin";
@@ -78,7 +85,10 @@ function AdminPage() {
       if (filters.course) q = q.eq("skill_sought", filters.course);
       if (filters.category) q = q.eq("category", filters.category);
       if (filters.centerLocation) q = q.ilike("center_location", `%${filters.centerLocation}%`);
-      if (filters.nigama) q = q.eq("nigama", filters.nigama);
+      if (filters.nigama) {
+        const nigamaAliases = getNigamaAliases(filters.nigama);
+        q = q.in("nigama", nigamaAliases);
+      }
       if (filters.partner) {
         const aliases = getCollegeAliases(filters.partner);
         q = q.in("institution_name", aliases);
@@ -101,6 +111,7 @@ function AdminPage() {
       const rows = ((data ?? []) as Row[]).map((r) => ({
         ...r,
         institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
+        nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
       }));
       return { rows, count: count ?? 0 };
     },
@@ -142,7 +153,8 @@ function AdminPage() {
       if (center) byCenter[center] = (byCenter[center] ?? 0) + 1;
       const partnerName = normalizeCollegeName(r.institution_name) || r.institution_name;
       if (partnerName) byPartner[partnerName] = (byPartner[partnerName] ?? 0) + 1;
-      if (r.nigama) byNigama[r.nigama] = (byNigama[r.nigama] ?? 0) + 1;
+      const nigamaName = normalizeNigamaName(r.nigama) || r.nigama;
+      if (nigamaName) byNigama[nigamaName] = (byNigama[nigamaName] ?? 0) + 1;
       const t = new Date(r.created_at).getTime();
       if (t >= startOfToday) today += 1;
       if (t >= startOfWeek) week += 1;
