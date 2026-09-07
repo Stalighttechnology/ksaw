@@ -1311,45 +1311,109 @@ function EditDialog({ row, onClose, onSaved }: { row: Row; onClose: () => void; 
                   dynamicOptions = [value, ...dynamicOptions];
                 }
 
-                const isDocument = c.group === "Documents" && c.type !== "bool";
+                const isDocument =
+                  (c.group === "Documents" ||
+                    c.key.endsWith("_proof") ||
+                    c.key === "profile_image") &&
+                  c.type !== "bool";
+
+                const getDisplayFileName = (url: string) => {
+                  if (!url) return "";
+                  try {
+                    const parsed = new URL(url);
+                    const parts = parsed.pathname.split("/");
+                    const last = decodeURIComponent(parts[parts.length - 1] || "");
+                    return last.replace(/^[a-z0-9]+_\d+_/, "") || last;
+                  } catch {
+                    const parts = url.split("/");
+                    const last = parts[parts.length - 1] || "";
+                    return last.replace(/^[a-z0-9]+_\d+_/, "") || url;
+                  }
+                };
 
                 return (
-                  <div key={c.key} className="space-y-1">
+                  <div key={c.key} className="space-y-1.5">
                     <div className="flex items-center justify-between gap-1">
-                      <label className="text-xs font-medium text-foreground">{c.label}</label>
-                      {isDocument && value && (
-                        <a
-                          href={value}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-0.5"
-                          title="Open document in new tab"
-                        >
-                          View ↗
-                        </a>
-                      )}
+                      <label className="text-xs font-semibold text-foreground">{c.label}</label>
                     </div>
 
                     {isDocument ? (
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-1.5">
+                      <div className="rounded-md border border-border/80 bg-background/60 p-2 space-y-2 shadow-xs">
+                        {value ? (
+                          <div className="flex items-center justify-between gap-2 bg-muted/40 p-1.5 px-2.5 rounded border border-border/60">
+                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                              <span className="text-xs">📎</span>
+                              <a
+                                href={value}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs font-medium text-primary hover:underline truncate"
+                                title={value}
+                              >
+                                {getDisplayFileName(value)}
+                              </a>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <a
+                                href={value}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded transition-colors"
+                              >
+                                View ↗
+                              </a>
+                              <label
+                                className={`inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-foreground bg-muted hover:bg-muted/80 border border-border rounded cursor-pointer transition-colors ${
+                                  uploadingKey === c.key ? "opacity-50 pointer-events-none" : ""
+                                }`}
+                              >
+                                {uploadingKey === c.key ? "Uploading..." : "Replace"}
+                                <input
+                                  type="file"
+                                  className="sr-only"
+                                  accept="image/*,application/pdf"
+                                  disabled={uploadingKey === c.key}
+                                  onChange={(e) => void handleFileUpload(c.key, e.target.files?.[0])}
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => setForm((f) => ({ ...f, [c.key]: "" }))}
+                                className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-destructive bg-destructive/10 hover:bg-destructive/20 border border-destructive/30 rounded transition-colors cursor-pointer"
+                                title="Delete document reference"
+                              >
+                                Delete ✕
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <label
+                              className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 border border-dashed border-primary/50 hover:border-primary bg-primary/5 hover:bg-primary/10 text-primary rounded-md text-xs font-semibold cursor-pointer transition-all ${
+                                uploadingKey === c.key ? "opacity-50 pointer-events-none" : ""
+                              }`}
+                            >
+                              <span>{uploadingKey === c.key ? "⏳ Uploading file..." : "📤 Choose File to Upload"}</span>
+                              <input
+                                type="file"
+                                className="sr-only"
+                                accept="image/*,application/pdf"
+                                disabled={uploadingKey === c.key}
+                                onChange={(e) => void handleFileUpload(c.key, e.target.files?.[0])}
+                              />
+                            </label>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-1.5 pt-0.5">
+                          <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider shrink-0">URL:</span>
                           <input
-                            className="form-ctrl text-xs truncate flex-1"
+                            className="form-ctrl text-[11px] h-7 truncate flex-1 font-mono bg-background"
                             type="text"
                             value={value}
                             onChange={(e) => setForm((f) => ({ ...f, [c.key]: e.target.value }))}
-                            placeholder="File URL or Google Drive link..."
+                            placeholder="Or paste direct URL / Google Drive link..."
                           />
-                          <label className={`cursor-pointer inline-flex items-center justify-center px-2.5 py-1.5 rounded text-xs font-semibold border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 transition-colors shrink-0 ${uploadingKey === c.key ? "opacity-50 pointer-events-none" : ""}`}>
-                            {uploadingKey === c.key ? "Uploading..." : "Upload / Replace"}
-                            <input
-                              type="file"
-                              className="sr-only"
-                              accept="image/*,application/pdf"
-                              disabled={uploadingKey === c.key}
-                              onChange={(e) => void handleFileUpload(c.key, e.target.files?.[0])}
-                            />
-                          </label>
                         </div>
                       </div>
                     ) : c.key === "languages_known" ? (
