@@ -599,31 +599,48 @@ function AdminPage() {
                         );
                       })}
                       <td className="whitespace-nowrap px-3 py-2.5 bg-muted/10">
-                        {curStatus !== "Pending" ? (
-                          <div className="flex items-center gap-2 relative">
-                            <span
-                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold shadow-2xs ${
-                                curStatus === "Approved"
-                                  ? "bg-emerald-600 text-white"
-                                  : curStatus === "Sent to Department"
-                                  ? "bg-sky-600 text-white"
-                                  : curStatus === "Approved by Dept"
-                                  ? "bg-indigo-600 text-white"
-                                  : curStatus === "Rejected"
-                                  ? "bg-red-600 text-white"
-                                  : "bg-amber-600 text-white"
-                              }`}
+                        {curStatus === "Pending" ? (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => requestStatusChange(r, "Approved")}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all cursor-pointer"
+                              title="Step 1: Admin Approval"
                             >
-                              {curStatus === "Approved"
-                                ? "✓ Approved"
-                                : curStatus === "Sent to Department"
-                                ? "📤 Sent to Dept"
-                                : curStatus === "Approved by Dept"
-                                ? "🏛️ Approved by Dept"
-                                : curStatus === "Rejected"
-                                ? "✕ Rejected"
-                                : "📄 Pending Doc"}
+                              ✓ Approve
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => requestStatusChange(r, "Rejected")}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-red-500/15 text-red-700 hover:bg-red-500/25 border border-red-500/30 transition-colors cursor-pointer"
+                              title="Set status to Rejected"
+                            >
+                              ✕ Reject
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => requestStatusChange(r, "Pending Document")}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 border border-amber-500/30 transition-colors cursor-pointer"
+                              title="Set status to Pending Document"
+                            >
+                              📄 Pending Doc
+                            </button>
+                          </div>
+                        ) : curStatus === "Approved" ? (
+                          <div className="flex items-center gap-2 relative">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-600 text-white shadow-2xs">
+                              ✓ Approved
                             </span>
+
+                            {/* Step 2 Trigger: Sent to Department */}
+                            <button
+                              type="button"
+                              onClick={() => requestStatusChange(r, "Sent to Department")}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white shadow-xs transition-all cursor-pointer animate-pulse"
+                              title="Step 2: Forward to Department"
+                            >
+                              📤 Sent to Dept →
+                            </button>
 
                             <div className="relative">
                               <button
@@ -631,20 +648,18 @@ function AdminPage() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setOpenChangeMenuId(openChangeMenuId === r.id ? null : r.id);
-                                  setOpenApproveMenuId(null);
                                 }}
-                                className="text-xs text-muted-foreground hover:text-foreground underline transition-colors cursor-pointer inline-flex items-center gap-0.5"
+                                className="text-xs text-muted-foreground hover:text-foreground underline transition-colors cursor-pointer"
                               >
                                 Change ▾
                               </button>
-
                               {openChangeMenuId === r.id && (
                                 <div
                                   onClick={(e) => e.stopPropagation()}
                                   className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-border bg-card p-1 shadow-xl text-left"
                                 >
                                   <div className="px-2 py-1 text-[10px] font-bold uppercase text-muted-foreground tracking-wider border-b border-border/60 mb-1">
-                                    Change Status
+                                    Override / Change Status
                                   </div>
                                   {STATUS_OPTIONS.map((st) => (
                                     <button
@@ -661,14 +676,113 @@ function AdminPage() {
                                           : "hover:bg-accent hover:text-accent-foreground cursor-pointer"
                                       }`}
                                     >
-                                      <span>
-                                        {st === "Approved" && "✓ "}
-                                        {st === "Sent to Department" && "📤 "}
-                                        {st === "Approved by Dept" && "🏛️ "}
-                                        {st === "Rejected" && "✕ "}
-                                        {st === "Pending Document" && "📄 "}
-                                        {st}
-                                      </span>
+                                      <span>{st}</span>
+                                      {st === curStatus && <span className="text-[10px]">Current</span>}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ) : curStatus === "Sent to Department" ? (
+                          <div className="flex items-center gap-2 relative">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-sky-600 text-white shadow-2xs">
+                              📤 Sent to Dept
+                            </span>
+
+                            {/* Step 3 Trigger: Approved by Dept */}
+                            <button
+                              type="button"
+                              onClick={() => requestStatusChange(r, "Approved by Dept")}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all cursor-pointer animate-pulse"
+                              title="Step 3: Department Final Approval"
+                            >
+                              🏛️ Approved by Dept →
+                            </button>
+
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenChangeMenuId(openChangeMenuId === r.id ? null : r.id);
+                                }}
+                                className="text-xs text-muted-foreground hover:text-foreground underline transition-colors cursor-pointer"
+                              >
+                                Change ▾
+                              </button>
+                              {openChangeMenuId === r.id && (
+                                <div
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-border bg-card p-1 shadow-xl text-left"
+                                >
+                                  <div className="px-2 py-1 text-[10px] font-bold uppercase text-muted-foreground tracking-wider border-b border-border/60 mb-1">
+                                    Override / Change Status
+                                  </div>
+                                  {STATUS_OPTIONS.map((st) => (
+                                    <button
+                                      key={st}
+                                      type="button"
+                                      disabled={st === curStatus}
+                                      onClick={() => {
+                                        setOpenChangeMenuId(null);
+                                        requestStatusChange(r, st);
+                                      }}
+                                      className={`w-full text-left px-2.5 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between ${
+                                        st === curStatus
+                                          ? "opacity-50 cursor-not-allowed bg-muted/40 font-semibold"
+                                          : "hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                                      }`}
+                                    >
+                                      <span>{st}</span>
+                                      {st === curStatus && <span className="text-[10px]">Current</span>}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ) : curStatus === "Approved by Dept" ? (
+                          <div className="flex items-center gap-2 relative">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-600 text-white shadow-2xs">
+                              🏛️ Approved by Dept ✓
+                            </span>
+
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenChangeMenuId(openChangeMenuId === r.id ? null : r.id);
+                                }}
+                                className="text-xs text-muted-foreground hover:text-foreground underline transition-colors cursor-pointer"
+                              >
+                                Change ▾
+                              </button>
+                              {openChangeMenuId === r.id && (
+                                <div
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-border bg-card p-1 shadow-xl text-left"
+                                >
+                                  <div className="px-2 py-1 text-[10px] font-bold uppercase text-muted-foreground tracking-wider border-b border-border/60 mb-1">
+                                    Override / Change Status
+                                  </div>
+                                  {STATUS_OPTIONS.map((st) => (
+                                    <button
+                                      key={st}
+                                      type="button"
+                                      disabled={st === curStatus}
+                                      onClick={() => {
+                                        setOpenChangeMenuId(null);
+                                        requestStatusChange(r, st);
+                                      }}
+                                      className={`w-full text-left px-2.5 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between ${
+                                        st === curStatus
+                                          ? "opacity-50 cursor-not-allowed bg-muted/40 font-semibold"
+                                          : "hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                                      }`}
+                                    >
+                                      <span>{st}</span>
                                       {st === curStatus && <span className="text-[10px]">Current</span>}
                                     </button>
                                   ))}
@@ -677,91 +791,65 @@ function AdminPage() {
                             </div>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-1.5 relative">
-                            {/* Approve Dropdown Button */}
-                            <div className="relative inline-flex items-center rounded-md bg-emerald-500/15 border border-emerald-500/30 overflow-visible">
-                              <button
-                                type="button"
-                                onClick={() => requestStatusChange(r, "Approved")}
-                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-500/25 transition-colors cursor-pointer rounded-l-md"
-                                title="Set status to Approved"
-                              >
-                                ✓ Approve
-                              </button>
+                          <div className="flex items-center gap-2 relative">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold shadow-2xs ${
+                                curStatus === "Rejected" ? "bg-red-600 text-white" : "bg-amber-600 text-white"
+                              }`}
+                            >
+                              {curStatus === "Rejected" ? "✕ Rejected" : "📄 Pending Doc"}
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() => requestStatusChange(r, "Approved")}
+                              className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 underline transition-colors cursor-pointer"
+                              title="Re-evaluate & Approve"
+                            >
+                              Re-evaluate
+                            </button>
+
+                            <div className="relative">
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setOpenApproveMenuId(openApproveMenuId === r.id ? null : r.id);
-                                  setOpenChangeMenuId(null);
+                                  setOpenChangeMenuId(openChangeMenuId === r.id ? null : r.id);
                                 }}
-                                className="px-1.5 py-1 text-xs font-bold text-emerald-700 hover:bg-emerald-500/25 border-l border-emerald-500/30 transition-colors cursor-pointer rounded-r-md"
-                                title="More Approval / Department options"
+                                className="text-xs text-muted-foreground hover:text-foreground underline transition-colors cursor-pointer"
                               >
-                                ▾
+                                Change ▾
                               </button>
-
-                              {openApproveMenuId === r.id && (
+                              {openChangeMenuId === r.id && (
                                 <div
                                   onClick={(e) => e.stopPropagation()}
-                                  className="absolute left-0 top-full z-50 mt-1 w-52 rounded-lg border border-border bg-card p-1 shadow-xl text-left"
+                                  className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-border bg-card p-1 shadow-xl text-left"
                                 >
                                   <div className="px-2 py-1 text-[10px] font-bold uppercase text-muted-foreground tracking-wider border-b border-border/60 mb-1">
-                                    Approval Workflow
+                                    Override / Change Status
                                   </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setOpenApproveMenuId(null);
-                                      requestStatusChange(r, "Approved");
-                                    }}
-                                    className="w-full text-left px-2.5 py-1.5 text-xs rounded-md hover:bg-emerald-500/10 text-emerald-700 font-medium transition-colors cursor-pointer flex items-center gap-1.5"
-                                  >
-                                    <span>✓</span>
-                                    <span>Approve (Admin)</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setOpenApproveMenuId(null);
-                                      requestStatusChange(r, "Sent to Department");
-                                    }}
-                                    className="w-full text-left px-2.5 py-1.5 text-xs rounded-md hover:bg-sky-500/10 text-sky-700 font-medium transition-colors cursor-pointer flex items-center gap-1.5"
-                                  >
-                                    <span>📤</span>
-                                    <span>Sent to Department</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setOpenApproveMenuId(null);
-                                      requestStatusChange(r, "Approved by Dept");
-                                    }}
-                                    className="w-full text-left px-2.5 py-1.5 text-xs rounded-md hover:bg-indigo-500/10 text-indigo-700 font-medium transition-colors cursor-pointer flex items-center gap-1.5"
-                                  >
-                                    <span>🏛️</span>
-                                    <span>Approved by Dept</span>
-                                  </button>
+                                  {STATUS_OPTIONS.map((st) => (
+                                    <button
+                                      key={st}
+                                      type="button"
+                                      disabled={st === curStatus}
+                                      onClick={() => {
+                                        setOpenChangeMenuId(null);
+                                        requestStatusChange(r, st);
+                                      }}
+                                      className={`w-full text-left px-2.5 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between ${
+                                        st === curStatus
+                                          ? "opacity-50 cursor-not-allowed bg-muted/40 font-semibold"
+                                          : "hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                                      }`}
+                                    >
+                                      <span>{st}</span>
+                                      {st === curStatus && <span className="text-[10px]">Current</span>}
+                                    </button>
+                                  ))}
                                 </div>
                               )}
                             </div>
-
-                            <button
-                              type="button"
-                              onClick={() => requestStatusChange(r, "Rejected")}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-red-500/15 text-red-700 hover:bg-red-500/25 border border-red-500/30 transition-colors cursor-pointer"
-                              title="Set status to Rejected"
-                            >
-                              ✕ Reject
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => requestStatusChange(r, "Pending Document")}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 border border-amber-500/30 transition-colors cursor-pointer"
-                              title="Set status to Pending Document"
-                            >
-                              📄 Pending Doc
-                            </button>
                           </div>
                         )}
                       </td>
@@ -1125,83 +1213,117 @@ function ViewDialog({
 
   return (
     <Dialog title={`${row["first_name"]} ${row["last_name"]}`} onClose={onClose}>
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border py-2.5 bg-muted/20 px-3 rounded-md mt-2">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-muted-foreground">Current Status:</span>
-          <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-              curStatus === "Approved"
-                ? "bg-emerald-500/15 text-emerald-700 border border-emerald-500/30"
-                : curStatus === "Sent to Department"
-                ? "bg-sky-500/15 text-sky-700 border border-sky-500/30"
+      {/* Step-by-Step Approval Track */}
+      <div className="border-b border-border py-3 bg-muted/20 px-3.5 rounded-lg mt-2 space-y-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-muted-foreground">Current Status:</span>
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                curStatus === "Approved"
+                  ? "bg-emerald-500/15 text-emerald-700 border border-emerald-500/30"
+                  : curStatus === "Sent to Department"
+                  ? "bg-sky-500/15 text-sky-700 border border-sky-500/30"
+                  : curStatus === "Approved by Dept"
+                  ? "bg-indigo-500/15 text-indigo-700 border border-indigo-500/30"
+                  : curStatus === "Rejected"
+                  ? "bg-red-500/15 text-red-700 border border-red-500/30"
+                  : curStatus === "Pending Document"
+                  ? "bg-amber-500/15 text-amber-700 border border-amber-500/30"
+                  : "bg-primary/10 text-primary border border-primary/20"
+              }`}
+            >
+              {curStatus === "Sent to Department"
+                ? "📤 Sent to Department"
                 : curStatus === "Approved by Dept"
-                ? "bg-indigo-500/15 text-indigo-700 border border-indigo-500/30"
-                : curStatus === "Rejected"
-                ? "bg-red-500/15 text-red-700 border border-red-500/30"
-                : curStatus === "Pending Document"
-                ? "bg-amber-500/15 text-amber-700 border border-amber-500/30"
-                : "bg-primary/10 text-primary border border-primary/20"
-            }`}
-          >
-            {curStatus === "Sent to Department"
-              ? "📤 Sent to Department"
-              : curStatus === "Approved by Dept"
-              ? "🏛️ Approved by Dept"
-              : curStatus}
-          </span>
-          {row["admin_notes"] && (
-            <span className="text-xs text-muted-foreground italic truncate max-w-[200px]" title={row["admin_notes"]}>
-              ({row["admin_notes"]})
+                ? "🏛️ Approved by Dept"
+                : curStatus}
             </span>
-          )}
+            {row["admin_notes"] && (
+              <span className="text-xs text-muted-foreground italic truncate max-w-[240px]" title={row["admin_notes"]}>
+                ({row["admin_notes"]})
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {curStatus === "Pending" && (
+              <button
+                type="button"
+                onClick={() => onAction(row, "Approved")}
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors cursor-pointer"
+              >
+                ✓ Step 1: Approve (Admin)
+              </button>
+            )}
+            {curStatus === "Approved" && (
+              <button
+                type="button"
+                onClick={() => onAction(row, "Sent to Department")}
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white shadow-xs transition-colors cursor-pointer animate-pulse"
+              >
+                📤 Step 2: Sent to Department →
+              </button>
+            )}
+            {curStatus === "Sent to Department" && (
+              <button
+                type="button"
+                onClick={() => onAction(row, "Approved by Dept")}
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors cursor-pointer animate-pulse"
+              >
+                🏛️ Step 3: Approved by Dept →
+              </button>
+            )}
+            {curStatus !== "Rejected" && (
+              <button
+                type="button"
+                onClick={() => onAction(row, "Rejected")}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-red-500/15 text-red-700 hover:bg-red-500/25 border border-red-500/30 transition-colors cursor-pointer"
+              >
+                ✕ Reject
+              </button>
+            )}
+            {curStatus !== "Pending Document" && (
+              <button
+                type="button"
+                onClick={() => onAction(row, "Pending Document")}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 border border-amber-500/30 transition-colors cursor-pointer"
+              >
+                📄 Pending Doc
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5">
-          {curStatus !== "Approved" && (
-            <button
-              type="button"
-              onClick={() => onAction(row, "Approved")}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 border border-emerald-500/30 transition-colors cursor-pointer"
-            >
-              ✓ Approve
-            </button>
-          )}
-          {curStatus !== "Sent to Department" && (
-            <button
-              type="button"
-              onClick={() => onAction(row, "Sent to Department")}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-sky-500/15 text-sky-700 hover:bg-sky-500/25 border border-sky-500/30 transition-colors cursor-pointer"
-            >
-              📤 Sent to Dept
-            </button>
-          )}
-          {curStatus !== "Approved by Dept" && (
-            <button
-              type="button"
-              onClick={() => onAction(row, "Approved by Dept")}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-500/15 text-indigo-700 hover:bg-indigo-500/25 border border-indigo-500/30 transition-colors cursor-pointer"
-            >
-              🏛️ Approved by Dept
-            </button>
-          )}
-          {curStatus !== "Rejected" && (
-            <button
-              type="button"
-              onClick={() => onAction(row, "Rejected")}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-red-500/15 text-red-700 hover:bg-red-500/25 border border-red-500/30 transition-colors cursor-pointer"
-            >
-              ✕ Reject
-            </button>
-          )}
-          {curStatus !== "Pending Document" && (
-            <button
-              type="button"
-              onClick={() => onAction(row, "Pending Document")}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 border border-amber-500/30 transition-colors cursor-pointer"
-            >
-              📄 Pending Doc
-            </button>
-          )}
+        {/* Visual 3-Stage Progress Tracker */}
+        <div className="grid grid-cols-3 gap-2 pt-1 text-center">
+          <div
+            className={`p-1.5 rounded text-[11px] font-semibold border ${
+              curStatus === "Approved" || curStatus === "Sent to Department" || curStatus === "Approved by Dept"
+                ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-700"
+                : "bg-muted/40 border-border text-muted-foreground"
+            }`}
+          >
+            1. Admin Approved {curStatus === "Approved" || curStatus === "Sent to Department" || curStatus === "Approved by Dept" ? "✓" : ""}
+          </div>
+          <div
+            className={`p-1.5 rounded text-[11px] font-semibold border ${
+              curStatus === "Sent to Department" || curStatus === "Approved by Dept"
+                ? "bg-sky-500/15 border-sky-500/40 text-sky-700"
+                : "bg-muted/40 border-border text-muted-foreground"
+            }`}
+          >
+            2. Sent to Dept {curStatus === "Sent to Department" || curStatus === "Approved by Dept" ? "✓" : ""}
+          </div>
+          <div
+            className={`p-1.5 rounded text-[11px] font-semibold border ${
+              curStatus === "Approved by Dept"
+                ? "bg-indigo-500/15 border-indigo-500/40 text-indigo-700"
+                : "bg-muted/40 border-border text-muted-foreground"
+            }`}
+          >
+            3. Dept Approved {curStatus === "Approved by Dept" ? "✓" : ""}
+          </div>
         </div>
       </div>
 
