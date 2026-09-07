@@ -21,7 +21,14 @@ export type ColumnDef = {
   options?: readonly string[];
 };
 
-export const STATUS_OPTIONS = ["Pending", "Approved", "Rejected", "Pending Document"] as const;
+export const STATUS_OPTIONS = [
+  "Pending",
+  "Approved",
+  "Sent to Department",
+  "Approved by Dept",
+  "Rejected",
+  "Pending Document",
+] as const;
 
 export const COLUMNS: ColumnDef[] = [
   { key: "reference_number", label: "Reference ID", group: "Meta" },

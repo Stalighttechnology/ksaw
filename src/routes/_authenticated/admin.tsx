@@ -73,6 +73,17 @@ function AdminPage() {
   const [viewing, setViewing] = useState<Row | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<{ ids: string[]; name: string } | null>(null);
+  const [openApproveMenuId, setOpenApproveMenuId] = useState<string | null>(null);
+  const [openChangeMenuId, setOpenChangeMenuId] = useState<string | null>(null);
+
+  useEffect(() => {
+    function handleClickOutside() {
+      setOpenApproveMenuId(null);
+      setOpenChangeMenuId(null);
+    }
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
   const filters = { search: search.trim(), status, course, category, centerLocation, nigama, partner };
 
@@ -188,12 +199,27 @@ function AdminPage() {
     "Other / Custom Note",
   ] as const;
 
+  const DEPT_OPTIONS = [
+    "Forwarded for verification",
+    "Sent for batch allotment",
+    "Sent for skill training assessment",
+    "Verified & Approved by Dept",
+    "Other / Custom Note",
+  ] as const;
+
   const requestStatusChange = (row: Row, newStatus: string) => {
     setStatusTarget({
       id: row.id,
       name: `${row["first_name"] || ""} ${row["last_name"] || ""}`.trim() || "this applicant",
       status: newStatus,
-      reason: newStatus === "Pending Document" || newStatus === "Rejected" ? "Wrong document" : "",
+      reason:
+        newStatus === "Pending Document" || newStatus === "Rejected"
+          ? "Wrong document"
+          : newStatus === "Sent to Department"
+          ? "Forwarded for verification"
+          : newStatus === "Approved by Dept"
+          ? "Verified & Approved by Dept"
+          : "",
       customNote: "",
     });
   };
@@ -330,7 +356,7 @@ function AdminPage() {
           </div>
         </div>
 
-        <section className="mt-4 grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7">
+        <section className="mt-4 grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-9">
           <StatCard label="Total Registrations" value={stats.total} />
           <StatCard label="Today" value={stats.today} />
           <StatCard label="Last 7 Days" value={stats.week} />
@@ -574,36 +600,152 @@ function AdminPage() {
                       })}
                       <td className="whitespace-nowrap px-3 py-2.5 bg-muted/10">
                         {curStatus !== "Pending" ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 relative">
                             <span
                               className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold shadow-2xs ${
                                 curStatus === "Approved"
                                   ? "bg-emerald-600 text-white"
+                                  : curStatus === "Sent to Department"
+                                  ? "bg-sky-600 text-white"
+                                  : curStatus === "Approved by Dept"
+                                  ? "bg-indigo-600 text-white"
                                   : curStatus === "Rejected"
                                   ? "bg-red-600 text-white"
                                   : "bg-amber-600 text-white"
                               }`}
                             >
-                              {curStatus === "Approved" ? "✓ Approved" : curStatus === "Rejected" ? "✕ Rejected" : "📄 Pending Doc"}
+                              {curStatus === "Approved"
+                                ? "✓ Approved"
+                                : curStatus === "Sent to Department"
+                                ? "📤 Sent to Dept"
+                                : curStatus === "Approved by Dept"
+                                ? "🏛️ Approved by Dept"
+                                : curStatus === "Rejected"
+                                ? "✕ Rejected"
+                                : "📄 Pending Doc"}
                             </span>
-                            <button
-                              type="button"
-                              onClick={() => requestStatusChange(r, curStatus === "Approved" ? "Pending Document" : "Approved")}
-                              className="text-xs text-muted-foreground hover:text-foreground underline transition-colors cursor-pointer"
-                            >
-                              Change
-                            </button>
+
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenChangeMenuId(openChangeMenuId === r.id ? null : r.id);
+                                  setOpenApproveMenuId(null);
+                                }}
+                                className="text-xs text-muted-foreground hover:text-foreground underline transition-colors cursor-pointer inline-flex items-center gap-0.5"
+                              >
+                                Change ▾
+                              </button>
+
+                              {openChangeMenuId === r.id && (
+                                <div
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-border bg-card p-1 shadow-xl text-left"
+                                >
+                                  <div className="px-2 py-1 text-[10px] font-bold uppercase text-muted-foreground tracking-wider border-b border-border/60 mb-1">
+                                    Change Status
+                                  </div>
+                                  {STATUS_OPTIONS.map((st) => (
+                                    <button
+                                      key={st}
+                                      type="button"
+                                      disabled={st === curStatus}
+                                      onClick={() => {
+                                        setOpenChangeMenuId(null);
+                                        requestStatusChange(r, st);
+                                      }}
+                                      className={`w-full text-left px-2.5 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between ${
+                                        st === curStatus
+                                          ? "opacity-50 cursor-not-allowed bg-muted/40 font-semibold"
+                                          : "hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                                      }`}
+                                    >
+                                      <span>
+                                        {st === "Approved" && "✓ "}
+                                        {st === "Sent to Department" && "📤 "}
+                                        {st === "Approved by Dept" && "🏛️ "}
+                                        {st === "Rejected" && "✕ "}
+                                        {st === "Pending Document" && "📄 "}
+                                        {st}
+                                      </span>
+                                      {st === curStatus && <span className="text-[10px]">Current</span>}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => requestStatusChange(r, "Approved")}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 border border-emerald-500/30 transition-colors cursor-pointer"
-                              title="Set status to Approved"
-                            >
-                              ✓ Approve
-                            </button>
+                          <div className="flex items-center gap-1.5 relative">
+                            {/* Approve Dropdown Button */}
+                            <div className="relative inline-flex items-center rounded-md bg-emerald-500/15 border border-emerald-500/30 overflow-visible">
+                              <button
+                                type="button"
+                                onClick={() => requestStatusChange(r, "Approved")}
+                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-500/25 transition-colors cursor-pointer rounded-l-md"
+                                title="Set status to Approved"
+                              >
+                                ✓ Approve
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenApproveMenuId(openApproveMenuId === r.id ? null : r.id);
+                                  setOpenChangeMenuId(null);
+                                }}
+                                className="px-1.5 py-1 text-xs font-bold text-emerald-700 hover:bg-emerald-500/25 border-l border-emerald-500/30 transition-colors cursor-pointer rounded-r-md"
+                                title="More Approval / Department options"
+                              >
+                                ▾
+                              </button>
+
+                              {openApproveMenuId === r.id && (
+                                <div
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="absolute left-0 top-full z-50 mt-1 w-52 rounded-lg border border-border bg-card p-1 shadow-xl text-left"
+                                >
+                                  <div className="px-2 py-1 text-[10px] font-bold uppercase text-muted-foreground tracking-wider border-b border-border/60 mb-1">
+                                    Approval Workflow
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenApproveMenuId(null);
+                                      requestStatusChange(r, "Approved");
+                                    }}
+                                    className="w-full text-left px-2.5 py-1.5 text-xs rounded-md hover:bg-emerald-500/10 text-emerald-700 font-medium transition-colors cursor-pointer flex items-center gap-1.5"
+                                  >
+                                    <span>✓</span>
+                                    <span>Approve (Admin)</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenApproveMenuId(null);
+                                      requestStatusChange(r, "Sent to Department");
+                                    }}
+                                    className="w-full text-left px-2.5 py-1.5 text-xs rounded-md hover:bg-sky-500/10 text-sky-700 font-medium transition-colors cursor-pointer flex items-center gap-1.5"
+                                  >
+                                    <span>📤</span>
+                                    <span>Sent to Department</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenApproveMenuId(null);
+                                      requestStatusChange(r, "Approved by Dept");
+                                    }}
+                                    className="w-full text-left px-2.5 py-1.5 text-xs rounded-md hover:bg-indigo-500/10 text-indigo-700 font-medium transition-colors cursor-pointer flex items-center gap-1.5"
+                                  >
+                                    <span>🏛️</span>
+                                    <span>Approved by Dept</span>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
                             <button
                               type="button"
                               onClick={() => requestStatusChange(r, "Rejected")}
@@ -717,6 +859,43 @@ function AdminPage() {
               </div>
             )}
 
+            {(statusTarget.status === "Sent to Department" || statusTarget.status === "Approved by Dept") && (
+              <div className="mt-4 space-y-2 rounded-lg bg-muted/40 p-3 border border-border">
+                <label className="text-xs font-semibold text-foreground block">
+                  Department Remarks / Workflow Note:
+                </label>
+                <select
+                  className="w-full form-ctrl text-xs bg-card"
+                  value={statusTarget.reason}
+                  onChange={(e) =>
+                    setStatusTarget((prev) =>
+                      prev ? { ...prev, reason: e.target.value } : null,
+                    )
+                  }
+                >
+                  {DEPT_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+
+                {statusTarget.reason === "Other / Custom Note" && (
+                  <input
+                    type="text"
+                    placeholder="Enter specific department / dispatch note..."
+                    className="w-full form-ctrl text-xs mt-2"
+                    value={statusTarget.customNote}
+                    onChange={(e) =>
+                      setStatusTarget((prev) =>
+                        prev ? { ...prev, customNote: e.target.value } : null,
+                      )
+                    }
+                  />
+                )}
+              </div>
+            )}
+
             <div className="mt-6 flex items-center justify-end gap-3">
               <button
                 type="button"
@@ -731,6 +910,10 @@ function AdminPage() {
                 className={`px-4 py-2 text-xs font-semibold rounded-md text-white transition-colors cursor-pointer shadow-xs ${
                   statusTarget.status === "Approved"
                     ? "bg-emerald-600 hover:bg-emerald-700"
+                    : statusTarget.status === "Sent to Department"
+                    ? "bg-sky-600 hover:bg-sky-700"
+                    : statusTarget.status === "Approved by Dept"
+                    ? "bg-indigo-600 hover:bg-indigo-700"
                     : statusTarget.status === "Rejected"
                     ? "bg-red-600 hover:bg-red-700"
                     : "bg-amber-600 hover:bg-amber-700"
@@ -949,6 +1132,10 @@ function ViewDialog({
             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
               curStatus === "Approved"
                 ? "bg-emerald-500/15 text-emerald-700 border border-emerald-500/30"
+                : curStatus === "Sent to Department"
+                ? "bg-sky-500/15 text-sky-700 border border-sky-500/30"
+                : curStatus === "Approved by Dept"
+                ? "bg-indigo-500/15 text-indigo-700 border border-indigo-500/30"
                 : curStatus === "Rejected"
                 ? "bg-red-500/15 text-red-700 border border-red-500/30"
                 : curStatus === "Pending Document"
@@ -956,7 +1143,11 @@ function ViewDialog({
                 : "bg-primary/10 text-primary border border-primary/20"
             }`}
           >
-            {curStatus}
+            {curStatus === "Sent to Department"
+              ? "📤 Sent to Department"
+              : curStatus === "Approved by Dept"
+              ? "🏛️ Approved by Dept"
+              : curStatus}
           </span>
           {row["admin_notes"] && (
             <span className="text-xs text-muted-foreground italic truncate max-w-[200px]" title={row["admin_notes"]}>
@@ -975,6 +1166,24 @@ function ViewDialog({
               ✓ Approve
             </button>
           )}
+          {curStatus !== "Sent to Department" && (
+            <button
+              type="button"
+              onClick={() => onAction(row, "Sent to Department")}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-sky-500/15 text-sky-700 hover:bg-sky-500/25 border border-sky-500/30 transition-colors cursor-pointer"
+            >
+              📤 Sent to Dept
+            </button>
+          )}
+          {curStatus !== "Approved by Dept" && (
+            <button
+              type="button"
+              onClick={() => onAction(row, "Approved by Dept")}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-500/15 text-indigo-700 hover:bg-indigo-500/25 border border-indigo-500/30 transition-colors cursor-pointer"
+            >
+              🏛️ Approved by Dept
+            </button>
+          )}
           {curStatus !== "Rejected" && (
             <button
               type="button"
@@ -990,7 +1199,7 @@ function ViewDialog({
               onClick={() => onAction(row, "Pending Document")}
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 border border-amber-500/30 transition-colors cursor-pointer"
             >
-              📄 Pending Document
+              📄 Pending Doc
             </button>
           )}
         </div>
