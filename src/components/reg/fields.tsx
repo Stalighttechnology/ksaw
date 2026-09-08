@@ -182,6 +182,7 @@ export function MultiSelect({
   max,
   searchable,
   single,
+  placeholder = "None selected",
 }: BaseInput & {
   options: readonly string[];
   value: string[];
@@ -189,6 +190,7 @@ export function MultiSelect({
   max?: number | undefined;
   searchable?: boolean | undefined;
   single?: boolean | undefined;
+  placeholder?: string | undefined;
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -213,7 +215,6 @@ export function MultiSelect({
   }, [open]);
 
   // Priority filtering: typed matches should rank matches starting with the typed query higher, followed by general inclusion.
-  // Search matches only against the English part (text before the hyphen " - ") of each option.
   const shown = useMemo(() => {
     if (!q) return options;
     const query = q.toLowerCase();
@@ -222,13 +223,13 @@ export function MultiSelect({
     const containsMatches: string[] = [];
 
     options.forEach((o) => {
-      // Split by hyphen to isolate the English text
-      const englishPart = o.split(" - ")[0] || "";
-      const englishLower = englishPart.toLowerCase();
+      const targetStr = o.toLowerCase();
+      // Split by hyphen to isolate the English part if applicable (e.g. for castes)
+      const englishPart = (o.split(" - ")[0] || "").toLowerCase();
       
-      if (englishLower.startsWith(query)) {
+      if (targetStr.startsWith(query) || englishPart.startsWith(query)) {
         startsWithMatches.push(o);
-      } else if (englishLower.includes(query)) {
+      } else if (targetStr.includes(query) || englishPart.includes(query)) {
         containsMatches.push(o);
       }
     });
@@ -250,7 +251,9 @@ export function MultiSelect({
     <Field label={label} required={required} error={error} span={span}>
       <div className="ms" ref={containerRef}>
         <button type="button" className={`form-ctrl ms-btn${error ? " is-invalid" : ""}`} onClick={() => setOpen((v) => !v)}>
-          <span className="ms-btn-text">{value.length ? value.join(", ") : "None selected"}</span>
+          <span className="ms-btn-text" style={{ color: value.length ? "inherit" : "#9ca3af" }}>
+            {value.length ? value.join(", ") : placeholder}
+          </span>
           <span className="caret" aria-hidden />
         </button>
         {open ? (

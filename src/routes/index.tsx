@@ -1012,13 +1012,15 @@ function RegistrationPage() {
           <form onSubmit={onSubmit} noValidate>
             <Section title="Center / Institute Details">
               <Row>
-                <SelectField
+                <MultiSelect
                   label="Name of College / Institute / University"
                   required
+                  searchable
+                  single
                   placeholder="Select College / Institute / University"
                   options={COLLEGES}
-                  value={institutionName}
-                  onChange={setInstitutionName}
+                  value={institutionName ? [institutionName] : []}
+                  onChange={(v) => setInstitutionName(v[0] ?? "")}
                   error={errors["institutionName"]}
                 />
                 <SelectField
