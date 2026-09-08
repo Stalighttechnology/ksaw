@@ -862,7 +862,15 @@ function RegistrationPage() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err: any) {
       console.error("Submission error:", err);
-      setSubmitError(err.message || "Failed to save registration. Please try again.");
+      if (
+        err?.code === "23505" ||
+        err?.message?.includes("registrations_aadhaar_number_unique") ||
+        err?.message?.includes("duplicate key")
+      ) {
+        setSubmitError("This Aadhaar number has already been registered in the system.");
+      } else {
+        setSubmitError(err.message || "Failed to save registration. Please try again.");
+      }
       window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setSubmitting(false);
