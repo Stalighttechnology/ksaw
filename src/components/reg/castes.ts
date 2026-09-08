@@ -728,6 +728,7 @@ export const CASTES: readonly CasteEntry[] = [
   { name: "Tulu - ತುಳು", category: "2A", nigama: "Devraj Urs" },
   { name: "Tulva - ತುಳುವ", category: "2A", nigama: "Devraj Urs" },
   { name: "Ushnama (Dharwad, Belagavi, Vijayapura, and Gadag districts) - ಉಷ್ಣಮ (ಧಾರವಾಡ, ಬೆಳಗಾವಿ, ವಿಜಯಪುರ, ಮತ್ತು ಗದಗ ಜಿಲ್ಲೆಗಳು)", category: "2A", nigama: "Devraj Urs" },
+  { name: "Bunt - ಬಂಟ್", category: "3B", nigama: "Devraj Urs" },
 ] as const;
 
 export const CASTE_NAMES = CASTES.map((c) => c.name);
