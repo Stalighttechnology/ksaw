@@ -11,6 +11,10 @@ export const COLLEGES = [
   "JSS college of women's, Mysore",
   "Maharani commerce and management college , Mysore",
   "GFGC Womens college, Mysore",
+  "BES Degree College Of Arts Commerce & Science- Bangalore",
+  "KTSV degree college for women vijayanagar-Bangalore",
+  "Oxford PU and Degree College-Bangalore",
+  "Kempegowda Institute of Management Studies & Research-Bangalore",
   "SIDHARTHA COLLEGE BIDAR",
   "KSAWU VIJAYAPURA",
   "Dadapheer Huballi",
@@ -116,6 +120,38 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "Government First Grade College for Women Mysore",
     "Govt First Grade Womens College Mysore",
   ],
+  "BES Degree College Of Arts Commerce & Science- Bangalore": [
+    "BES Degree College Of Arts Commerce & Science- Bangalore",
+    "BES Degree College Of Arts Commerce & Science Bangalore",
+    "BES Degree College Of Arts Commerce & Science, Bangalore",
+    "BES DEGREE COLLEGE BANGALORE",
+    "BES Degree College Bangalore",
+    "BES COLLEGE BANGALORE",
+  ],
+  "KTSV degree college for women vijayanagar-Bangalore": [
+    "KTSV degree college for women vijayanagar-Bangalore",
+    "KTSV degree college for women vijayanagar Bangalore",
+    "KTSV degree college for women vijayanagar, Bangalore",
+    "KTSV Degree College Vijayanagar Bangalore",
+    "KTSV DEGREE COLLEGE FOR WOMEN VIJAYANAGAR BANGALORE",
+    "KTSV College Vijayanagar",
+  ],
+  "Oxford PU and Degree College-Bangalore": [
+    "Oxford PU and Degree College-Bangalore",
+    "Oxford PU and Degree College Bangalore",
+    "Oxford PU and Degree College, Bangalore",
+    "Oxford PU & Degree College Bangalore",
+    "OXFORD PU AND DEGREE COLLEGE BANGALORE",
+    "Oxford Degree College Bangalore",
+  ],
+  "Kempegowda Institute of Management Studies & Research-Bangalore": [
+    "Kempegowda Institute of Management Studies & Research-Bangalore",
+    "Kempegowda Institute of Management Studies & Research Bangalore",
+    "Kempegowda Institute of Management Studies & Research, Bangalore",
+    "Kempegowda Institute of Management Studies and Research Bangalore",
+    "KEMPEGOWDA INSTITUTE OF MANAGEMENT STUDIES & RESEARCH BANGALORE",
+    "KIMS BANGALORE",
+  ],
   "KSAWU VIJAYAPURA": [
     "KSAWU VIJAYAPURA",
   ],
@@ -155,6 +191,10 @@ export function normalizeCollegeName(rawName?: string | null): string {
   if (upper.includes("MAHARANI") && (upper.includes("COMMERCE") || upper.includes("MANAGEMENT"))) return "Maharani commerce and management college , Mysore";
   if (upper.includes("JSS") && (upper.includes("WOMEN") || upper.includes("MYSORE") || upper.includes("MYSURU"))) return "JSS college of women's, Mysore";
   if ((upper.includes("GFGC") || upper.includes("GOVTFIRSTGRADE")) && (upper.includes("MYSORE") || upper.includes("MYSURU"))) return "GFGC Womens college, Mysore";
+  if (upper.includes("BES") && (upper.includes("DEGREE") || upper.includes("ARTS") || upper.includes("COMMERCE") || upper.includes("BANGALORE") || upper.includes("BENGALURU"))) return "BES Degree College Of Arts Commerce & Science- Bangalore";
+  if (upper.includes("KTSV")) return "KTSV degree college for women vijayanagar-Bangalore";
+  if (upper.includes("OXFORD") && (upper.includes("PU") || upper.includes("DEGREE") || upper.includes("BANGALORE") || upper.includes("BENGALURU"))) return "Oxford PU and Degree College-Bangalore";
+  if (upper.includes("KEMPEGOWDA") && (upper.includes("MANAGEMENT") || upper.includes("RESEARCH") || upper.includes("STUDIES"))) return "Kempegowda Institute of Management Studies & Research-Bangalore";
   if (upper.includes("SHIVAKUMAR")) return "Shivakumar";
   if (upper.includes("KSAW")) return "KSAWU VIJAYAPURA";
   if (upper.includes("PES") && upper.includes("MANDYA")) return "PES COLLEGE MANDYA";
