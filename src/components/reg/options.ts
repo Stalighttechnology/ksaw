@@ -15,6 +15,7 @@ export const COLLEGES = [
   "KTSV degree college for women vijayanagar-Bangalore",
   "Oxford PU and Degree College-Bangalore",
   "Kempegowda Institute of Management Studies & Research-Bangalore",
+  "Government First Grade College for Women's, Gandhadakoti, Hassan",
   "SIDHARTHA COLLEGE BIDAR",
   "KSAWU VIJAYAPURA",
   "Dadapheer Huballi",
@@ -61,7 +62,7 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "A V KANTHAMMA COLLEGE FOR WOMEN HASSAN",
     "A. V. K. FOR WOMEN HASSAN",
     "AVK COLLLEGE FOR WOMENS HASSAN",
-    "A V KANTHAMMA COLLEG FOR WOMEN HASSAN",
+    "A V KANTHAMMA COLLEG FOR WOMEN Hassan",
     "A V KANTHAMMA COLLEGE FOR WOMEN, HASSAN",
     "AVKCOLLEGEFORWOMENHASSAN",
     "A V K COLLEGE FOR WOMEN HASSAN",
@@ -152,6 +153,14 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "KEMPEGOWDA INSTITUTE OF MANAGEMENT STUDIES & RESEARCH BANGALORE",
     "KIMS BANGALORE",
   ],
+  "Government First Grade College for Women's, Gandhadakoti, Hassan": [
+    "Government First Grade College for Women's, Gandhadakoti, Hassan",
+    "Government First Grade College for Women's Gandhadakoti Hassan",
+    "Government First Grade College for Women Gandhadakoti Hassan",
+    "GFGC Gandhadakoti Hassan",
+    "GFGC FOR WOMEN GANDHADAKOTI HASSAN",
+    "Government First Grade College Gandhadakoti Hassan",
+  ],
   "KSAWU VIJAYAPURA": [
     "KSAWU VIJAYAPURA",
   ],
@@ -183,6 +192,7 @@ export function normalizeCollegeName(rawName?: string | null): string {
   }
 
   const upper = trimmed.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (upper.includes("GANDHADAKOTI")) return "Government First Grade College for Women's, Gandhadakoti, Hassan";
   if (upper.includes("AVK") || upper.includes("KANTHAMMA")) return "AVK COLLEGE HASSAN";
   if (upper.includes("TERESIAN")) return "TERESIAN COLLEGE MYSORE";
   if (upper.includes("CENTRALCOMMERCE")) return "CENTRAL COMMERCE COLLEGE HASSAN";
