@@ -7,6 +7,10 @@ export const COLLEGES = [
   "GOVT COLLEGE CHANNARAYAPATNA",
   "GOVT FIRST GRADE WOMENS COLLEGE YADGIRI",
   "MARI MALLAPPA WOMENS COLLEGE MYSORE",
+  "Maharani science college , Mysore",
+  "JSS college of women's, Mysore",
+  "Maharani commerce and management college , Mysore",
+  "GFGC Womens college, Mysore",
   "SIDHARTHA COLLEGE BIDAR",
   "KSAWU VIJAYAPURA",
   "Dadapheer Huballi",
@@ -79,6 +83,39 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "MALNAD COLLEGE OF ENGINEERING",
     "MCE HASSAN",
   ],
+  "Maharani science college , Mysore": [
+    "Maharani science college , Mysore",
+    "Maharani Science College Mysore",
+    "Maharani Science College, Mysore",
+    "MAHARANI SCIENCE COLLEGE MYSORE",
+    "Maharani Science College for Women Mysore",
+    "Maharani's Science College for Women, Mysore",
+  ],
+  "JSS college of women's, Mysore": [
+    "JSS college of women's, Mysore",
+    "JSS College of Women's Mysore",
+    "JSS College of Women's, Mysore",
+    "JSS College for Women Mysore",
+    "JSS College for Women, Mysore",
+    "JSS COLLEGE FOR WOMEN MYSORE",
+    "JSS COLLEGE OF WOMEN'S MYSORE",
+  ],
+  "Maharani commerce and management college , Mysore": [
+    "Maharani commerce and management college , Mysore",
+    "Maharani Commerce and Management College Mysore",
+    "Maharani Commerce and Management College, Mysore",
+    "MAHARANI COMMERCE AND MANAGEMENT COLLEGE MYSORE",
+    "Maharani's Commerce and Management College for Women Mysore",
+  ],
+  "GFGC Womens college, Mysore": [
+    "GFGC Womens college, Mysore",
+    "GFGC Womens College Mysore",
+    "GFGC Women's College Mysore",
+    "GFGC Women's College, Mysore",
+    "GFGC WOMENS COLLEGE MYSORE",
+    "Government First Grade College for Women Mysore",
+    "Govt First Grade Womens College Mysore",
+  ],
   "KSAWU VIJAYAPURA": [
     "KSAWU VIJAYAPURA",
   ],
@@ -114,6 +151,10 @@ export function normalizeCollegeName(rawName?: string | null): string {
   if (upper.includes("TERESIAN")) return "TERESIAN COLLEGE MYSORE";
   if (upper.includes("CENTRALCOMMERCE")) return "CENTRAL COMMERCE COLLEGE HASSAN";
   if (upper.includes("MALNAD") || upper === "MCE" || upper.includes("MCEHASSAN")) return "MALNAD COLLEGE OF ENGINEERING HASSAN";
+  if (upper.includes("MAHARANI") && (upper.includes("SCIENCE") || upper.includes("SCI"))) return "Maharani science college , Mysore";
+  if (upper.includes("MAHARANI") && (upper.includes("COMMERCE") || upper.includes("MANAGEMENT"))) return "Maharani commerce and management college , Mysore";
+  if (upper.includes("JSS") && (upper.includes("WOMEN") || upper.includes("MYSORE") || upper.includes("MYSURU"))) return "JSS college of women's, Mysore";
+  if ((upper.includes("GFGC") || upper.includes("GOVTFIRSTGRADE")) && (upper.includes("MYSORE") || upper.includes("MYSURU"))) return "GFGC Womens college, Mysore";
   if (upper.includes("SHIVAKUMAR")) return "Shivakumar";
   if (upper.includes("KSAW")) return "KSAWU VIJAYAPURA";
   if (upper.includes("PES") && upper.includes("MANDYA")) return "PES COLLEGE MANDYA";
