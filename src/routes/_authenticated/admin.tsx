@@ -173,6 +173,73 @@ function AdminPage() {
     return { total: rows.length, today, week, byStatus, byCourse, byGender, byCenter, byPartner, byNigama };
   }, [statsQuery.data]);
 
+  // Dynamic filter options based on existing applications and interdependent active selections
+  const dynamicFilterOptions = useMemo(() => {
+    const rawRows = statsQuery.data ?? [];
+    const rows = rawRows.map((r) => ({
+      ...r,
+      normalizedPartner: normalizeCollegeName(r.institution_name) || r.institution_name || "",
+      normalizedNigama: normalizeNigamaName(r.nigama) || r.nigama || "",
+      normalizedStatus: r.status || "Pending",
+      normalizedCourse: r.skill_sought || "",
+      normalizedCategory: r.category || "",
+      normalizedCenter: r.center_location || r.cur_district || "",
+    }));
+
+    const matchesFilter = (
+      r: (typeof rows)[number],
+      excludeKey?: "nigama" | "status" | "partner" | "course" | "category" | "center"
+    ) => {
+      if (nigama && excludeKey !== "nigama") {
+        const nigamaAliases = getNigamaAliases(nigama);
+        if (!nigamaAliases.includes(r.nigama || "") && r.normalizedNigama !== nigama) return false;
+      }
+      if (status && excludeKey !== "status" && r.normalizedStatus !== status) return false;
+      if (partner && excludeKey !== "partner") {
+        const collegeAliases = getCollegeAliases(partner);
+        if (!collegeAliases.includes(r.institution_name || "") && r.normalizedPartner !== partner) return false;
+      }
+      if (course && excludeKey !== "course" && r.normalizedCourse !== course) return false;
+      if (category && excludeKey !== "category" && r.normalizedCategory !== category) return false;
+      if (centerLocation && excludeKey !== "center") {
+        if (!r.normalizedCenter.toLowerCase().includes(centerLocation.toLowerCase())) return false;
+      }
+      return true;
+    };
+
+    const nigamaSet = new Set<string>();
+    const statusSet = new Set<string>();
+    const partnerSet = new Set<string>();
+    const courseSet = new Set<string>();
+    const categorySet = new Set<string>();
+    const centerSet = new Set<string>();
+
+    for (const r of rows) {
+      if (r.normalizedNigama && matchesFilter(r, "nigama")) nigamaSet.add(r.normalizedNigama);
+      if (r.normalizedStatus && matchesFilter(r, "status")) statusSet.add(r.normalizedStatus);
+      if (r.normalizedPartner && matchesFilter(r, "partner")) partnerSet.add(r.normalizedPartner);
+      if (r.normalizedCourse && matchesFilter(r, "course")) courseSet.add(r.normalizedCourse);
+      if (r.normalizedCategory && matchesFilter(r, "category")) categorySet.add(r.normalizedCategory);
+      if (r.normalizedCenter && matchesFilter(r, "center")) centerSet.add(r.normalizedCenter);
+    }
+
+    const sortAlpha = (arr: string[]) => arr.sort((a, b) => a.localeCompare(b));
+
+    return {
+      nigamas: sortAlpha(Array.from(nigamaSet)),
+      statuses: Array.from(statusSet).sort((a, b) => {
+        const idxA = STATUS_OPTIONS.indexOf(a as any);
+        const idxB = STATUS_OPTIONS.indexOf(b as any);
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        return a.localeCompare(b);
+      }),
+      partners: sortAlpha(Array.from(partnerSet)),
+      courses: sortAlpha(Array.from(courseSet)),
+      categories: sortAlpha(Array.from(categorySet)),
+      centers: sortAlpha(Array.from(centerSet)),
+    };
+  }, [statsQuery.data, nigama, status, partner, course, category, centerLocation]);
+
   const total = listQuery.data?.count ?? 0;
   const pageCount = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
 
@@ -188,7 +255,7 @@ function AdminPage() {
     navigate({ to: "/auth", replace: true });
   };
 
-  const [exportStatusFilter, setExportStatusFilter] = useState<string>("");
+  const [isExporting, setIsExporting] = useState(false);
   const [statusTarget, setStatusTarget] = useState<{ id: string; name: string; status: string; reason: string; customNote: string } | null>(null);
 
   const REASON_OPTIONS = [
@@ -278,30 +345,63 @@ function AdminPage() {
     void qc.invalidateQueries({ queryKey: ["registration-stats"] });
   };
 
-  const exportCsv = () => {
-    let rows = listQuery.data?.rows ?? [];
-    if (exportStatusFilter) {
-      rows = rows.filter((r) => (r.status || "Pending") === exportStatusFilter);
+  const exportCsv = async () => {
+    try {
+      setIsExporting(true);
+      const selectCols = ["id", ...COLUMNS.map((c) => c.key)].join(",");
+      let q = supabase.from("registrations").select(selectCols);
+      if (filters.status) q = q.eq("status", filters.status);
+      if (filters.course) q = q.eq("skill_sought", filters.course);
+      if (filters.category) q = q.eq("category", filters.category);
+      if (filters.centerLocation) q = q.ilike("center_location", `%${filters.centerLocation}%`);
+      if (filters.nigama) {
+        const nigamaAliases = getNigamaAliases(filters.nigama);
+        q = q.in("nigama", nigamaAliases);
+      }
+      if (filters.partner) {
+        const aliases = getCollegeAliases(filters.partner);
+        q = q.in("institution_name", aliases);
+      }
+      if (filters.search) {
+        const s = filters.search.replace(/[%,()]/g, "");
+        q = q.or(
+          `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,center_location.ilike.%${s}%,institution_name.ilike.%${s}%`,
+        );
+      }
+      const { data, error } = await q.order("created_at", { ascending: !sortDesc }).limit(20000);
+      if (error) throw error;
+
+      const rows = ((data ?? []) as Row[]).map((r) => ({
+        ...r,
+        institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
+        nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
+      }));
+
+      if (!rows.length) {
+        toast.error("No matching records found to export.");
+        return;
+      }
+
+      const head = COLUMNS.map((c) => c.label).join(",");
+      const body = rows
+        .map((r) =>
+          COLUMNS.map((c) => `"${String(formatCell(r[c.key], c.type)).replace(/"/g, '""')}"`).join(","),
+        )
+        .join("\n");
+      const blob = new Blob([`${head}\n${body}`], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const statusSuffix = filters.status ? `-${filters.status.toLowerCase().replace(/\s+/g, "_")}` : "";
+      a.download = `registrations${statusSuffix}-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${rows.length} record${rows.length === 1 ? "" : "s"} to CSV`);
+    } catch (err: any) {
+      toast.error(`Export failed: ${err.message || err}`);
+    } finally {
+      setIsExporting(false);
     }
-    if (!rows.length) {
-      toast.error(`No records found to export${exportStatusFilter ? ` with status "${exportStatusFilter}"` : ""}`);
-      return;
-    }
-    const head = COLUMNS.map((c) => c.label).join(",");
-    const body = rows
-      .map((r) =>
-        COLUMNS.map((c) => `"${String(formatCell(r[c.key], c.type)).replace(/"/g, '""')}"`).join(","),
-      )
-      .join("\n");
-    const blob = new Blob([`${head}\n${body}`], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    const filterSuffix = exportStatusFilter ? `-${exportStatusFilter.toLowerCase().replace(/\s+/g, "_")}` : "";
-    a.download = `registrations${filterSuffix}-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success(`Exported ${rows.length} record${rows.length === 1 ? "" : "s"} to CSV`);
   };
 
   const allRowIds = useMemo(() => (listQuery.data?.rows ?? []).map((r) => r.id), [listQuery.data?.rows]);
@@ -332,24 +432,6 @@ function AdminPage() {
             <p className="text-xs text-muted-foreground sm:text-sm">Manage and inspect all applicant registrations.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5 bg-card border border-border px-2 py-1 rounded-md shadow-xs">
-              <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">Export:</label>
-              <select
-                className="bg-transparent border-0 text-xs font-semibold text-foreground focus:outline-hidden cursor-pointer"
-                value={exportStatusFilter}
-                onChange={(e) => setExportStatusFilter(e.target.value)}
-              >
-                <option value="">All Statuses</option>
-                {STATUS_OPTIONS.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <button type="button" className="btn-kk btn-cancel-kk text-xs sm:text-sm py-1.5 px-3 sm:py-2 sm:px-4" onClick={exportCsv}>
-              📥 Export CSV
-            </button>
             <button type="button" className="btn-kk btn-primary-kk text-xs sm:text-sm py-1.5 px-3 sm:py-2 sm:px-4" onClick={signOut}>
               Sign Out
             </button>
@@ -409,17 +491,17 @@ function AdminPage() {
                 onChange={(e) => resetPage(setSearch)(e.target.value)}
               />
             </div>
-            <FilterSelect label="Status" value={status} onChange={resetPage(setStatus)} options={STATUS_OPTIONS} />
-            <FilterSelect label="Course" value={course} onChange={resetPage(setCourse)} options={SKILLS} />
-            <FilterSelect label="Category" value={category} onChange={resetPage(setCategory)} options={CATEGORIES} />
-            <FilterSelect label="Center Location" value={centerLocation} onChange={resetPage(setCenterLocation)} options={DISTRICTS["KARNATAKA"] || []} />
-            <FilterSelect label="Nigama" value={nigama} onChange={resetPage(setNigama)} options={NIGAMAS} />
+            <FilterSelect label="Nigama" value={nigama} onChange={resetPage(setNigama)} options={dynamicFilterOptions.nigamas} />
+            <FilterSelect label="Status" value={status} onChange={resetPage(setStatus)} options={dynamicFilterOptions.statuses} />
             <FilterSelect
               label="Partner"
               value={partner}
               onChange={resetPage(setPartner)}
-              options={COLLEGES}
+              options={dynamicFilterOptions.partners}
             />
+            <FilterSelect label="Course" value={course} onChange={resetPage(setCourse)} options={dynamicFilterOptions.courses} />
+            <FilterSelect label="Category" value={category} onChange={resetPage(setCategory)} options={dynamicFilterOptions.categories} />
+            <FilterSelect label="Center Location" value={centerLocation} onChange={resetPage(setCenterLocation)} options={dynamicFilterOptions.centers} />
           </div>
 
           <div className="mt-4 flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm">
@@ -427,6 +509,16 @@ function AdminPage() {
               <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary">
                 {listQuery.isLoading ? "Loading…" : `${total} Record${total === 1 ? "" : "s"} Found`}
               </span>
+              <button
+                type="button"
+                disabled={isExporting || total === 0}
+                onClick={exportCsv}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                title="Export filtered records to CSV"
+              >
+                <span className="text-sm sm:text-base">{isExporting ? "⏳" : "📥"}</span>
+                <span>{isExporting ? "Exporting Data…" : "Export Filtered CSV"}</span>
+              </button>
               {selectedIds.length > 0 && (
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium text-muted-foreground">
