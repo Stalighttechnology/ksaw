@@ -1585,8 +1585,8 @@ function RegistrationPage() {
                 <FileField
                   label="Profile Image (Upload Latest Passport Image)"
                   required
-                  accept="image/*"
-                  hint="Image, max 1 MB"
+                  accept="application/pdf,image/jpeg,image/png,image/jpg,image/*,.pdf,.jpg,.jpeg,.png"
+                  hint="PDF or JPG/PNG, max 1 MB"
                   value={profileImg}
                   onChange={setProfileImg}
                   error={errors["profileImg"]}

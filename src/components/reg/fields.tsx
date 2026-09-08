@@ -346,7 +346,13 @@ export function FileField({
       a.startsWith(".") ? file.name.toLowerCase().endsWith(a) : a.endsWith("/*") ? file.type.startsWith(a.slice(0, -1)) : file.type === a,
     );
     if (!ok) {
-      setLocalError(accept === "application/pdf" ? "Only PDF files are allowed" : "Invalid file type");
+      const errorMsg =
+        accept === "application/pdf"
+          ? "Only PDF files are allowed"
+          : accept.includes("pdf") && (accept.includes("image") || accept.includes("jpg"))
+            ? "Only PDF or JPG/PNG files are allowed"
+            : "Invalid file type";
+      setLocalError(errorMsg);
       onChange("");
       return;
     }
