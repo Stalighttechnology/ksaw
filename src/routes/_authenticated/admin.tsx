@@ -947,40 +947,25 @@ function AdminPage() {
               </div>
             )}
 
-            {(statusTarget.status === "Sent to Department" || statusTarget.status === "Approved by Dept") && (
-              <div className="mt-4 space-y-2 rounded-lg bg-muted/40 p-3 border border-border">
-                <label className="text-xs font-semibold text-foreground block">
-                  Department Remarks / Workflow Note:
-                </label>
-                <select
-                  className="w-full form-ctrl text-xs bg-card"
-                  value={statusTarget.reason}
-                  onChange={(e) =>
-                    setStatusTarget((prev) =>
-                      prev ? { ...prev, reason: e.target.value } : null,
-                    )
-                  }
-                >
-                  {DEPT_OPTIONS.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
+            {statusTarget.status === "Sent to Department" && (
+              <div className="mt-4 rounded-lg bg-sky-500/10 p-3 border border-sky-500/20 text-xs">
+                <span className="font-semibold text-sky-900 block mb-1">
+                  Department Remarks:
+                </span>
+                <span className="font-medium text-sky-800">
+                  Forwarded for verification
+                </span>
+              </div>
+            )}
 
-                {statusTarget.reason === "Other / Custom Note" && (
-                  <input
-                    type="text"
-                    placeholder="Enter specific department / dispatch note..."
-                    className="w-full form-ctrl text-xs mt-2"
-                    value={statusTarget.customNote}
-                    onChange={(e) =>
-                      setStatusTarget((prev) =>
-                        prev ? { ...prev, customNote: e.target.value } : null,
-                      )
-                    }
-                  />
-                )}
+            {statusTarget.status === "Approved by Dept" && (
+              <div className="mt-4 rounded-lg bg-indigo-500/10 p-3 border border-indigo-500/20 text-xs">
+                <span className="font-semibold text-indigo-900 block mb-1">
+                  Department Remarks:
+                </span>
+                <span className="font-medium text-indigo-800">
+                  Verified &amp; Approved by Dept
+                </span>
               </div>
             )}
 
