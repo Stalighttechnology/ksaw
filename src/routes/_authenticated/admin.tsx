@@ -107,7 +107,7 @@ function AdminPage() {
       if (filters.search) {
         const s = filters.search.replace(/[%,()]/g, "");
         q = q.or(
-          `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,center_location.ilike.%${s}%,institution_name.ilike.%${s}%`,
+          `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
         );
       }
       let req = q.order("created_at", { ascending: !sortDesc });
@@ -365,7 +365,7 @@ function AdminPage() {
       if (filters.search) {
         const s = filters.search.replace(/[%,()]/g, "");
         q = q.or(
-          `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,center_location.ilike.%${s}%,institution_name.ilike.%${s}%`,
+          `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
         );
       }
       const { data, error } = await q.order("created_at", { ascending: !sortDesc }).limit(20000);
@@ -486,7 +486,7 @@ function AdminPage() {
               <input
                 id="q"
                 className="form-ctrl text-xs sm:text-sm h-9"
-                placeholder="Name, email, phone, college, center..."
+                placeholder="Search Name, Ref ID, SAF No, Email, Phone, College, Course, Nigama, RD No..."
                 value={search}
                 onChange={(e) => resetPage(setSearch)(e.target.value)}
               />
