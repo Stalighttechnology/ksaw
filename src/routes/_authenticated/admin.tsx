@@ -60,6 +60,7 @@ function AdminPage() {
   const [centerLocation, setCenterLocation] = useState("");
   const [nigama, setNigama] = useState("");
   const [partner, setPartner] = useState("");
+  const [safStatus, setSafStatus] = useState("");
   const [sortDesc, setSortDesc] = useState(true);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
@@ -79,7 +80,7 @@ function AdminPage() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
-  const filters = { search: search.trim(), status, course, category, centerLocation, nigama, partner };
+  const filters = { search: search.trim(), status, course, category, centerLocation, nigama, partner, safStatus };
 
   const listQuery = useQuery({
     queryKey: ["registrations", filters, page, pageSize, sortDesc],
@@ -90,6 +91,11 @@ function AdminPage() {
       if (filters.course) q = q.eq("skill_sought", filters.course);
       if (filters.category) q = q.eq("category", filters.category);
       if (filters.centerLocation) q = q.ilike("center_location", `%${filters.centerLocation}%`);
+      if (filters.safStatus === "Empty / Missing") {
+        q = q.or("saf_number.is.null,saf_number.eq.");
+      } else if (filters.safStatus === "Filled / Present") {
+        q = q.not("saf_number", "is", null).neq("saf_number", "");
+      }
       if (filters.nigama) {
         const nigamaAliases = getNigamaAliases(filters.nigama);
         q = q.in("nigama", nigamaAliases);
@@ -348,6 +354,11 @@ function AdminPage() {
       if (filters.course) q = q.eq("skill_sought", filters.course);
       if (filters.category) q = q.eq("category", filters.category);
       if (filters.centerLocation) q = q.ilike("center_location", `%${filters.centerLocation}%`);
+      if (filters.safStatus === "Empty / Missing") {
+        q = q.or("saf_number.is.null,saf_number.eq.");
+      } else if (filters.safStatus === "Filled / Present") {
+        q = q.not("saf_number", "is", null).neq("saf_number", "");
+      }
       if (filters.nigama) {
         const nigamaAliases = getNigamaAliases(filters.nigama);
         q = q.in("nigama", nigamaAliases);
@@ -665,6 +676,12 @@ function AdminPage() {
             <FilterSelect label="Course" value={course} onChange={resetPage(setCourse)} options={dynamicFilterOptions.courses} />
             <FilterSelect label="Category" value={category} onChange={resetPage(setCategory)} options={dynamicFilterOptions.categories} />
             <FilterSelect label="Center Location" value={centerLocation} onChange={resetPage(setCenterLocation)} options={dynamicFilterOptions.centers} />
+            <FilterSelect
+              label="SAF Number"
+              value={safStatus}
+              onChange={resetPage(setSafStatus)}
+              options={["Empty / Missing", "Filled / Present"]}
+            />
           </div>
 
           <div className="mt-4 flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm">
