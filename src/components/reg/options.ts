@@ -186,7 +186,19 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "PES College of Science Arts & Commerce Mandya",
     "PES College of Science Arts and Commerce Mandya",
   ],
-  "GOVT COLLEGE CHANNARAYAPATNA": ["GOVT COLLEGE CHANNARAYAPATNA"],
+  "GOVT COLLEGE CHANNARAYAPATNA": [
+    "GOVT COLLEGE CHANNARAYAPATNA",
+    "GOVT FIRST GRADE COLLEGE CHANNARAYAPATNA",
+    "GFGC CHANNARAYAPATNA",
+    "Channarayapatna Govt College",
+  ],
+  "BGS College Channarayapatna": [
+    "BGS College Channarayapatna",
+    "BGS COLLEGE CHANNARAYAPATNA",
+    "BGS FIRST GRADE COLLEGE CHANNARAYAPATNA",
+    "BGS PU AND FIRST GRADE COLLEGE CHANNARAYAPATNA",
+    "BGS COLLEGE",
+  ],
   "GOVT FIRST GRADE WOMENS COLLEGE YADGIRI": ["GOVT FIRST GRADE WOMENS COLLEGE YADGIRI"],
   "MARI MALLAPPA WOMENS COLLEGE MYSORE": ["MARI MALLAPPA WOMENS COLLEGE MYSORE"],
   "SIDHARTHA COLLEGE BIDAR": ["SIDHARTHA COLLEGE BIDAR"],
@@ -235,6 +247,7 @@ export function normalizeCollegeName(rawName?: string | null): string {
   if (upper.includes("SHIVAKUMAR")) return "Shivakumar";
   if (upper.includes("KSAW")) return "KSAWU VIJAYAPURA";
   if (upper.includes("PES") && upper.includes("MANDYA")) return "PES COLLEGE MANDYA";
+  if (upper.includes("BGS")) return "BGS College Channarayapatna";
   if (upper.includes("CHANNARAYAPATNA")) return "GOVT COLLEGE CHANNARAYAPATNA";
   if (upper.includes("YADGIR")) return "GOVT FIRST GRADE WOMENS COLLEGE YADGIRI";
   if (upper.includes("MALLAPPA")) return "MARI MALLAPPA WOMENS COLLEGE MYSORE";
