@@ -61,6 +61,8 @@ function AdminPage() {
   const [nigama, setNigama] = useState("");
   const [partner, setPartner] = useState("");
   const [safStatus, setSafStatus] = useState("");
+  const [gender, setGender] = useState("");
+  const [dateFilter, setDateFilter] = useState<"today" | "week" | "">("");
   const [sortDesc, setSortDesc] = useState(true);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
@@ -68,19 +70,26 @@ function AdminPage() {
   const [viewing, setViewing] = useState<Row | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<{ ids: string[]; name: string } | null>(null);
-  const [openApproveMenuId, setOpenApproveMenuId] = useState<string | null>(null);
-  const [openChangeMenuId, setOpenChangeMenuId] = useState<string | null>(null);
 
-  useEffect(() => {
-    function handleClickOutside() {
-      setOpenApproveMenuId(null);
-      setOpenChangeMenuId(null);
-    }
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
+  const tableSectionRef = useRef<HTMLElement>(null);
 
-  const filters = { search: search.trim(), status, course, category, centerLocation, nigama, partner, safStatus };
+  const scrollToTable = () => {
+    setTimeout(() => {
+      const el = tableSectionRef.current || document.getElementById("records-section");
+      if (el) {
+        const navHeight = 70;
+        const rect = el.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const targetTop = rect.top + scrollTop - navHeight;
+        window.scrollTo({
+          top: Math.max(0, targetTop),
+          behavior: "smooth",
+        });
+      }
+    }, 40);
+  };
+
+  const filters = { search: search.trim(), status, course, category, centerLocation, nigama, partner, safStatus, gender, dateFilter };
 
   const listQuery = useQuery({
     queryKey: ["registrations", filters, page, pageSize, sortDesc],
@@ -88,9 +97,12 @@ function AdminPage() {
       const selectCols = ["id", ...COLUMNS.map((c) => c.key)].join(",");
       let q = supabase.from("registrations").select(selectCols, { count: "exact" });
       if (filters.status) q = q.eq("status", filters.status);
+      if (filters.gender) q = q.eq("gender", filters.gender);
       if (filters.course) q = q.eq("skill_sought", filters.course);
       if (filters.category) q = q.eq("category", filters.category);
-      if (filters.centerLocation) q = q.ilike("center_location", `%${filters.centerLocation}%`);
+      if (filters.centerLocation) {
+        q = q.or(`center_location.ilike.%${filters.centerLocation}%,cur_district.ilike.%${filters.centerLocation}%`);
+      }
       if (filters.safStatus === "Empty / Missing") {
         q = q.or("saf_number.is.null,saf_number.eq.,saf_number.eq.N/A,saf_number.eq.NA,saf_number.not.ilike.SAF%");
       } else if (filters.safStatus === "Filled / Present") {
@@ -98,16 +110,25 @@ function AdminPage() {
       }
       if (filters.nigama) {
         const nigamaAliases = getNigamaAliases(filters.nigama);
-        q = q.in("nigama", nigamaAliases);
+        q = q.in("nigama", Array.from(new Set([filters.nigama, ...nigamaAliases])));
       }
       if (filters.partner) {
         const aliases = getCollegeAliases(filters.partner);
-        q = q.in("institution_name", aliases);
+        q = q.in("institution_name", Array.from(new Set([filters.partner, ...aliases])));
+      }
+      if (filters.dateFilter === "today") {
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+        q = q.gte("created_at", startOfToday);
+      } else if (filters.dateFilter === "week") {
+        const now = new Date();
+        const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).toISOString();
+        q = q.gte("created_at", startOfWeek);
       }
       if (filters.search) {
         const s = filters.search.replace(/[%,()]/g, "");
         q = q.or(
-          `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
+          `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,gender.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
         );
       }
       let req = q.order("created_at", { ascending: !sortDesc });
@@ -283,10 +304,10 @@ function AdminPage() {
         newStatus === "Pending Document" || newStatus === "Rejected"
           ? "Wrong document"
           : newStatus === "Sent to Department"
-          ? "Forwarded for verification"
-          : newStatus === "Approved by Dept"
-          ? "Verified & Approved by Dept"
-          : "",
+            ? "Forwarded for verification"
+            : newStatus === "Approved by Dept"
+              ? "Verified & Approved by Dept"
+              : "",
       customNote: "",
     });
   };
@@ -351,9 +372,12 @@ function AdminPage() {
       const selectCols = ["id", ...COLUMNS.map((c) => c.key)].join(",");
       let q = supabase.from("registrations").select(selectCols);
       if (filters.status) q = q.eq("status", filters.status);
+      if (filters.gender) q = q.eq("gender", filters.gender);
       if (filters.course) q = q.eq("skill_sought", filters.course);
       if (filters.category) q = q.eq("category", filters.category);
-      if (filters.centerLocation) q = q.ilike("center_location", `%${filters.centerLocation}%`);
+      if (filters.centerLocation) {
+        q = q.or(`center_location.ilike.%${filters.centerLocation}%,cur_district.ilike.%${filters.centerLocation}%`);
+      }
       if (filters.safStatus === "Empty / Missing") {
         q = q.or("saf_number.is.null,saf_number.eq.,saf_number.eq.N/A,saf_number.eq.NA,saf_number.not.ilike.SAF%");
       } else if (filters.safStatus === "Filled / Present") {
@@ -361,16 +385,25 @@ function AdminPage() {
       }
       if (filters.nigama) {
         const nigamaAliases = getNigamaAliases(filters.nigama);
-        q = q.in("nigama", nigamaAliases);
+        q = q.in("nigama", Array.from(new Set([filters.nigama, ...nigamaAliases])));
       }
       if (filters.partner) {
         const aliases = getCollegeAliases(filters.partner);
-        q = q.in("institution_name", aliases);
+        q = q.in("institution_name", Array.from(new Set([filters.partner, ...aliases])));
+      }
+      if (filters.dateFilter === "today") {
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+        q = q.gte("created_at", startOfToday);
+      } else if (filters.dateFilter === "week") {
+        const now = new Date();
+        const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).toISOString();
+        q = q.gte("created_at", startOfWeek);
       }
       if (filters.search) {
         const s = filters.search.replace(/[%,()]/g, "");
         q = q.or(
-          `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
+          `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,gender.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
         );
       }
       const { data, error } = await q.order("created_at", { ascending: !sortDesc }).limit(20000);
@@ -453,35 +486,38 @@ function AdminPage() {
 
   const handleSafFileSelect = async (file: File) => {
     try {
+      setIsImportingSaf(true);
       const buffer = await file.arrayBuffer();
-      const wb = read(buffer, { type: "array" });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rawRows: any[] = utils.sheet_to_json(ws, { header: 1 });
+      const workbook = read(buffer, { type: "array" });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const rawRows = utils.sheet_to_json<any[]>(worksheet, { header: 1, defval: "" });
 
       if (rawRows.length < 2) {
-        toast.error("The selected Excel file is empty or has no data rows.");
+        toast.error("The selected file contains no data rows.");
         return;
       }
 
-      const headers: string[] = (rawRows[0] || []).map((h: any) => String(h || "").trim().toLowerCase());
-      const refIdx = headers.findIndex((h) => h.includes("reference") || h.includes("ref"));
-      const safIdx = headers.findIndex((h) => h.includes("saf"));
-      const aadhaarIdx = headers.findIndex((h) => h.includes("aadhaar") || h.includes("adhaar") || h.includes("aadhar"));
-      const fnIdx = headers.findIndex((h) => h.includes("first name") || h.includes("name"));
-      const lnIdx = headers.findIndex((h) => h.includes("last name"));
+      const headers = rawRows[0].map((h: any) => String(h).trim().toLowerCase());
+      const findCol = (candidates: string[]) => {
+        return headers.findIndex((h: string) => candidates.some((c) => h.includes(c)));
+      };
 
-      if (refIdx === -1 || safIdx === -1 || aadhaarIdx === -1) {
-        toast.error("Excel must contain Reference ID, SAF Number, and Aadhaar Number columns.");
+      const refIdx = findCol(["ref", "reference", "app_no", "application", "reg"]);
+      const safIdx = findCol(["saf", "saf_no", "saf id", "safid"]);
+      const aadhaarIdx = findCol(["aadhaar", "adhar", "uid", "aadhar"]);
+      const fnIdx = findCol(["first name", "firstname", "first", "candidate name", "name", "student name"]);
+      const lnIdx = findCol(["last name", "lastname", "last", "surname"]);
+
+      if (safIdx === -1 && refIdx === -1 && aadhaarIdx === -1) {
+        toast.error("Could not find SAF Number, Reference ID, or Aadhaar columns in this file.");
         return;
       }
-
-      // Valid data rows count (exclude header and blanks)
-      const dataRows = rawRows.slice(1).filter((r) => r && (r[refIdx] || r[aadhaarIdx]));
 
       setPendingSafData({
         file,
-        totalRows: dataRows.length,
-        rows: rawRows,
+        totalRows: rawRows.length - 1,
+        rows: rawRows.slice(1),
         refIdx,
         safIdx,
         aadhaarIdx,
@@ -492,14 +528,14 @@ function AdminPage() {
       setSafPasswordError("");
       setSafConfirmModalOpen(true);
     } catch (err: any) {
-      console.error("Error reading Excel:", err);
-      toast.error(`Could not read Excel file: ${err.message || err}`);
+      toast.error(`Failed to read file: ${err.message || err}`);
     } finally {
+      setIsImportingSaf(false);
       if (safFileInputRef.current) safFileInputRef.current.value = "";
     }
   };
 
-  const executeSafUpdate = async () => {
+  const processSafImport = async () => {
     if (!pendingSafData) return;
     if (safPassword !== "Gleamator@2025") {
       setSafPasswordError("Incorrect password. Verification required.");
@@ -509,9 +545,8 @@ function AdminPage() {
     try {
       setIsImportingSaf(true);
       setSafPasswordError("");
-      const { rows: rawRows, refIdx, safIdx, aadhaarIdx, fnIdx, lnIdx } = pendingSafData;
+      const { rows: fileRows, refIdx, safIdx, aadhaarIdx, fnIdx, lnIdx } = pendingSafData;
 
-      // Fetch all portal registrations
       const { data: portalRows, error } = await supabase
         .from("registrations")
         .select("id, reference_number, aadhaar_number, saf_number, first_name, last_name");
@@ -527,16 +562,16 @@ function AdminPage() {
       let unchangedCount = 0;
       const unmatchedList: Array<{ ref: string; aadhaar: string; name: string; saf: string }> = [];
 
-      for (let i = 1; i < rawRows.length; i++) {
-        const row = rawRows[i];
+      for (let i = 0; i < fileRows.length; i++) {
+        const row = fileRows[i];
         if (!row || !row.length) continue;
 
-        const refVal = String(row[refIdx] ?? "").trim();
-        const safVal = String(row[safIdx] ?? "").trim();
-        const aadhaarVal = String(row[aadhaarIdx] ?? "").trim();
-        const nameVal = `${String(row[fnIdx] ?? "").trim()} ${lnIdx !== -1 ? String(row[lnIdx] ?? "").trim() : ""}`.trim();
+        const refVal = refIdx !== -1 ? String(row[refIdx] ?? "").trim() : "";
+        const safVal = safIdx !== -1 ? String(row[safIdx] ?? "").trim() : "";
+        const aadhaarVal = aadhaarIdx !== -1 ? String(row[aadhaarIdx] ?? "").trim() : "";
+        const nameVal = `${fnIdx !== -1 ? String(row[fnIdx] ?? "").trim() : ""} ${lnIdx !== -1 ? String(row[lnIdx] ?? "").trim() : ""}`.trim();
 
-        if (!refVal && !aadhaarVal) continue;
+        if (!safVal) continue;
 
         const cRef = cleanRef(refVal);
         const cAadhaar = cleanAadhaar(aadhaarVal);
@@ -544,11 +579,11 @@ function AdminPage() {
         const match = portalRows.find((p) => {
           const pRef = cleanRef(p.reference_number);
           const pAadhaar = cleanAadhaar(p.aadhaar_number);
-          return cRef && cAadhaar && pRef === cRef && pAadhaar === cAadhaar;
+          return (cRef && pRef && pRef === cRef) || (cAadhaar && pAadhaar && cAadhaar.length >= 10 && pAadhaar === cAadhaar);
         });
 
         if (!match) {
-          unmatchedList.push({ ref: refVal, aadhaar: aadhaarVal, name: nameVal, saf: safVal });
+          unmatchedList.push({ ref: refVal || "N/A", aadhaar: aadhaarVal || "N/A", name: nameVal || "N/A", saf: safVal });
           continue;
         }
 
@@ -596,75 +631,325 @@ function AdminPage() {
     }
   };
 
+  const activeFilterCount = [
+    search.trim(),
+    status,
+    course,
+    category,
+    centerLocation,
+    nigama,
+    partner,
+    safStatus,
+    gender,
+    dateFilter,
+  ].filter(Boolean).length;
+
+  const clearAllFilters = () => {
+    setSearch("");
+    setStatus("");
+    setCourse("");
+    setCategory("");
+    setCenterLocation("");
+    setNigama("");
+    setPartner("");
+    setSafStatus("");
+    setGender("");
+    setDateFilter("");
+    setPage(0);
+  };
+
+  const formattedDate = useMemo(() => {
+    const d = new Date();
+    const dateStr = d.toLocaleDateString("en-IN", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+    return dateStr;
+  }, []);
+
   return (
     <div className="kk-page min-h-screen bg-muted/20">
-      <SiteHeader />
-      <main className="mx-auto w-full max-w-[1600px] px-3 py-4 sm:px-6 sm:py-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <SiteHeader variant="admin" />
+      <main className="mx-auto w-full max-w-[1680px] px-3 py-4 sm:px-6 sm:py-6 space-y-5">
+        {/* Top Header Row */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">Registrations Dashboard</h1>
-            <p className="text-xs text-muted-foreground sm:text-sm">Manage and inspect all applicant registrations.</p>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+                Registrations Dashboard
+              </h1>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                Live Database
+              </span>
+            </div>
+            <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
+              Manage, inspect, verify and export applicant registrations and SAF identifiers.
+            </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button type="button" className="btn-kk btn-primary-kk text-xs sm:text-sm py-1.5 px-3 sm:py-2 sm:px-4" onClick={signOut}>
-              Sign Out
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="hidden sm:flex items-center gap-2 rounded-xl border border-border/80 bg-card px-3.5 py-2 shadow-2xs text-xs font-semibold text-foreground">
+              <span className="text-base text-muted-foreground">📅</span>
+              <span>{formattedDate}</span>
+            </div>
+
+            <a
+              href="/"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#EE5D1D] hover:bg-[#D94F12] text-white text-xs sm:text-sm font-semibold px-4 py-2 shadow-xs hover:shadow-md transition-all active:scale-95 cursor-pointer"
+              title="Open public registration form in new tab"
+            >
+              <span className="text-base font-bold">+</span>
+              <span>New Registration</span>
+            </a>
+
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border/80 bg-card hover:bg-muted text-foreground text-xs sm:text-sm font-semibold px-3.5 py-2 transition-all cursor-pointer shadow-2xs"
+              onClick={signOut}
+            >
+              <span>Sign Out</span>
             </button>
           </div>
         </div>
 
-        <section className="mt-4 grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-9">
-          <StatCard label="Total Registrations" value={stats.total} />
-          <StatCard label="Today" value={stats.today} />
-          <StatCard label="Last 7 Days" value={stats.week} />
-          {STATUS_OPTIONS.map((s) => (
-            <StatCard key={s} label={s} value={stats.byStatus[s] ?? 0} />
-          ))}
+        {/* 8 Top KPI Stat Cards (2 Rows of 4 Cards) */}
+        <section className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
+          <StatCard
+            label="Total Registrations"
+            value={stats.total}
+            theme="blue"
+            badgeText="ALL DATA"
+            icon={
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            }
+            isActive={!status && !dateFilter && activeFilterCount === 0}
+            onClick={() => {
+              clearAllFilters();
+              scrollToTable();
+            }}
+          />
+          <StatCard
+            label="Today"
+            value={stats.today}
+            theme="emerald"
+            badgeText="TODAY"
+            icon={
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            }
+            isActive={dateFilter === "today"}
+            onClick={() => {
+              resetPage(setDateFilter)(dateFilter === "today" ? "" : "today");
+              scrollToTable();
+            }}
+          />
+          <StatCard
+            label="Last 7 Days"
+            value={stats.week}
+            theme="amber"
+            badgeText="PAST 7 DAYS"
+            icon={
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+            isActive={dateFilter === "week"}
+            onClick={() => {
+              resetPage(setDateFilter)(dateFilter === "week" ? "" : "week");
+              scrollToTable();
+            }}
+          />
+          <StatCard
+            label="Pending"
+            value={stats.byStatus["Pending"] ?? 0}
+            theme="purple"
+            percent={stats.total > 0 ? `${(((stats.byStatus["Pending"] ?? 0) / stats.total) * 100).toFixed(1)}%` : undefined}
+            icon={
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+            isActive={status === "Pending"}
+            onClick={() => {
+              resetPage(setStatus)(status === "Pending" ? "" : "Pending");
+              scrollToTable();
+            }}
+          />
+          <StatCard
+            label="Approved"
+            value={stats.byStatus["Approved"] ?? 0}
+            theme="emerald"
+            percent={stats.total > 0 ? `${(((stats.byStatus["Approved"] ?? 0) / stats.total) * 100).toFixed(1)}%` : undefined}
+            icon={
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+            isActive={status === "Approved"}
+            onClick={() => {
+              resetPage(setStatus)(status === "Approved" ? "" : "Approved");
+              scrollToTable();
+            }}
+          />
+          <StatCard
+            label="Sent to Dept"
+            value={stats.byStatus["Sent to Department"] ?? 0}
+            theme="sky"
+            percent={stats.total > 0 ? `${(((stats.byStatus["Sent to Department"] ?? 0) / stats.total) * 100).toFixed(1)}%` : undefined}
+            icon={
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+              </svg>
+            }
+            isActive={status === "Sent to Department"}
+            onClick={() => {
+              resetPage(setStatus)(status === "Sent to Department" ? "" : "Sent to Department");
+              scrollToTable();
+            }}
+          />
+          <StatCard
+            label="Rejected"
+            value={stats.byStatus["Rejected"] ?? 0}
+            theme="rose"
+            percent={stats.total > 0 ? `${(((stats.byStatus["Rejected"] ?? 0) / stats.total) * 100).toFixed(1)}%` : undefined}
+            icon={
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+            isActive={status === "Rejected"}
+            onClick={() => {
+              resetPage(setStatus)(status === "Rejected" ? "" : "Rejected");
+              scrollToTable();
+            }}
+          />
+          <StatCard
+            label="Pending Document"
+            value={stats.byStatus["Pending Document"] ?? 0}
+            theme="orange"
+            percent={stats.total > 0 ? `${(((stats.byStatus["Pending Document"] ?? 0) / stats.total) * 100).toFixed(1)}%` : undefined}
+            icon={
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            }
+            isActive={status === "Pending Document"}
+            onClick={() => {
+              resetPage(setStatus)(status === "Pending Document" ? "" : "Pending Document");
+              scrollToTable();
+            }}
+          />
         </section>
 
-        <section className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+        {/* 5 Analytics Breakdown Cards */}
+        <section className="grid gap-2.5 sm:gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
           <Breakdown
-            title="By Course"
+            title="Registrations by Course"
             data={stats.byCourse}
-            onItemClick={(selectedCourse) => resetPage(setCourse)(selectedCourse)}
+            limit={5}
+            barColor="bg-blue-600"
+            activeValue={course}
+            onItemClick={(selectedCourse) => {
+              resetPage(setCourse)(course === selectedCourse ? "" : selectedCourse);
+              scrollToTable();
+            }}
           />
           <Breakdown
             title="By Nigama"
             data={stats.byNigama}
-            limit={8}
-            onItemClick={(selectedNigama) => resetPage(setNigama)(selectedNigama)}
+            limit={5}
+            barColor="bg-purple-600"
+            activeValue={nigama}
+            onItemClick={(selectedNigama) => {
+              resetPage(setNigama)(nigama === selectedNigama ? "" : selectedNigama);
+              scrollToTable();
+            }}
           />
           <Breakdown
             title="By Partner"
             data={stats.byPartner}
-            limit={8}
-            onItemClick={(selectedPartner) => resetPage(setPartner)(selectedPartner)}
+            limit={5}
+            barColor="bg-emerald-600"
+            activeValue={partner}
+            onItemClick={(selectedPartner) => {
+              resetPage(setPartner)(partner === selectedPartner ? "" : selectedPartner);
+              scrollToTable();
+            }}
           />
-          <Breakdown
-            title="By Gender"
+          <GenderDonut
             data={stats.byGender}
+            activeGender={gender}
+            onItemClick={(g) => {
+              resetPage(setGender)(gender === g ? "" : g);
+              scrollToTable();
+            }}
           />
           <Breakdown
             title="Center Locations"
             data={stats.byCenter}
-            limit={8}
-            onItemClick={(selectedCenter) => resetPage(setCenterLocation)(selectedCenter)}
+            limit={5}
+            barColor="bg-orange-500"
+            activeValue={centerLocation}
+            onItemClick={(selectedCenter) => {
+              resetPage(setCenterLocation)(centerLocation === selectedCenter ? "" : selectedCenter);
+              scrollToTable();
+            }}
           />
         </section>
 
-        <section className="mt-5 rounded-xl border border-border bg-card p-3 shadow-xs sm:p-5">
-          <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
-            <div className="sm:col-span-2 xl:col-span-2">
-              <label className="ctrl-label text-xs" htmlFor="q">
-                Search Applicants
+        {/* Filter Bar & Controls Panel */}
+        <section
+          ref={tableSectionRef}
+          id="records-section"
+          style={{ scrollMarginTop: "5.5rem" }}
+          className="rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-xs scroll-mt-24"
+        >
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
+            <div className="sm:col-span-2 xl:col-span-2 flex flex-col gap-1">
+              <label className="text-[11px] font-semibold text-muted-foreground flex items-center justify-between" htmlFor="q">
+                <span>Search Applicants</span>
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => resetPage(setSearch)("")}
+                    className="text-[10px] text-primary hover:underline cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                )}
               </label>
-              <input
-                id="q"
-                className="form-ctrl text-xs sm:text-sm h-9"
-                placeholder="Search Name, Ref ID, SAF No, Email, Phone, College, Course, Nigama, RD No..."
-                value={search}
-                onChange={(e) => resetPage(setSearch)(e.target.value)}
-              />
+              <div className="relative flex items-center">
+                <span className="pointer-events-none absolute left-3 text-muted-foreground text-xs select-none z-10">
+                  🔍
+                </span>
+                <input
+                  id="q"
+                  className="w-full form-ctrl text-xs sm:text-sm h-9.5 rounded-xl border border-border/80 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  style={{ paddingLeft: "2.3rem", paddingRight: "2rem" }}
+                  placeholder="Search Name, Ref ID, SAF No, Aadhaar, Phone..."
+                  value={search}
+                  onChange={(e) => resetPage(setSearch)(e.target.value)}
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => resetPage(setSearch)("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs cursor-pointer p-1"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
+
             <FilterSelect label="Nigama" value={nigama} onChange={resetPage(setNigama)} options={dynamicFilterOptions.nigamas} />
             <FilterSelect label="Status" value={status} onChange={resetPage(setStatus)} options={dynamicFilterOptions.statuses} />
             <FilterSelect
@@ -684,20 +969,77 @@ function AdminPage() {
             />
           </div>
 
-          <div className="mt-4 flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary">
+          {/* Action Toolbar */}
+          <div className="mt-4 flex flex-col gap-3 border-t border-border/70 pt-3.5 sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
                 {listQuery.isLoading ? "Loading…" : `${total} Record${total === 1 ? "" : "s"} Found`}
               </span>
+
+              {activeFilterCount > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={clearAllFilters}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground border border-border transition-colors cursor-pointer"
+                    title="Reset all active filters"
+                  >
+                    <span>✕ Reset All ({activeFilterCount})</span>
+                  </button>
+
+                  {dateFilter && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-700 border border-amber-500/20">
+                      Date: {dateFilter === "today" ? "Today" : "Last 7 Days"}
+                      <button type="button" onClick={() => resetPage(setDateFilter)("")} className="cursor-pointer hover:text-amber-900 ml-0.5">✕</button>
+                    </span>
+                  )}
+                  {gender && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-700 border border-blue-500/20">
+                      Gender: {gender}
+                      <button type="button" onClick={() => resetPage(setGender)("")} className="cursor-pointer hover:text-blue-900 ml-0.5">✕</button>
+                    </span>
+                  )}
+                  {status && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
+                      Status: {status}
+                      <button type="button" onClick={() => resetPage(setStatus)("")} className="cursor-pointer hover:text-emerald-900 ml-0.5">✕</button>
+                    </span>
+                  )}
+                  {course && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-700 border border-blue-500/20 max-w-[200px] truncate">
+                      Course: {course}
+                      <button type="button" onClick={() => resetPage(setCourse)("")} className="cursor-pointer hover:text-blue-900 ml-0.5">✕</button>
+                    </span>
+                  )}
+                  {nigama && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-700 border border-purple-500/20 max-w-[200px] truncate">
+                      Nigama: {nigama}
+                      <button type="button" onClick={() => resetPage(setNigama)("")} className="cursor-pointer hover:text-purple-900 ml-0.5">✕</button>
+                    </span>
+                  )}
+                  {partner && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 max-w-[200px] truncate">
+                      Partner: {partner}
+                      <button type="button" onClick={() => resetPage(setPartner)("")} className="cursor-pointer hover:text-emerald-900 ml-0.5">✕</button>
+                    </span>
+                  )}
+                  {centerLocation && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-500/10 text-orange-700 border border-orange-500/20">
+                      Center: {centerLocation}
+                      <button type="button" onClick={() => resetPage(setCenterLocation)("")} className="cursor-pointer hover:text-orange-900 ml-0.5">✕</button>
+                    </span>
+                  )}
+                </div>
+              )}
 
               <button
                 type="button"
                 disabled={isExporting || total === 0}
                 onClick={exportCsv}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                 title="Export filtered records to CSV"
               >
-                <span className="text-sm sm:text-base">{isExporting ? "⏳" : "📥"}</span>
+                <span>{isExporting ? "⏳" : "📥"}</span>
                 <span>{isExporting ? "Exporting Data…" : "Export Filtered CSV"}</span>
               </button>
 
@@ -715,10 +1057,10 @@ function AdminPage() {
                 type="button"
                 disabled={isImportingSaf}
                 onClick={() => safFileInputRef.current?.click()}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                 title="Upload SAF Excel to match and update registrations"
               >
-                <span className="text-sm sm:text-base">{isImportingSaf ? "⏳" : "📊"}</span>
+                <span>{isImportingSaf ? "⏳" : "📊"}</span>
                 <span>{isImportingSaf ? "Processing…" : "Import & Match SAF Excel"}</span>
               </button>
 
@@ -730,28 +1072,29 @@ function AdminPage() {
                   <button
                     type="button"
                     onClick={removeSelected}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors shadow-xs cursor-pointer"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors shadow-xs cursor-pointer"
                   >
                     🗑️ Delete ({selectedIds.length})
                   </button>
                 </div>
               )}
             </div>
-            
-            <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 sm:gap-3">
-              <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border/80 text-xs">
+
+            <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5">
+              <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border text-xs">
                 <button
                   type="button"
                   onClick={() => setSortDesc((v) => !v)}
-                  className="px-2.5 py-1 text-xs font-medium rounded-md bg-card border border-border/60 hover:bg-muted text-foreground transition-colors shadow-2xs cursor-pointer"
+                  className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-card border border-border/60 hover:bg-muted text-foreground transition-colors shadow-2xs cursor-pointer flex items-center gap-1"
                 >
-                  Sort: <span className="font-semibold text-primary">{sortDesc ? "Newest" : "Oldest"}</span>
+                  <span>Sort:</span>
+                  <span className="font-bold text-primary">{sortDesc ? "Newest" : "Oldest"}</span>
                 </button>
-                
+
                 <span className="text-border px-0.5">|</span>
-                
+
                 <select
-                  className="bg-transparent border-0 py-1 pl-1 pr-5 text-xs font-medium text-foreground focus:outline-hidden focus:ring-0 cursor-pointer"
+                  className="bg-transparent border-0 py-1 pl-1 pr-5 text-xs font-semibold text-foreground focus:outline-hidden focus:ring-0 cursor-pointer"
                   value={pageSize}
                   onChange={(e) => {
                     setPageSize(Number(e.target.value));
@@ -766,23 +1109,23 @@ function AdminPage() {
                 </select>
               </div>
 
-              <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border/80 text-xs">
+              <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border text-xs">
                 <button
                   type="button"
                   disabled={page === 0 || pageSize === -1}
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  className="inline-flex items-center justify-center h-7 px-2 text-xs font-medium rounded-md bg-card border border-border/60 text-foreground hover:bg-muted disabled:opacity-50 disabled:pointer-events-none transition-colors shadow-2xs cursor-pointer"
+                  className="inline-flex items-center justify-center h-7 px-2.5 text-xs font-semibold rounded-lg bg-card border border-border/60 text-foreground hover:bg-muted disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-2xs cursor-pointer"
                 >
                   ← Prev
                 </button>
                 <span className="px-2 text-xs font-medium text-muted-foreground whitespace-nowrap">
                   {pageSize === -1 ? (
                     <>
-                      All <strong className="text-foreground">{total}</strong> Records
+                      All <strong className="text-foreground font-bold">{total}</strong> Records
                     </>
                   ) : (
                     <>
-                      Page <strong className="text-foreground">{page + 1}</strong> of <strong className="text-foreground">{pageCount}</strong>
+                      Page <strong className="text-foreground font-bold">{page + 1}</strong> of <strong className="text-foreground font-bold">{pageCount}</strong>
                     </>
                   )}
                 </span>
@@ -790,7 +1133,7 @@ function AdminPage() {
                   type="button"
                   disabled={page + 1 >= pageCount || pageSize === -1}
                   onClick={() => setPage((p) => p + 1)}
-                  className="inline-flex items-center justify-center h-7 px-2 text-xs font-medium rounded-md bg-card border border-border/60 text-foreground hover:bg-muted disabled:opacity-50 disabled:pointer-events-none transition-colors shadow-2xs cursor-pointer"
+                  className="inline-flex items-center justify-center h-7 px-2.5 text-xs font-semibold rounded-lg bg-card border border-border/60 text-foreground hover:bg-muted disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-2xs cursor-pointer"
                 >
                   Next →
                 </button>
@@ -799,12 +1142,15 @@ function AdminPage() {
           </div>
 
           {listQuery.isError ? (
-            <p className="mt-3 text-xs sm:text-sm text-destructive">
-              Could not load records. Your account may not have admin access yet.
+            <p className="mt-3 text-xs sm:text-sm text-destructive font-semibold">
+              ⚠️ Could not load records. Your account may not have admin access yet.
             </p>
           ) : null}
+        </section>
 
-          <div className="mt-3 overflow-x-auto rounded-lg border border-border shadow-2xs bg-card">
+        {/* ── 4. Main Records Table Card ────────────────────────────────────── */}
+        <section className="rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-xs overflow-hidden">
+          <div className="overflow-x-auto rounded-xl border border-border/70 shadow-2xs bg-card">
             <table className="w-full min-w-[1700px] border-collapse text-xs sm:text-sm">
               <thead className="bg-muted/70 text-muted-foreground">
                 <tr>
@@ -894,8 +1240,37 @@ function AdminPage() {
                         );
                       })}
                       <td className="whitespace-nowrap px-3 py-2.5 bg-muted/10">
-                        {curStatus === "Pending" ? (
-                          <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-2">
+                          {/* Current Status Badge */}
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold shadow-2xs ${curStatus === "Approved"
+                                ? "bg-emerald-600 text-white"
+                                : curStatus === "Sent to Department"
+                                  ? "bg-sky-600 text-white"
+                                  : curStatus === "Approved by Dept"
+                                    ? "bg-indigo-600 text-white"
+                                    : curStatus === "Rejected"
+                                      ? "bg-red-600 text-white"
+                                      : curStatus === "Pending Document"
+                                        ? "bg-amber-600 text-white"
+                                        : "bg-primary/15 text-primary border border-primary/20"
+                              }`}
+                          >
+                            {curStatus === "Approved"
+                              ? "✓ Approved"
+                              : curStatus === "Sent to Department"
+                                ? "📤 Sent to Dept"
+                                : curStatus === "Approved by Dept"
+                                  ? "🏛️ Approved by Dept"
+                                  : curStatus === "Rejected"
+                                    ? "✕ Rejected"
+                                    : curStatus === "Pending Document"
+                                      ? "📄 Pending Doc"
+                                      : "⏳ Pending"}
+                          </span>
+
+                          {/* 1-Click Fast Workflow Step Actions */}
+                          {curStatus === "Pending" && (
                             <button
                               type="button"
                               onClick={() => requestStatusChange(r, "Approved")}
@@ -904,30 +1279,8 @@ function AdminPage() {
                             >
                               ✓ Approve
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => requestStatusChange(r, "Rejected")}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-red-500/15 text-red-700 hover:bg-red-500/25 border border-red-500/30 transition-colors cursor-pointer"
-                              title="Set status to Rejected"
-                            >
-                              ✕ Reject
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => requestStatusChange(r, "Pending Document")}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 border border-amber-500/30 transition-colors cursor-pointer"
-                              title="Set status to Pending Document"
-                            >
-                              📄 Pending Doc
-                            </button>
-                          </div>
-                        ) : curStatus === "Approved" ? (
-                          <div className="flex items-center gap-2 relative">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-600 text-white shadow-2xs">
-                              ✓ Approved
-                            </span>
-
-                            {/* Step 2 Trigger: Sent to Department */}
+                          )}
+                          {curStatus === "Approved" && (
                             <button
                               type="button"
                               onClick={() => requestStatusChange(r, "Sent to Department")}
@@ -936,56 +1289,8 @@ function AdminPage() {
                             >
                               📤 Sent to Dept →
                             </button>
-
-                            <div className="relative">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenChangeMenuId(openChangeMenuId === r.id ? null : r.id);
-                                }}
-                                className="text-xs text-muted-foreground hover:text-foreground underline transition-colors cursor-pointer"
-                              >
-                                Change ▾
-                              </button>
-                              {openChangeMenuId === r.id && (
-                                <div
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-border bg-card p-1 shadow-xl text-left"
-                                >
-                                  <div className="px-2 py-1 text-[10px] font-bold uppercase text-muted-foreground tracking-wider border-b border-border/60 mb-1">
-                                    Override / Change Status
-                                  </div>
-                                  {STATUS_OPTIONS.map((st) => (
-                                    <button
-                                      key={st}
-                                      type="button"
-                                      disabled={st === curStatus}
-                                      onClick={() => {
-                                        setOpenChangeMenuId(null);
-                                        requestStatusChange(r, st);
-                                      }}
-                                      className={`w-full text-left px-2.5 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between ${
-                                        st === curStatus
-                                          ? "opacity-50 cursor-not-allowed bg-muted/40 font-semibold"
-                                          : "hover:bg-accent hover:text-accent-foreground cursor-pointer"
-                                      }`}
-                                    >
-                                      <span>{st}</span>
-                                      {st === curStatus && <span className="text-[10px]">Current</span>}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ) : curStatus === "Sent to Department" ? (
-                          <div className="flex items-center gap-2 relative">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-sky-600 text-white shadow-2xs">
-                              📤 Sent to Dept
-                            </span>
-
-                            {/* Step 3 Trigger: Approved by Dept */}
+                          )}
+                          {curStatus === "Sent to Department" && (
                             <button
                               type="button"
                               onClick={() => requestStatusChange(r, "Approved by Dept")}
@@ -994,107 +1299,8 @@ function AdminPage() {
                             >
                               🏛️ Approved by Dept →
                             </button>
-
-                            <div className="relative">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenChangeMenuId(openChangeMenuId === r.id ? null : r.id);
-                                }}
-                                className="text-xs text-muted-foreground hover:text-foreground underline transition-colors cursor-pointer"
-                              >
-                                Change ▾
-                              </button>
-                              {openChangeMenuId === r.id && (
-                                <div
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-border bg-card p-1 shadow-xl text-left"
-                                >
-                                  <div className="px-2 py-1 text-[10px] font-bold uppercase text-muted-foreground tracking-wider border-b border-border/60 mb-1">
-                                    Override / Change Status
-                                  </div>
-                                  {STATUS_OPTIONS.map((st) => (
-                                    <button
-                                      key={st}
-                                      type="button"
-                                      disabled={st === curStatus}
-                                      onClick={() => {
-                                        setOpenChangeMenuId(null);
-                                        requestStatusChange(r, st);
-                                      }}
-                                      className={`w-full text-left px-2.5 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between ${
-                                        st === curStatus
-                                          ? "opacity-50 cursor-not-allowed bg-muted/40 font-semibold"
-                                          : "hover:bg-accent hover:text-accent-foreground cursor-pointer"
-                                      }`}
-                                    >
-                                      <span>{st}</span>
-                                      {st === curStatus && <span className="text-[10px]">Current</span>}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ) : curStatus === "Approved by Dept" ? (
-                          <div className="flex items-center gap-2 relative">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-600 text-white shadow-2xs">
-                              🏛️ Approved by Dept ✓
-                            </span>
-
-                            <div className="relative">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenChangeMenuId(openChangeMenuId === r.id ? null : r.id);
-                                }}
-                                className="text-xs text-muted-foreground hover:text-foreground underline transition-colors cursor-pointer"
-                              >
-                                Change ▾
-                              </button>
-                              {openChangeMenuId === r.id && (
-                                <div
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-border bg-card p-1 shadow-xl text-left"
-                                >
-                                  <div className="px-2 py-1 text-[10px] font-bold uppercase text-muted-foreground tracking-wider border-b border-border/60 mb-1">
-                                    Override / Change Status
-                                  </div>
-                                  {STATUS_OPTIONS.map((st) => (
-                                    <button
-                                      key={st}
-                                      type="button"
-                                      disabled={st === curStatus}
-                                      onClick={() => {
-                                        setOpenChangeMenuId(null);
-                                        requestStatusChange(r, st);
-                                      }}
-                                      className={`w-full text-left px-2.5 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between ${
-                                        st === curStatus
-                                          ? "opacity-50 cursor-not-allowed bg-muted/40 font-semibold"
-                                          : "hover:bg-accent hover:text-accent-foreground cursor-pointer"
-                                      }`}
-                                    >
-                                      <span>{st}</span>
-                                      {st === curStatus && <span className="text-[10px]">Current</span>}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 relative">
-                            <span
-                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold shadow-2xs ${
-                                curStatus === "Rejected" ? "bg-red-600 text-white" : "bg-amber-600 text-white"
-                              }`}
-                            >
-                              {curStatus === "Rejected" ? "✕ Rejected" : "📄 Pending Doc"}
-                            </span>
-
+                          )}
+                          {(curStatus === "Rejected" || curStatus === "Pending Document") && (
                             <button
                               type="button"
                               onClick={() => requestStatusChange(r, "Approved")}
@@ -1103,50 +1309,28 @@ function AdminPage() {
                             >
                               Re-evaluate
                             </button>
+                          )}
 
-                            <div className="relative">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenChangeMenuId(openChangeMenuId === r.id ? null : r.id);
-                                }}
-                                className="text-xs text-muted-foreground hover:text-foreground underline transition-colors cursor-pointer"
-                              >
-                                Change ▾
-                              </button>
-                              {openChangeMenuId === r.id && (
-                                <div
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-border bg-card p-1 shadow-xl text-left"
-                                >
-                                  <div className="px-2 py-1 text-[10px] font-bold uppercase text-muted-foreground tracking-wider border-b border-border/60 mb-1">
-                                    Override / Change Status
-                                  </div>
-                                  {STATUS_OPTIONS.map((st) => (
-                                    <button
-                                      key={st}
-                                      type="button"
-                                      disabled={st === curStatus}
-                                      onClick={() => {
-                                        setOpenChangeMenuId(null);
-                                        requestStatusChange(r, st);
-                                      }}
-                                      className={`w-full text-left px-2.5 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between ${
-                                        st === curStatus
-                                          ? "opacity-50 cursor-not-allowed bg-muted/40 font-semibold"
-                                          : "hover:bg-accent hover:text-accent-foreground cursor-pointer"
-                                      }`}
-                                    >
-                                      <span>{st}</span>
-                                      {st === curStatus && <span className="text-[10px]">Current</span>}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
+                          {/* Quick Change Selector */}
+                          <select
+                            value={curStatus}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val && val !== curStatus) {
+                                requestStatusChange(r, val);
+                              }
+                            }}
+                            className="h-7 px-2 text-xs font-semibold rounded-lg border border-border/80 bg-background hover:bg-muted text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs"
+                            title="Change status for this applicant"
+                          >
+                            <option value="" disabled>Change Status...</option>
+                            {STATUS_OPTIONS.map((st) => (
+                              <option key={st} value={st}>
+                                {st === curStatus ? `✓ ${st} (Current)` : `Change to ${st}`}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1186,13 +1370,12 @@ function AdminPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4">
           <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-2xl border border-border">
             <div className="flex items-center gap-3">
-              <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl ${
-                statusTarget.status === "Approved"
+              <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl ${statusTarget.status === "Approved"
                   ? "bg-emerald-500/15 text-emerald-600"
                   : statusTarget.status === "Rejected"
-                  ? "bg-red-500/15 text-red-600"
-                  : "bg-amber-500/15 text-amber-600"
-              }`}>
+                    ? "bg-red-500/15 text-red-600"
+                    : "bg-amber-500/15 text-amber-600"
+                }`}>
                 {statusTarget.status === "Approved" ? "✓" : statusTarget.status === "Rejected" ? "✕" : "📄"}
               </div>
               <div>
@@ -1275,17 +1458,16 @@ function AdminPage() {
               <button
                 type="button"
                 onClick={() => void confirmStatusChange()}
-                className={`px-4 py-2 text-xs font-semibold rounded-md text-white transition-colors cursor-pointer shadow-xs ${
-                  statusTarget.status === "Approved"
+                className={`px-4 py-2 text-xs font-semibold rounded-md text-white transition-colors cursor-pointer shadow-xs ${statusTarget.status === "Approved"
                     ? "bg-emerald-600 hover:bg-emerald-700"
                     : statusTarget.status === "Sent to Department"
-                    ? "bg-sky-600 hover:bg-sky-700"
-                    : statusTarget.status === "Approved by Dept"
-                    ? "bg-indigo-600 hover:bg-indigo-700"
-                    : statusTarget.status === "Rejected"
-                    ? "bg-red-600 hover:bg-red-700"
-                    : "bg-amber-600 hover:bg-amber-700"
-                }`}
+                      ? "bg-sky-600 hover:bg-sky-700"
+                      : statusTarget.status === "Approved by Dept"
+                        ? "bg-indigo-600 hover:bg-indigo-700"
+                        : statusTarget.status === "Rejected"
+                          ? "bg-red-600 hover:bg-red-700"
+                          : "bg-amber-600 hover:bg-amber-700"
+                  }`}
               >
                 Yes, Set to {statusTarget.status}
               </button>
@@ -1486,11 +1668,154 @@ function AdminPage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({
+  label,
+  value,
+  percent,
+  badgeText,
+  icon,
+  theme = "blue",
+  isActive,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  percent?: string;
+  badgeText?: string;
+  icon: React.ReactNode;
+  theme?: "blue" | "emerald" | "amber" | "purple" | "sky" | "rose" | "orange";
+  isActive?: boolean;
+  onClick?: () => void;
+}) {
+  const themeStyles = {
+    blue: {
+      border: "border-blue-500/25 hover:border-blue-500/60",
+      activeBg: "bg-gradient-to-b from-blue-500/[0.12] to-card border-blue-600 ring-2 ring-blue-500/30 shadow-md shadow-blue-500/10",
+      iconBg: "bg-gradient-to-br from-blue-500/20 to-indigo-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-blue-500/25 transition-all duration-300",
+      badge: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30",
+      dot: "bg-blue-500",
+      topBar: "bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400",
+      ambientGlow: "bg-radial from-blue-500/15 via-blue-500/5 to-transparent",
+    },
+    emerald: {
+      border: "border-emerald-500/25 hover:border-emerald-500/60",
+      activeBg: "bg-gradient-to-b from-emerald-500/[0.12] to-card border-emerald-600 ring-2 ring-emerald-500/30 shadow-md shadow-emerald-500/10",
+      iconBg: "bg-gradient-to-br from-emerald-500/20 to-teal-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 group-hover:from-emerald-600 group-hover:to-teal-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-emerald-500/25 transition-all duration-300",
+      badge: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
+      dot: "bg-emerald-500",
+      topBar: "bg-gradient-to-r from-emerald-500 via-teal-500 to-green-400",
+      ambientGlow: "bg-radial from-emerald-500/15 via-emerald-500/5 to-transparent",
+    },
+    amber: {
+      border: "border-amber-500/25 hover:border-amber-500/60",
+      activeBg: "bg-gradient-to-b from-amber-500/[0.12] to-card border-amber-600 ring-2 ring-amber-500/30 shadow-md shadow-amber-500/10",
+      iconBg: "bg-gradient-to-br from-amber-500/20 to-orange-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 group-hover:from-amber-600 group-hover:to-orange-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-amber-500/25 transition-all duration-300",
+      badge: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30",
+      dot: "bg-amber-500",
+      topBar: "bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-400",
+      ambientGlow: "bg-radial from-amber-500/15 via-amber-500/5 to-transparent",
+    },
+    purple: {
+      border: "border-purple-500/25 hover:border-purple-500/60",
+      activeBg: "bg-gradient-to-b from-purple-500/[0.12] to-card border-purple-600 ring-2 ring-purple-500/30 shadow-md shadow-purple-500/10",
+      iconBg: "bg-gradient-to-br from-purple-500/20 to-violet-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30 group-hover:from-purple-600 group-hover:to-violet-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-purple-500/25 transition-all duration-300",
+      badge: "bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30",
+      dot: "bg-purple-500",
+      topBar: "bg-gradient-to-r from-purple-500 via-violet-500 to-fuchsia-400",
+      ambientGlow: "bg-radial from-purple-500/15 via-purple-500/5 to-transparent",
+    },
+    sky: {
+      border: "border-sky-500/25 hover:border-sky-500/60",
+      activeBg: "bg-gradient-to-b from-sky-500/[0.12] to-card border-sky-600 ring-2 ring-sky-500/30 shadow-md shadow-sky-500/10",
+      iconBg: "bg-gradient-to-br from-sky-500/20 to-blue-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/30 group-hover:from-sky-600 group-hover:to-blue-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-sky-500/25 transition-all duration-300",
+      badge: "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/30",
+      dot: "bg-sky-500",
+      topBar: "bg-gradient-to-r from-sky-500 via-blue-500 to-cyan-400",
+      ambientGlow: "bg-radial from-sky-500/15 via-sky-500/5 to-transparent",
+    },
+    rose: {
+      border: "border-rose-500/25 hover:border-rose-500/60",
+      activeBg: "bg-gradient-to-b from-rose-500/[0.12] to-card border-rose-600 ring-2 ring-rose-500/30 shadow-md shadow-rose-500/10",
+      iconBg: "bg-gradient-to-br from-rose-500/20 to-red-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 group-hover:from-rose-600 group-hover:to-red-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-rose-500/25 transition-all duration-300",
+      badge: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30",
+      dot: "bg-rose-500",
+      topBar: "bg-gradient-to-r from-rose-500 via-red-500 to-pink-400",
+      ambientGlow: "bg-radial from-rose-500/15 via-rose-500/5 to-transparent",
+    },
+    orange: {
+      border: "border-orange-500/25 hover:border-orange-500/60",
+      activeBg: "bg-gradient-to-b from-orange-500/[0.12] to-card border-orange-600 ring-2 ring-orange-500/30 shadow-md shadow-orange-500/10",
+      iconBg: "bg-gradient-to-br from-orange-500/20 to-amber-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/30 group-hover:from-orange-600 group-hover:to-amber-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-orange-500/25 transition-all duration-300",
+      badge: "bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/30",
+      dot: "bg-orange-500",
+      topBar: "bg-gradient-to-r from-orange-500 via-amber-500 to-rose-400",
+      ambientGlow: "bg-radial from-orange-500/15 via-orange-500/5 to-transparent",
+    },
+  }[theme];
+
   return (
-    <div className="rounded-lg border border-border bg-card p-3">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-foreground">{value}</p>
+    <div
+      onClick={onClick}
+      className={`relative overflow-hidden rounded-xl sm:rounded-2xl border bg-gradient-to-b from-card via-card to-card/95 p-3 sm:p-3.5 transition-all duration-300 select-none group flex flex-col justify-between shadow-[0_4px_16px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_12px_28px_-6px_rgba(0,0,0,0.12)] hover:-translate-y-1 ${
+        onClick ? "cursor-pointer" : ""
+      } ${
+        isActive
+          ? themeStyles.activeBg
+          : `border-border/80 ${themeStyles.border}`
+      }`}
+    >
+      {/* Top accent glow line */}
+      <div className={`absolute top-0 left-0 right-0 h-1 sm:h-1.5 ${themeStyles.topBar} ${isActive ? "opacity-100" : "opacity-60 group-hover:opacity-100"} transition-opacity`} />
+
+      {/* Ambient Top-Right Corner Glow */}
+      <div className={`pointer-events-none absolute -top-8 -right-8 h-24 w-24 rounded-full ${themeStyles.ambientGlow} blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+
+      {/* Top Header: Big bold readable label on left, styled icon on right */}
+      <div className="relative flex items-start justify-between gap-2.5">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs sm:text-[13.5px] font-black text-foreground/90 group-hover:text-foreground tracking-tight transition-colors leading-snug">
+            {label}
+          </p>
+        </div>
+        <div className={`flex h-8.5 w-8.5 sm:h-9.5 sm:w-9.5 shrink-0 items-center justify-center rounded-lg sm:rounded-xl shadow-xs ${themeStyles.iconBg}`}>
+          {icon}
+        </div>
+      </div>
+
+      {/* Big prominent Number & Badges */}
+      <div className="relative mt-2.5 sm:mt-3 flex items-baseline justify-between gap-1.5">
+        <p className="text-2xl sm:text-[29px] font-black tracking-tight text-foreground tabular-nums leading-none drop-shadow-2xs">
+          {value.toLocaleString()}
+        </p>
+
+        {isActive ? (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-black bg-primary text-primary-foreground shadow-xs shrink-0 ring-1 ring-primary/40 animate-pulse">
+            <span className="h-1.5 w-1.5 rounded-full bg-white" />
+            <span>Active</span>
+          </span>
+        ) : badgeText ? (
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold tracking-wide border ${themeStyles.badge} shrink-0`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${themeStyles.dot}`} />
+            {badgeText}
+          </span>
+        ) : percent ? (
+          <span className={`inline-flex items-center gap-1 text-[11px] sm:text-xs font-extrabold tabular-nums shrink-0 px-1.5 py-0.5 rounded-md border ${themeStyles.badge}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${themeStyles.dot}`} />
+            {percent}
+          </span>
+        ) : null}
+      </div>
+
+      {/* Bottom filter hint footer */}
+      {onClick && (
+        <div className="relative mt-2.5 pt-2 border-t border-border/50 flex items-center justify-between text-[11px] text-muted-foreground/80 group-hover:text-foreground transition-colors font-medium">
+          <span className="text-[10.5px] sm:text-[11px] font-semibold flex items-center gap-1">
+            <span className="text-primary/70 group-hover:text-primary transition-colors">✦</span>
+            Filter records
+          </span>
+          <span className="text-[11px] font-black text-primary/70 group-hover:text-primary group-hover:translate-x-1 transition-all">→</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -1498,12 +1823,16 @@ function StatCard({ label, value }: { label: string; value: number }) {
 function Breakdown({
   title,
   data,
-  limit = 10,
+  limit = 5,
+  barColor = "bg-primary",
+  activeValue,
   onItemClick,
 }: {
   title: string;
   data: Record<string, number>;
   limit?: number;
+  barColor?: string;
+  activeValue?: string;
   onItemClick?: (key: string) => void;
 }) {
   const [showAll, setShowAll] = useState(false);
@@ -1515,50 +1844,235 @@ function Breakdown({
   const max = allEntries[0]?.[1] ?? 1;
 
   return (
-    <div className="rounded-lg border border-border bg-card p-3 flex flex-col justify-between">
+    <div className="rounded-xl sm:rounded-2xl border border-border/80 bg-gradient-to-b from-card via-card to-card/95 p-3 sm:p-3.5 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.05)] flex flex-col justify-between hover:shadow-[0_12px_28px_-6px_rgba(0,0,0,0.10)] hover:-translate-y-0.5 transition-all duration-300">
       <div>
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-          <span className="text-[11px] font-medium text-muted-foreground">
-            {allEntries.length} {allEntries.length === 1 ? "entry" : "entries"}
-          </span>
-        </div>
-        {allEntries.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">No data yet.</p> : null}
-        <ul className="mt-2 space-y-2 max-h-[260px] overflow-y-auto pr-1">
-          {entries.map(([k, v]) => (
-            <li
-              key={k}
-              onClick={() => onItemClick?.(k)}
-              className={`rounded-md p-1 -mx-1 transition-colors ${
-                onItemClick ? "cursor-pointer hover:bg-muted/60" : ""
-              }`}
-              title={onItemClick ? `Filter by ${k}` : undefined}
+        <div className="flex items-center justify-between gap-1">
+          <h2 className="text-xs sm:text-sm font-extrabold text-foreground tracking-tight truncate flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary/80" />
+            {title}
+          </h2>
+          {allEntries.length > limit && (
+            <button
+              type="button"
+              onClick={() => setShowAll((prev) => !prev)}
+              className="text-[11px] font-bold text-primary hover:underline cursor-pointer shrink-0"
             >
-              <div className="flex justify-between text-xs items-center gap-2">
-                <span className="truncate pr-1 text-foreground font-medium">{k}</span>
-                <span className="shrink-0 font-semibold text-primary tabular-nums">{v}</span>
-              </div>
-              <div className="mt-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                <div
-                  className="h-1.5 rounded-full bg-primary transition-all duration-300"
-                  style={{ width: `${(v / max) * 100}%` }}
-                />
-              </div>
-            </li>
-          ))}
+              {showAll ? "Collapse" : "View All"}
+            </button>
+          )}
+        </div>
+        {allEntries.length === 0 ? (
+          <p className="mt-4 text-xs text-muted-foreground">No records found.</p>
+        ) : null}
+        <ul className="mt-2.5 space-y-1.5 max-h-[200px] overflow-y-auto overflow-x-hidden pr-1 [scrollbar-width:thin]">
+          {entries.map(([k, v]) => {
+            const isActive = !!activeValue && activeValue.toLowerCase() === k.toLowerCase();
+            return (
+              <li
+                key={k}
+                onClick={() => onItemClick?.(k)}
+                className={`group/item rounded-lg p-1 -mx-0.5 transition-all overflow-hidden ${onItemClick ? "cursor-pointer hover:bg-muted/60" : ""
+                  } ${isActive ? "bg-primary/10 ring-1 ring-primary/30 font-semibold" : ""
+                  }`}
+                title={onItemClick ? `Click to filter by: ${k}` : undefined}
+              >
+                <div className="flex justify-between text-xs items-center gap-2 min-w-0">
+                  <span
+                    className={`truncate min-w-0 flex-1 transition-colors ${isActive ? "text-primary font-bold" : "text-foreground/90 font-medium group-hover/item:text-primary"
+                      }`}
+                  >
+                    {isActive && <span className="mr-1 text-primary font-bold">✓</span>}
+                    {k}
+                  </span>
+                  <span className={`shrink-0 tabular-nums ${isActive ? "text-primary font-black" : "font-bold text-foreground/80"}`}>
+                    {v}
+                  </span>
+                </div>
+                <div className="mt-1 h-1.5 rounded-full bg-muted/60 overflow-hidden">
+                  <div
+                    className={`h-1.5 rounded-full ${barColor} transition-all duration-300`}
+                    style={{ width: `${Math.max(4, (v / max) * 100)}%` }}
+                  />
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </div>
-      {allEntries.length > limit ? (
-        <div className="mt-2 pt-2 border-t border-border/60 text-right">
-          <button
-            type="button"
-            onClick={() => setShowAll((prev) => !prev)}
-            className="text-[11px] font-medium text-primary hover:underline cursor-pointer"
-          >
-            {showAll ? "Show Less" : `View All (${allEntries.length})`}
-          </button>
+      {allEntries.length > 0 && (
+        <div className="mt-2.5 pt-2 border-t border-border/50 flex items-center justify-between text-[11px] text-muted-foreground font-medium">
+          <span>Total: <strong className="text-foreground font-bold">{allEntries.length}</strong></span>
+          {activeValue ? (
+            <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Filtered ✓</span>
+          ) : (
+            onItemClick && <span className="text-[10px] text-muted-foreground/80 hover:text-primary transition-colors">Click to filter →</span>
+          )}
         </div>
-      ) : null}
+      )}
+    </div>
+  );
+}
+
+function GenderDonut({
+  data,
+  activeGender,
+  onItemClick,
+}: {
+  data: Record<string, number>;
+  activeGender?: string;
+  onItemClick?: (gender: string) => void;
+}) {
+  const female = data["Female"] ?? 0;
+  const male = data["Male"] ?? 0;
+  const other = data["Other"] ?? 0;
+  const total = female + male + other;
+
+  const radius = 36;
+  const circumference = 2 * Math.PI * radius; // ~226.19
+
+  const femalePercent = total > 0 ? (female / total) * 100 : 0;
+  const malePercent = total > 0 ? (male / total) * 100 : 0;
+  const otherPercent = total > 0 ? (other / total) * 100 : 0;
+
+  const femaleDash = (femalePercent / 100) * circumference;
+  const maleDash = (malePercent / 100) * circumference;
+  const otherDash = (otherPercent / 100) * circumference;
+
+  const femaleOffset = 0;
+  const maleOffset = -femaleDash;
+  const otherOffset = -(femaleDash + maleDash);
+
+  const isFemaleActive = activeGender === "Female";
+  const isMaleActive = activeGender === "Male";
+  const isOtherActive = activeGender === "Other";
+
+  return (
+    <div className="rounded-xl sm:rounded-2xl border border-border/80 bg-gradient-to-b from-card via-card to-card/95 p-3 sm:p-3.5 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.05)] flex flex-col justify-between hover:shadow-[0_12px_28px_-6px_rgba(0,0,0,0.10)] hover:-translate-y-0.5 transition-all duration-300">
+      <div>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs sm:text-sm font-extrabold text-foreground flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary/80" />
+            By Gender
+          </h2>
+          {activeGender ? (
+            <span className="text-[10px] font-semibold text-primary">Filtered ({activeGender})</span>
+          ) : (
+            <span className="text-xs font-semibold text-muted-foreground">Distribution</span>
+          )}
+        </div>
+
+        <div className="my-2.5 flex items-center justify-center">
+          <div className="relative flex items-center justify-center">
+            <svg className="h-32 w-32 -rotate-90 transform" viewBox="0 0 100 100">
+              <circle
+                cx="50"
+                cy="50"
+                r={radius}
+                className="text-muted/30"
+                strokeWidth="14"
+                stroke="currentColor"
+                fill="transparent"
+              />
+              {female > 0 && (
+                <circle
+                  cx="50"
+                  cy="50"
+                  r={radius}
+                  stroke="#3B82F6"
+                  strokeWidth="14"
+                  strokeDasharray={`${femaleDash} ${circumference}`}
+                  strokeDashoffset={femaleOffset}
+                  fill="transparent"
+                  className="transition-all duration-500 cursor-pointer hover:opacity-80"
+                  onClick={() => onItemClick?.("Female")}
+                />
+              )}
+              {male > 0 && (
+                <circle
+                  cx="50"
+                  cy="50"
+                  r={radius}
+                  stroke="#EC4899"
+                  strokeWidth="14"
+                  strokeDasharray={`${maleDash} ${circumference}`}
+                  strokeDashoffset={maleOffset}
+                  fill="transparent"
+                  className="transition-all duration-500 cursor-pointer hover:opacity-80"
+                  onClick={() => onItemClick?.("Male")}
+                />
+              )}
+              {other > 0 && (
+                <circle
+                  cx="50"
+                  cy="50"
+                  r={radius}
+                  stroke="#F59E0B"
+                  strokeWidth="14"
+                  strokeDasharray={`${otherDash} ${circumference}`}
+                  strokeDashoffset={otherOffset}
+                  fill="transparent"
+                  className="transition-all duration-500 cursor-pointer hover:opacity-80"
+                  onClick={() => onItemClick?.("Other")}
+                />
+              )}
+            </svg>
+            <div className="absolute flex flex-col items-center justify-center text-center">
+              <span className="text-xl font-extrabold text-foreground tabular-nums">{total}</span>
+              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Total</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-1 pt-1">
+          <div
+            onClick={() => onItemClick?.("Female")}
+            className={`flex items-center justify-between text-xs cursor-pointer p-1.5 rounded-lg transition-colors ${isFemaleActive ? "bg-primary/10 ring-1 ring-primary/30 font-bold" : "hover:bg-muted/50"
+              }`}
+            title="Filter by Female"
+          >
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+              <span className="font-medium text-foreground">Female {isFemaleActive ? "✓" : ""}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-foreground tabular-nums">{female}</span>
+              <span className="text-muted-foreground text-[11px] tabular-nums">{femalePercent.toFixed(1)}%</span>
+            </div>
+          </div>
+
+          <div
+            onClick={() => onItemClick?.("Male")}
+            className={`flex items-center justify-between text-xs cursor-pointer p-1.5 rounded-lg transition-colors ${isMaleActive ? "bg-primary/10 ring-1 ring-primary/30 font-bold" : "hover:bg-muted/50"
+              }`}
+            title="Filter by Male"
+          >
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-pink-500" />
+              <span className="font-medium text-foreground">Male {isMaleActive ? "✓" : ""}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-foreground tabular-nums">{male}</span>
+              <span className="text-muted-foreground text-[11px] tabular-nums">{malePercent.toFixed(1)}%</span>
+            </div>
+          </div>
+
+          <div
+            onClick={() => onItemClick?.("Other")}
+            className={`flex items-center justify-between text-xs cursor-pointer p-1.5 rounded-lg transition-colors ${isOtherActive ? "bg-primary/10 ring-1 ring-primary/30 font-bold" : "hover:bg-muted/50"
+              }`}
+            title="Filter by Other"
+          >
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+              <span className="font-medium text-foreground">Other {isOtherActive ? "✓" : ""}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-foreground tabular-nums">{other}</span>
+              <span className="text-muted-foreground text-[11px] tabular-nums">{otherPercent.toFixed(1)}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1574,11 +2088,22 @@ function FilterSelect({
   onChange: (v: string) => void;
   options: readonly string[];
 }) {
+  const isSelected = !!value;
   return (
-    <div>
-      <label className="ctrl-label">{label}</label>
-      <select className="form-ctrl" value={value} onChange={(e) => onChange(e.target.value)}>
-        <option value="">All</option>
+    <div className="flex flex-col gap-1">
+      <label className="text-[11px] font-semibold text-muted-foreground tracking-tight flex items-center justify-between">
+        <span>{label}</span>
+        {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+      </label>
+      <select
+        className={`form-ctrl text-xs h-9.5 rounded-xl border transition-all ${isSelected
+            ? "border-primary ring-1 ring-primary/20 bg-primary/[0.02] font-semibold text-foreground"
+            : "border-border/80 bg-background text-foreground hover:border-border"
+          }`}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">All {label}</option>
         {options.map((o) => (
           <option key={o} value={o}>
             {o}
@@ -1651,25 +2176,24 @@ function ViewDialog({
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-muted-foreground">Current Status:</span>
             <span
-              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                curStatus === "Approved"
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${curStatus === "Approved"
                   ? "bg-emerald-500/15 text-emerald-700 border border-emerald-500/30"
                   : curStatus === "Sent to Department"
-                  ? "bg-sky-500/15 text-sky-700 border border-sky-500/30"
-                  : curStatus === "Approved by Dept"
-                  ? "bg-indigo-500/15 text-indigo-700 border border-indigo-500/30"
-                  : curStatus === "Rejected"
-                  ? "bg-red-500/15 text-red-700 border border-red-500/30"
-                  : curStatus === "Pending Document"
-                  ? "bg-amber-500/15 text-amber-700 border border-amber-500/30"
-                  : "bg-primary/10 text-primary border border-primary/20"
-              }`}
+                    ? "bg-sky-500/15 text-sky-700 border border-sky-500/30"
+                    : curStatus === "Approved by Dept"
+                      ? "bg-indigo-500/15 text-indigo-700 border border-indigo-500/30"
+                      : curStatus === "Rejected"
+                        ? "bg-red-500/15 text-red-700 border border-red-500/30"
+                        : curStatus === "Pending Document"
+                          ? "bg-amber-500/15 text-amber-700 border border-amber-500/30"
+                          : "bg-primary/10 text-primary border border-primary/20"
+                }`}
             >
               {curStatus === "Sent to Department"
                 ? "📤 Sent to Department"
                 : curStatus === "Approved by Dept"
-                ? "🏛️ Approved by Dept"
-                : curStatus}
+                  ? "🏛️ Approved by Dept"
+                  : curStatus}
             </span>
             {row["admin_notes"] && (
               <span className="text-xs text-muted-foreground italic truncate max-w-[240px]" title={row["admin_notes"]}>
@@ -1730,29 +2254,26 @@ function ViewDialog({
         {/* Visual 3-Stage Progress Tracker */}
         <div className="grid grid-cols-3 gap-2 pt-1 text-center">
           <div
-            className={`p-1.5 rounded text-[11px] font-semibold border ${
-              curStatus === "Approved" || curStatus === "Sent to Department" || curStatus === "Approved by Dept"
+            className={`p-1.5 rounded text-[11px] font-semibold border ${curStatus === "Approved" || curStatus === "Sent to Department" || curStatus === "Approved by Dept"
                 ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-700"
                 : "bg-muted/40 border-border text-muted-foreground"
-            }`}
+              }`}
           >
             1. Admin Approved {curStatus === "Approved" || curStatus === "Sent to Department" || curStatus === "Approved by Dept" ? "✓" : ""}
           </div>
           <div
-            className={`p-1.5 rounded text-[11px] font-semibold border ${
-              curStatus === "Sent to Department" || curStatus === "Approved by Dept"
+            className={`p-1.5 rounded text-[11px] font-semibold border ${curStatus === "Sent to Department" || curStatus === "Approved by Dept"
                 ? "bg-sky-500/15 border-sky-500/40 text-sky-700"
                 : "bg-muted/40 border-border text-muted-foreground"
-            }`}
+              }`}
           >
             2. Sent to Dept {curStatus === "Sent to Department" || curStatus === "Approved by Dept" ? "✓" : ""}
           </div>
           <div
-            className={`p-1.5 rounded text-[11px] font-semibold border ${
-              curStatus === "Approved by Dept"
+            className={`p-1.5 rounded text-[11px] font-semibold border ${curStatus === "Approved by Dept"
                 ? "bg-indigo-500/15 border-indigo-500/40 text-indigo-700"
                 : "bg-muted/40 border-border text-muted-foreground"
-            }`}
+              }`}
           >
             3. Dept Approved {curStatus === "Approved by Dept" ? "✓" : ""}
           </div>
@@ -1903,11 +2424,10 @@ function SearchableDropdown({
                     onChange(opt);
                     setOpen(false);
                   }}
-                  className={`px-2 py-1.5 rounded cursor-pointer transition-colors ${
-                    opt === value
+                  className={`px-2 py-1.5 rounded cursor-pointer transition-colors ${opt === value
                       ? "bg-primary text-primary-foreground font-medium"
                       : "hover:bg-accent hover:text-accent-foreground"
-                  }`}
+                    }`}
                 >
                   {opt}
                 </li>
@@ -2006,8 +2526,8 @@ function EditDialog({ row, onClose, onSaved }: { row: Row; onClose: () => void; 
         v = Array.isArray(v)
           ? v
           : typeof v === "string"
-          ? v.split(",").map((s) => s.trim()).filter(Boolean)
-          : [];
+            ? v.split(",").map((s) => s.trim()).filter(Boolean)
+            : [];
       } else if (c.type === "date") {
         v = v ? v : null;
       }
@@ -2126,9 +2646,8 @@ function EditDialog({ row, onClose, onSaved }: { row: Row; onClose: () => void; 
                                 View ↗
                               </a>
                               <label
-                                className={`inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-foreground bg-muted hover:bg-muted/80 border border-border rounded cursor-pointer transition-colors ${
-                                  uploadingKey === c.key ? "opacity-50 pointer-events-none" : ""
-                                }`}
+                                className={`inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-foreground bg-muted hover:bg-muted/80 border border-border rounded cursor-pointer transition-colors ${uploadingKey === c.key ? "opacity-50 pointer-events-none" : ""
+                                  }`}
                               >
                                 {uploadingKey === c.key ? "Uploading..." : "Replace"}
                                 <input
@@ -2152,9 +2671,8 @@ function EditDialog({ row, onClose, onSaved }: { row: Row; onClose: () => void; 
                         ) : (
                           <div className="flex items-center gap-2">
                             <label
-                              className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 border border-dashed border-primary/50 hover:border-primary bg-primary/5 hover:bg-primary/10 text-primary rounded-md text-xs font-semibold cursor-pointer transition-all ${
-                                uploadingKey === c.key ? "opacity-50 pointer-events-none" : ""
-                              }`}
+                              className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 border border-dashed border-primary/50 hover:border-primary bg-primary/5 hover:bg-primary/10 text-primary rounded-md text-xs font-semibold cursor-pointer transition-all ${uploadingKey === c.key ? "opacity-50 pointer-events-none" : ""
+                                }`}
                             >
                               <span>{uploadingKey === c.key ? "⏳ Uploading file..." : "📤 Choose File to Upload"}</span>
                               <input
@@ -2185,8 +2703,8 @@ function EditDialog({ row, onClose, onSaved }: { row: Row; onClose: () => void; 
                           const list = Array.isArray(raw)
                             ? (raw as string[])
                             : typeof raw === "string"
-                            ? raw.split(",").map((s) => s.trim()).filter(Boolean)
-                            : [];
+                              ? raw.split(",").map((s) => s.trim()).filter(Boolean)
+                              : [];
                           const checked = list.includes(lang);
                           return (
                             <button
@@ -2196,11 +2714,10 @@ function EditDialog({ row, onClose, onSaved }: { row: Row; onClose: () => void; 
                                 const next = checked ? list.filter((l) => l !== lang) : [...list, lang];
                                 setForm((f) => ({ ...f, [c.key]: next }));
                               }}
-                              className={`px-2 py-0.5 text-xs rounded-full border transition-colors cursor-pointer ${
-                                checked
+                              className={`px-2 py-0.5 text-xs rounded-full border transition-colors cursor-pointer ${checked
                                   ? "bg-primary text-primary-foreground border-primary font-medium"
                                   : "bg-background border-border text-muted-foreground hover:border-primary/50"
-                              }`}
+                                }`}
                             >
                               {lang} {checked ? "✓" : "+"}
                             </button>

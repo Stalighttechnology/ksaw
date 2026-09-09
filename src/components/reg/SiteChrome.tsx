@@ -1,19 +1,42 @@
 import univLogo from "@/assets/image.png";
 import govLogo from "@/assets/image copy.png";
 
-export function SiteHeader() {
+export function SiteHeader({ variant = "default" }: { variant?: "default" | "admin" }) {
+  const isAdmin = variant === "admin";
   return (
-    <header className="kk-header">
-      <div className="kk-wrap kk-header-in">
-        <div className="kk-logo">
-          <img src={govLogo} alt="Government of Karnataka emblem" width={58} height={58} />
-          <img src={univLogo} alt="Karnataka State Akkamahadevi Women's University logo" width={58} height={58} />
+    <header className={`kk-header ${isAdmin ? "border-b-[3.5px] border-[#EE5D1D] bg-white shadow-sm" : ""}`}>
+      <div className={`kk-wrap kk-header-in ${isAdmin ? "max-w-[1680px] px-3 sm:px-6 py-3 min-h-[90px]" : ""}`}>
+        {/* Left Corner: Karnataka State Emblem */}
+        <div className="kk-logo kk-logo-left shrink-0">
+          <img
+            src={govLogo}
+            alt="Government of Karnataka emblem"
+            width={isAdmin ? 70 : 60}
+            height={isAdmin ? 70 : 60}
+            className={`${isAdmin ? "h-14 w-14 sm:h-16 sm:w-16" : "h-12 w-12 sm:h-15 sm:w-15"} object-contain drop-shadow-2xs transition-transform hover:scale-105`}
+          />
         </div>
-        <div className="kk-header-titles">
-          <p className="kk-header-title">Karnataka State Akkamahadevi Women&apos;s University</p>
-          <p className="kk-header-sub">Vijayapura, Karnataka</p>
+
+        {/* Center: University Title and Sub-title */}
+        <div className="kk-header-titles flex flex-col items-center justify-center text-center px-1">
+          <p className={`${isAdmin ? "text-lg sm:text-2xl lg:text-[26px] font-black text-[#123A6B] tracking-tight leading-snug uppercase drop-shadow-2xs" : "kk-header-title"}`}>
+            Karnataka State Akkamahadevi Women&apos;s University
+          </p>
+          <p className={`${isAdmin ? "mt-1 text-xs sm:text-sm lg:text-[14.5px] font-extrabold uppercase tracking-[0.18em] text-[#EE5D1D]" : "kk-header-sub"}`}>
+            Vijayapura, Karnataka
+          </p>
         </div>
-        <div className="kk-logo kk-header-spacer" aria-hidden />
+
+        {/* Right Corner: KSAW University Emblem */}
+        <div className="kk-logo kk-logo-right shrink-0 justify-end">
+          <img
+            src={univLogo}
+            alt="Karnataka State Akkamahadevi Women's University logo"
+            width={isAdmin ? 70 : 60}
+            height={isAdmin ? 70 : 60}
+            className={`${isAdmin ? "h-14 w-14 sm:h-16 sm:w-16" : "h-12 w-12 sm:h-15 sm:w-15"} object-contain drop-shadow-2xs transition-transform hover:scale-105`}
+          />
+        </div>
       </div>
     </header>
   );
