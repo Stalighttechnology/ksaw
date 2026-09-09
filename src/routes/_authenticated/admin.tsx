@@ -92,9 +92,9 @@ function AdminPage() {
       if (filters.category) q = q.eq("category", filters.category);
       if (filters.centerLocation) q = q.ilike("center_location", `%${filters.centerLocation}%`);
       if (filters.safStatus === "Empty / Missing") {
-        q = q.or("saf_number.is.null,saf_number.eq.");
+        q = q.or("saf_number.is.null,saf_number.eq.,saf_number.eq.N/A,saf_number.eq.NA,saf_number.not.ilike.SAF%");
       } else if (filters.safStatus === "Filled / Present") {
-        q = q.not("saf_number", "is", null).neq("saf_number", "");
+        q = q.ilike("saf_number", "SAF%");
       }
       if (filters.nigama) {
         const nigamaAliases = getNigamaAliases(filters.nigama);
@@ -355,9 +355,9 @@ function AdminPage() {
       if (filters.category) q = q.eq("category", filters.category);
       if (filters.centerLocation) q = q.ilike("center_location", `%${filters.centerLocation}%`);
       if (filters.safStatus === "Empty / Missing") {
-        q = q.or("saf_number.is.null,saf_number.eq.");
+        q = q.or("saf_number.is.null,saf_number.eq.,saf_number.eq.N/A,saf_number.eq.NA,saf_number.not.ilike.SAF%");
       } else if (filters.safStatus === "Filled / Present") {
-        q = q.not("saf_number", "is", null).neq("saf_number", "");
+        q = q.ilike("saf_number", "SAF%");
       }
       if (filters.nigama) {
         const nigamaAliases = getNigamaAliases(filters.nigama);
