@@ -13,9 +13,11 @@ export const COLLEGES = [
   "JSS college of women's, Mysore",
   "Maharani commerce and management college , Mysore",
   "GFGC Womens college, Mysore",
+  "GFGC Byrapur , Mysore",
   "BES Degree College Of Arts Commerce & Science- Bangalore",
   "KTSV degree college for women vijayanagar-Bangalore",
   "Oxford PU and Degree College-Bangalore",
+  "Oxford college Banglore",
   "Kempegowda Institute of Management Studies & Research-Bangalore",
   "Government First Grade College for Women's, Gandhadakoti, Hassan",
   "SIDHARTHA COLLEGE BIDAR",
@@ -40,6 +42,7 @@ export const COLLEGES = [
   "Government Girls PU college Channapatna - Ramnagara",
   "Shanikethan College - Ramnagara",
   "Government first grade College Ramnagar",
+  "New expert college , Ramanagar",
 ] as const;
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
@@ -215,6 +218,33 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "GOVT FIRST GRADE COLLEGE RAMNAGAR",
     "Govt First Grade College Ramnagar",
   ],
+  "New expert college , Ramanagar": [
+    "New expert college , Ramanagar",
+    "New Expert College, Ramanagar",
+    "New Expert College Ramanagar",
+    "New Expert College Ramanagara",
+    "New expert college, Ramanagara",
+    "NEW EXPERT COLLEGE RAMANAGAR",
+    "NEW EXPERT COLLEGE",
+  ],
+  "GFGC Byrapur , Mysore": [
+    "GFGC Byrapur , Mysore",
+    "GFGC Byrapur, Mysore",
+    "GFGC Byrapur Mysore",
+    "GFGC Byrapura, Mysore",
+    "GFGC Bairapura Mysore",
+    "GFGC BYRAPUR MYSORE",
+    "Government First Grade College Byrapur Mysore",
+  ],
+  "Oxford college Banglore": [
+    "Oxford college Banglore",
+    "Oxford College Bangalore",
+    "Oxford College, Bangalore",
+    "Oxford College Banglore",
+    "Oxford College, Banglore",
+    "OXFORD COLLEGE BANGLORE",
+    "OXFORD COLLEGE BANGALORE",
+  ],
 };
 
 export function normalizeCollegeName(rawName?: string | null): string {
@@ -230,6 +260,9 @@ export function normalizeCollegeName(rawName?: string | null): string {
   }
 
   const upper = trimmed.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (upper.includes("NEWEXPERT")) return "New expert college , Ramanagar";
+  if (upper.includes("BYRAPUR") || upper.includes("BAIRAPUR")) return "GFGC Byrapur , Mysore";
+  if (upper.includes("OXFORD") && !upper.includes("PU")) return "Oxford college Banglore";
   if ((upper.includes("GFGC") || upper.includes("GOVTFIRSTGRADE") || upper.includes("FIRSTGRADE")) && (upper.includes("RAMNAGAR") || upper.includes("RAMNAGARA"))) return "Government first grade College Ramnagar";
   if (upper.includes("GANDHADAKOTI")) return "Government First Grade College for Women's, Gandhadakoti, Hassan";
   if (upper.includes("AVK") || upper.includes("KANTHAMMA")) return "AVK COLLEGE HASSAN";

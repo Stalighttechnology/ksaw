@@ -717,16 +717,15 @@ function AdminPage() {
           </div>
         </div>
 
-        {/* 8 Top KPI Stat Cards (2 Rows of 4 Cards) */}
-        <section className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
+        {/* 8 Top KPI Stat Cards (Clean, Professional 4x2 Grid) */}
+        <section className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-3.5">
           <StatCard
             label="Total Registrations"
             value={stats.total}
-            theme="blue"
-            badgeText="ALL DATA"
+            badgeText="All Data"
             icon={
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             }
             isActive={!status && !dateFilter && activeFilterCount === 0}
@@ -738,11 +737,10 @@ function AdminPage() {
           <StatCard
             label="Today"
             value={stats.today}
-            theme="emerald"
-            badgeText="TODAY"
+            badgeText="Today"
             icon={
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             }
             isActive={dateFilter === "today"}
@@ -754,11 +752,10 @@ function AdminPage() {
           <StatCard
             label="Last 7 Days"
             value={stats.week}
-            theme="amber"
-            badgeText="PAST 7 DAYS"
+            badgeText="7 Days"
             icon={
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             }
             isActive={dateFilter === "week"}
@@ -768,13 +765,12 @@ function AdminPage() {
             }}
           />
           <StatCard
-            label="Pending"
+            label="Pending Review"
             value={stats.byStatus["Pending"] ?? 0}
-            theme="purple"
             percent={stats.total > 0 ? `${(((stats.byStatus["Pending"] ?? 0) / stats.total) * 100).toFixed(1)}%` : undefined}
             icon={
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             }
             isActive={status === "Pending"}
@@ -786,11 +782,10 @@ function AdminPage() {
           <StatCard
             label="Approved"
             value={stats.byStatus["Approved"] ?? 0}
-            theme="emerald"
             percent={stats.total > 0 ? `${(((stats.byStatus["Approved"] ?? 0) / stats.total) * 100).toFixed(1)}%` : undefined}
             icon={
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             }
             isActive={status === "Approved"}
@@ -800,13 +795,12 @@ function AdminPage() {
             }}
           />
           <StatCard
-            label="Sent to Dept"
+            label="Sent to Department"
             value={stats.byStatus["Sent to Department"] ?? 0}
-            theme="sky"
             percent={stats.total > 0 ? `${(((stats.byStatus["Sent to Department"] ?? 0) / stats.total) * 100).toFixed(1)}%` : undefined}
             icon={
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
               </svg>
             }
             isActive={status === "Sent to Department"}
@@ -818,11 +812,10 @@ function AdminPage() {
           <StatCard
             label="Rejected"
             value={stats.byStatus["Rejected"] ?? 0}
-            theme="rose"
             percent={stats.total > 0 ? `${(((stats.byStatus["Rejected"] ?? 0) / stats.total) * 100).toFixed(1)}%` : undefined}
             icon={
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             }
             isActive={status === "Rejected"}
@@ -832,13 +825,12 @@ function AdminPage() {
             }}
           />
           <StatCard
-            label="Pending Document"
+            label="Pending Documents"
             value={stats.byStatus["Pending Document"] ?? 0}
-            theme="orange"
             percent={stats.total > 0 ? `${(((stats.byStatus["Pending Document"] ?? 0) / stats.total) * 100).toFixed(1)}%` : undefined}
             icon={
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             }
             isActive={status === "Pending Document"}
@@ -855,7 +847,7 @@ function AdminPage() {
             title="Registrations by Course"
             data={stats.byCourse}
             limit={5}
-            barColor="bg-blue-600"
+            barColor="bg-primary/80"
             activeValue={course}
             onItemClick={(selectedCourse) => {
               resetPage(setCourse)(course === selectedCourse ? "" : selectedCourse);
@@ -866,7 +858,7 @@ function AdminPage() {
             title="By Nigama"
             data={stats.byNigama}
             limit={5}
-            barColor="bg-purple-600"
+            barColor="bg-primary/80"
             activeValue={nigama}
             onItemClick={(selectedNigama) => {
               resetPage(setNigama)(nigama === selectedNigama ? "" : selectedNigama);
@@ -877,7 +869,7 @@ function AdminPage() {
             title="By Partner"
             data={stats.byPartner}
             limit={5}
-            barColor="bg-emerald-600"
+            barColor="bg-primary/80"
             activeValue={partner}
             onItemClick={(selectedPartner) => {
               resetPage(setPartner)(partner === selectedPartner ? "" : selectedPartner);
@@ -896,7 +888,7 @@ function AdminPage() {
             title="Center Locations"
             data={stats.byCenter}
             limit={5}
-            barColor="bg-orange-500"
+            barColor="bg-primary/80"
             activeValue={centerLocation}
             onItemClick={(selectedCenter) => {
               resetPage(setCenterLocation)(centerLocation === selectedCenter ? "" : selectedCenter);
@@ -1674,7 +1666,6 @@ function StatCard({
   percent,
   badgeText,
   icon,
-  theme = "blue",
   isActive,
   onClick,
 }: {
@@ -1683,137 +1674,63 @@ function StatCard({
   percent?: string;
   badgeText?: string;
   icon: React.ReactNode;
-  theme?: "blue" | "emerald" | "amber" | "purple" | "sky" | "rose" | "orange";
   isActive?: boolean;
   onClick?: () => void;
 }) {
-  const themeStyles = {
-    blue: {
-      border: "border-blue-500/25 hover:border-blue-500/60",
-      activeBg: "bg-gradient-to-b from-blue-500/[0.12] to-card border-blue-600 ring-2 ring-blue-500/30 shadow-md shadow-blue-500/10",
-      iconBg: "bg-gradient-to-br from-blue-500/20 to-indigo-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-blue-500/25 transition-all duration-300",
-      badge: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30",
-      dot: "bg-blue-500",
-      topBar: "bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400",
-      ambientGlow: "bg-radial from-blue-500/15 via-blue-500/5 to-transparent",
-    },
-    emerald: {
-      border: "border-emerald-500/25 hover:border-emerald-500/60",
-      activeBg: "bg-gradient-to-b from-emerald-500/[0.12] to-card border-emerald-600 ring-2 ring-emerald-500/30 shadow-md shadow-emerald-500/10",
-      iconBg: "bg-gradient-to-br from-emerald-500/20 to-teal-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 group-hover:from-emerald-600 group-hover:to-teal-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-emerald-500/25 transition-all duration-300",
-      badge: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
-      dot: "bg-emerald-500",
-      topBar: "bg-gradient-to-r from-emerald-500 via-teal-500 to-green-400",
-      ambientGlow: "bg-radial from-emerald-500/15 via-emerald-500/5 to-transparent",
-    },
-    amber: {
-      border: "border-amber-500/25 hover:border-amber-500/60",
-      activeBg: "bg-gradient-to-b from-amber-500/[0.12] to-card border-amber-600 ring-2 ring-amber-500/30 shadow-md shadow-amber-500/10",
-      iconBg: "bg-gradient-to-br from-amber-500/20 to-orange-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 group-hover:from-amber-600 group-hover:to-orange-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-amber-500/25 transition-all duration-300",
-      badge: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30",
-      dot: "bg-amber-500",
-      topBar: "bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-400",
-      ambientGlow: "bg-radial from-amber-500/15 via-amber-500/5 to-transparent",
-    },
-    purple: {
-      border: "border-purple-500/25 hover:border-purple-500/60",
-      activeBg: "bg-gradient-to-b from-purple-500/[0.12] to-card border-purple-600 ring-2 ring-purple-500/30 shadow-md shadow-purple-500/10",
-      iconBg: "bg-gradient-to-br from-purple-500/20 to-violet-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30 group-hover:from-purple-600 group-hover:to-violet-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-purple-500/25 transition-all duration-300",
-      badge: "bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30",
-      dot: "bg-purple-500",
-      topBar: "bg-gradient-to-r from-purple-500 via-violet-500 to-fuchsia-400",
-      ambientGlow: "bg-radial from-purple-500/15 via-purple-500/5 to-transparent",
-    },
-    sky: {
-      border: "border-sky-500/25 hover:border-sky-500/60",
-      activeBg: "bg-gradient-to-b from-sky-500/[0.12] to-card border-sky-600 ring-2 ring-sky-500/30 shadow-md shadow-sky-500/10",
-      iconBg: "bg-gradient-to-br from-sky-500/20 to-blue-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/30 group-hover:from-sky-600 group-hover:to-blue-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-sky-500/25 transition-all duration-300",
-      badge: "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/30",
-      dot: "bg-sky-500",
-      topBar: "bg-gradient-to-r from-sky-500 via-blue-500 to-cyan-400",
-      ambientGlow: "bg-radial from-sky-500/15 via-sky-500/5 to-transparent",
-    },
-    rose: {
-      border: "border-rose-500/25 hover:border-rose-500/60",
-      activeBg: "bg-gradient-to-b from-rose-500/[0.12] to-card border-rose-600 ring-2 ring-rose-500/30 shadow-md shadow-rose-500/10",
-      iconBg: "bg-gradient-to-br from-rose-500/20 to-red-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 group-hover:from-rose-600 group-hover:to-red-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-rose-500/25 transition-all duration-300",
-      badge: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30",
-      dot: "bg-rose-500",
-      topBar: "bg-gradient-to-r from-rose-500 via-red-500 to-pink-400",
-      ambientGlow: "bg-radial from-rose-500/15 via-rose-500/5 to-transparent",
-    },
-    orange: {
-      border: "border-orange-500/25 hover:border-orange-500/60",
-      activeBg: "bg-gradient-to-b from-orange-500/[0.12] to-card border-orange-600 ring-2 ring-orange-500/30 shadow-md shadow-orange-500/10",
-      iconBg: "bg-gradient-to-br from-orange-500/20 to-amber-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/30 group-hover:from-orange-600 group-hover:to-amber-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-orange-500/25 transition-all duration-300",
-      badge: "bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/30",
-      dot: "bg-orange-500",
-      topBar: "bg-gradient-to-r from-orange-500 via-amber-500 to-rose-400",
-      ambientGlow: "bg-radial from-orange-500/15 via-orange-500/5 to-transparent",
-    },
-  }[theme];
-
   return (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden rounded-xl sm:rounded-2xl border bg-gradient-to-b from-card via-card to-card/95 p-3 sm:p-3.5 transition-all duration-300 select-none group flex flex-col justify-between shadow-[0_4px_16px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_12px_28px_-6px_rgba(0,0,0,0.12)] hover:-translate-y-1 ${
+      className={`group relative rounded-2xl border bg-card p-4 sm:p-4.5 transition-all duration-200 select-none flex flex-col justify-between ${
         onClick ? "cursor-pointer" : ""
       } ${
         isActive
-          ? themeStyles.activeBg
-          : `border-border/80 ${themeStyles.border}`
+          ? "border-primary ring-2 ring-primary/25 bg-primary/[0.03] shadow-sm"
+          : "border-border/80 hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-md hover:-translate-y-0.5"
       }`}
     >
-      {/* Top accent glow line */}
-      <div className={`absolute top-0 left-0 right-0 h-1 sm:h-1.5 ${themeStyles.topBar} ${isActive ? "opacity-100" : "opacity-60 group-hover:opacity-100"} transition-opacity`} />
-
-      {/* Ambient Top-Right Corner Glow */}
-      <div className={`pointer-events-none absolute -top-8 -right-8 h-24 w-24 rounded-full ${themeStyles.ambientGlow} blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-
-      {/* Top Header: Big bold readable label on left, styled icon on right */}
-      <div className="relative flex items-start justify-between gap-2.5">
-        <div className="min-w-0 flex-1">
-          <p className="text-xs sm:text-[13.5px] font-black text-foreground/90 group-hover:text-foreground tracking-tight transition-colors leading-snug">
-            {label}
-          </p>
-        </div>
-        <div className={`flex h-8.5 w-8.5 sm:h-9.5 sm:w-9.5 shrink-0 items-center justify-center rounded-lg sm:rounded-xl shadow-xs ${themeStyles.iconBg}`}>
+      {/* Header: Large, bold, readable label on left & styled neutral icon on right */}
+      <div className="flex items-center justify-between gap-2.5">
+        <span className="text-sm sm:text-[15px] font-bold text-foreground/90 group-hover:text-foreground tracking-tight line-clamp-1 transition-colors">
+          {label}
+        </span>
+        <div
+          className={`flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl border transition-all ${
+            isActive
+              ? "bg-primary text-primary-foreground border-primary shadow-xs"
+              : "bg-muted/80 text-muted-foreground border-border/60 group-hover:bg-muted group-hover:text-foreground group-hover:border-border"
+          }`}
+        >
           {icon}
         </div>
       </div>
 
-      {/* Big prominent Number & Badges */}
-      <div className="relative mt-2.5 sm:mt-3 flex items-baseline justify-between gap-1.5">
-        <p className="text-2xl sm:text-[29px] font-black tracking-tight text-foreground tabular-nums leading-none drop-shadow-2xs">
+      {/* Main Metric & Status Badge */}
+      <div className="mt-3.5 flex items-baseline justify-between gap-2">
+        <span className="text-2xl sm:text-3xl font-black tracking-tight text-foreground tabular-nums">
           {value.toLocaleString()}
-        </p>
+        </span>
 
         {isActive ? (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-black bg-primary text-primary-foreground shadow-xs shrink-0 ring-1 ring-primary/40 animate-pulse">
-            <span className="h-1.5 w-1.5 rounded-full bg-white" />
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary text-primary-foreground shrink-0 shadow-2xs">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground animate-pulse" />
             <span>Active</span>
           </span>
         ) : badgeText ? (
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold tracking-wide border ${themeStyles.badge} shrink-0`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${themeStyles.dot}`} />
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-muted text-muted-foreground border border-border/70 shrink-0">
             {badgeText}
           </span>
         ) : percent ? (
-          <span className={`inline-flex items-center gap-1 text-[11px] sm:text-xs font-extrabold tabular-nums shrink-0 px-1.5 py-0.5 rounded-md border ${themeStyles.badge}`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${themeStyles.dot}`} />
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold tabular-nums bg-muted text-muted-foreground border border-border/70 shrink-0">
             {percent}
           </span>
         ) : null}
       </div>
 
-      {/* Bottom filter hint footer */}
+      {/* Bottom Filter Prompt */}
       {onClick && (
-        <div className="relative mt-2.5 pt-2 border-t border-border/50 flex items-center justify-between text-[11px] text-muted-foreground/80 group-hover:text-foreground transition-colors font-medium">
-          <span className="text-[10.5px] sm:text-[11px] font-semibold flex items-center gap-1">
-            <span className="text-primary/70 group-hover:text-primary transition-colors">✦</span>
-            Filter records
-          </span>
-          <span className="text-[11px] font-black text-primary/70 group-hover:text-primary group-hover:translate-x-1 transition-all">→</span>
+        <div className="mt-3 pt-2.5 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground group-hover:text-foreground font-semibold transition-colors">
+          <span className="text-[11px]">Filter records</span>
+          <span className="text-xs group-hover:translate-x-1 transition-transform text-muted-foreground group-hover:text-primary">→</span>
         </div>
       )}
     </div>
@@ -1844,53 +1761,51 @@ function Breakdown({
   const max = allEntries[0]?.[1] ?? 1;
 
   return (
-    <div className="rounded-xl sm:rounded-2xl border border-border/80 bg-gradient-to-b from-card via-card to-card/95 p-3 sm:p-3.5 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.05)] flex flex-col justify-between hover:shadow-[0_12px_28px_-6px_rgba(0,0,0,0.10)] hover:-translate-y-0.5 transition-all duration-300">
+    <div className="rounded-xl border border-border/80 bg-card p-3 sm:p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-400 dark:hover:border-slate-600 transition-all duration-200">
       <div>
-        <div className="flex items-center justify-between gap-1">
-          <h2 className="text-xs sm:text-sm font-extrabold text-foreground tracking-tight truncate flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary/80" />
+        <div className="flex items-center justify-between gap-1 pb-1.5 border-b border-border/40">
+          <h2 className="text-xs font-semibold text-foreground tracking-tight truncate">
             {title}
           </h2>
-          {allEntries.length > limit && (
-            <button
-              type="button"
-              onClick={() => setShowAll((prev) => !prev)}
-              className="text-[11px] font-bold text-primary hover:underline cursor-pointer shrink-0"
-            >
-              {showAll ? "Collapse" : "View All"}
-            </button>
-          )}
+          {activeValue ? (
+            <span className="text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded shrink-0">
+              Filtered ✓
+            </span>
+          ) : null}
         </div>
         {allEntries.length === 0 ? (
-          <p className="mt-4 text-xs text-muted-foreground">No records found.</p>
+          <p className="mt-3 text-xs text-muted-foreground">No records found.</p>
         ) : null}
-        <ul className="mt-2.5 space-y-1.5 max-h-[200px] overflow-y-auto overflow-x-hidden pr-1 [scrollbar-width:thin]">
+        <ul className="mt-2 space-y-1.5 max-h-[145px] overflow-y-auto overflow-x-hidden pr-1 [scrollbar-width:thin]">
           {entries.map(([k, v]) => {
             const isActive = !!activeValue && activeValue.toLowerCase() === k.toLowerCase();
             return (
               <li
                 key={k}
                 onClick={() => onItemClick?.(k)}
-                className={`group/item rounded-lg p-1 -mx-0.5 transition-all overflow-hidden ${onItemClick ? "cursor-pointer hover:bg-muted/60" : ""
-                  } ${isActive ? "bg-primary/10 ring-1 ring-primary/30 font-semibold" : ""
-                  }`}
+                className={`group/item rounded-md p-1 px-1.5 transition-all overflow-hidden ${
+                  onItemClick ? "cursor-pointer hover:bg-muted/70" : ""
+                } ${
+                  isActive ? "bg-primary/10 ring-1 ring-primary/30 font-semibold" : ""
+                }`}
                 title={onItemClick ? `Click to filter by: ${k}` : undefined}
               >
-                <div className="flex justify-between text-xs items-center gap-2 min-w-0">
+                <div className="flex justify-between text-[11px] items-center gap-1.5 min-w-0">
                   <span
-                    className={`truncate min-w-0 flex-1 transition-colors ${isActive ? "text-primary font-bold" : "text-foreground/90 font-medium group-hover/item:text-primary"
-                      }`}
+                    className={`truncate min-w-0 flex-1 transition-colors ${
+                      isActive ? "text-primary font-semibold" : "text-foreground font-medium group-hover/item:text-foreground"
+                    }`}
                   >
-                    {isActive && <span className="mr-1 text-primary font-bold">✓</span>}
+                    {isActive && <span className="mr-1 text-primary">✓</span>}
                     {k}
                   </span>
-                  <span className={`shrink-0 tabular-nums ${isActive ? "text-primary font-black" : "font-bold text-foreground/80"}`}>
+                  <span className={`shrink-0 tabular-nums text-[11px] ${isActive ? "text-primary font-bold" : "font-semibold text-muted-foreground"}`}>
                     {v}
                   </span>
                 </div>
-                <div className="mt-1 h-1.5 rounded-full bg-muted/60 overflow-hidden">
+                <div className="mt-1 h-1 rounded-full bg-muted overflow-hidden">
                   <div
-                    className={`h-1.5 rounded-full ${barColor} transition-all duration-300`}
+                    className={`h-1 rounded-full ${barColor} transition-all duration-300`}
                     style={{ width: `${Math.max(4, (v / max) * 100)}%` }}
                   />
                 </div>
@@ -1900,13 +1815,17 @@ function Breakdown({
         </ul>
       </div>
       {allEntries.length > 0 && (
-        <div className="mt-2.5 pt-2 border-t border-border/50 flex items-center justify-between text-[11px] text-muted-foreground font-medium">
-          <span>Total: <strong className="text-foreground font-bold">{allEntries.length}</strong></span>
-          {activeValue ? (
-            <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Filtered ✓</span>
-          ) : (
-            onItemClick && <span className="text-[10px] text-muted-foreground/80 hover:text-primary transition-colors">Click to filter →</span>
-          )}
+        <div className="mt-2 pt-1.5 border-t border-border/40 flex items-center justify-between text-[10.5px] text-muted-foreground font-medium">
+          <span>Total: <strong className="text-foreground font-semibold">{allEntries.length}</strong></span>
+          {allEntries.length > limit ? (
+            <button
+              type="button"
+              onClick={() => setShowAll((prev) => !prev)}
+              className="text-[10.5px] font-semibold text-primary hover:underline cursor-pointer transition-colors"
+            >
+              {showAll ? "Collapse" : "View All"}
+            </button>
+          ) : null}
         </div>
       )}
     </div>
@@ -1947,28 +1866,27 @@ function GenderDonut({
   const isOtherActive = activeGender === "Other";
 
   return (
-    <div className="rounded-xl sm:rounded-2xl border border-border/80 bg-gradient-to-b from-card via-card to-card/95 p-3 sm:p-3.5 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.05)] flex flex-col justify-between hover:shadow-[0_12px_28px_-6px_rgba(0,0,0,0.10)] hover:-translate-y-0.5 transition-all duration-300">
+    <div className="rounded-xl border border-border/80 bg-card p-3 sm:p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-400 dark:hover:border-slate-600 transition-all duration-200">
       <div>
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs sm:text-sm font-extrabold text-foreground flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary/80" />
+        <div className="flex items-center justify-between pb-1.5 border-b border-border/40">
+          <h2 className="text-xs font-semibold text-foreground">
             By Gender
           </h2>
           {activeGender ? (
             <span className="text-[10px] font-semibold text-primary">Filtered ({activeGender})</span>
           ) : (
-            <span className="text-xs font-semibold text-muted-foreground">Distribution</span>
+            <span className="text-[10px] text-muted-foreground">Distribution</span>
           )}
         </div>
 
-        <div className="my-2.5 flex items-center justify-center">
+        <div className="my-2 flex items-center justify-center">
           <div className="relative flex items-center justify-center">
-            <svg className="h-32 w-32 -rotate-90 transform" viewBox="0 0 100 100">
+            <svg className="h-18 w-18 -rotate-90 transform" viewBox="0 0 100 100">
               <circle
                 cx="50"
                 cy="50"
                 r={radius}
-                className="text-muted/30"
+                className="text-muted"
                 strokeWidth="14"
                 stroke="currentColor"
                 fill="transparent"
@@ -1978,7 +1896,7 @@ function GenderDonut({
                   cx="50"
                   cy="50"
                   r={radius}
-                  stroke="#3B82F6"
+                  stroke="#475569"
                   strokeWidth="14"
                   strokeDasharray={`${femaleDash} ${circumference}`}
                   strokeDashoffset={femaleOffset}
@@ -1992,7 +1910,7 @@ function GenderDonut({
                   cx="50"
                   cy="50"
                   r={radius}
-                  stroke="#EC4899"
+                  stroke="#94A3B8"
                   strokeWidth="14"
                   strokeDasharray={`${maleDash} ${circumference}`}
                   strokeDashoffset={maleOffset}
@@ -2006,7 +1924,7 @@ function GenderDonut({
                   cx="50"
                   cy="50"
                   r={radius}
-                  stroke="#F59E0B"
+                  stroke="#CBD5E1"
                   strokeWidth="14"
                   strokeDasharray={`${otherDash} ${circumference}`}
                   strokeDashoffset={otherOffset}
@@ -2017,60 +1935,65 @@ function GenderDonut({
               )}
             </svg>
             <div className="absolute flex flex-col items-center justify-center text-center">
-              <span className="text-xl font-extrabold text-foreground tabular-nums">{total}</span>
-              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Total</span>
+              <span className="text-sm font-bold text-foreground tabular-nums leading-none">{total}</span>
+              <span className="text-[8px] font-medium text-muted-foreground uppercase tracking-wider">Total</span>
             </div>
           </div>
         </div>
 
-        <div className="space-y-1 pt-1">
+        <div className="space-y-1 pt-0.5">
           <div
             onClick={() => onItemClick?.("Female")}
-            className={`flex items-center justify-between text-xs cursor-pointer p-1.5 rounded-lg transition-colors ${isFemaleActive ? "bg-primary/10 ring-1 ring-primary/30 font-bold" : "hover:bg-muted/50"
-              }`}
+            className={`flex items-center justify-between text-[11px] cursor-pointer p-1 px-1.5 rounded transition-colors ${
+              isFemaleActive ? "bg-primary/10 ring-1 ring-primary/30 font-semibold text-primary" : "hover:bg-muted/70 text-foreground"
+            }`}
             title="Filter by Female"
           >
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-              <span className="font-medium text-foreground">Female {isFemaleActive ? "✓" : ""}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-slate-600 dark:bg-slate-400" />
+              <span>Female</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-foreground tabular-nums">{female}</span>
-              <span className="text-muted-foreground text-[11px] tabular-nums">{femalePercent.toFixed(1)}%</span>
+            <div className="flex items-center gap-1">
+              <span className="font-semibold tabular-nums">{female}</span>
+              <span className="text-[10px] text-muted-foreground">({femalePercent.toFixed(0)}%)</span>
             </div>
           </div>
 
           <div
             onClick={() => onItemClick?.("Male")}
-            className={`flex items-center justify-between text-xs cursor-pointer p-1.5 rounded-lg transition-colors ${isMaleActive ? "bg-primary/10 ring-1 ring-primary/30 font-bold" : "hover:bg-muted/50"
-              }`}
+            className={`flex items-center justify-between text-[11px] cursor-pointer p-1 px-1.5 rounded transition-colors ${
+              isMaleActive ? "bg-primary/10 ring-1 ring-primary/30 font-semibold text-primary" : "hover:bg-muted/70 text-foreground"
+            }`}
             title="Filter by Male"
           >
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-pink-500" />
-              <span className="font-medium text-foreground">Male {isMaleActive ? "✓" : ""}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-slate-400 dark:bg-slate-500" />
+              <span>Male</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-foreground tabular-nums">{male}</span>
-              <span className="text-muted-foreground text-[11px] tabular-nums">{malePercent.toFixed(1)}%</span>
+            <div className="flex items-center gap-1">
+              <span className="font-semibold tabular-nums">{male}</span>
+              <span className="text-[10px] text-muted-foreground">({malePercent.toFixed(0)}%)</span>
             </div>
           </div>
 
-          <div
-            onClick={() => onItemClick?.("Other")}
-            className={`flex items-center justify-between text-xs cursor-pointer p-1.5 rounded-lg transition-colors ${isOtherActive ? "bg-primary/10 ring-1 ring-primary/30 font-bold" : "hover:bg-muted/50"
+          {other > 0 && (
+            <div
+              onClick={() => onItemClick?.("Other")}
+              className={`flex items-center justify-between text-[11px] cursor-pointer p-1 px-1.5 rounded transition-colors ${
+                isOtherActive ? "bg-primary/10 ring-1 ring-primary/30 font-semibold text-primary" : "hover:bg-muted/70 text-foreground"
               }`}
-            title="Filter by Other"
-          >
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-              <span className="font-medium text-foreground">Other {isOtherActive ? "✓" : ""}</span>
+              title="Filter by Other"
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-slate-300 dark:bg-slate-600" />
+                <span>Other</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="font-semibold tabular-nums">{other}</span>
+                <span className="text-[10px] text-muted-foreground">({otherPercent.toFixed(0)}%)</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-foreground tabular-nums">{other}</span>
-              <span className="text-muted-foreground text-[11px] tabular-nums">{otherPercent.toFixed(1)}%</span>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
