@@ -14,7 +14,7 @@ import {
   SelectField,
   TextField,
 } from "@/components/reg/fields";
-import { CASTES, CASTE_CATEGORIES, CASTE_NAMES, NIGAMAS } from "@/components/reg/castes";
+import { CASTES, CASTE_CATEGORIES, CASTE_NAMES, NIGAMAS, getCasteCertificateType } from "@/components/reg/castes";
 import {
   CASTE_CERTIFICATE_TYPES,
   CATEGORIES,
@@ -769,6 +769,7 @@ function RegistrationPage() {
         category: category,
         caste: caste || null,
         caste_sub_category: casteSubCategory || null,
+        caste_cert_type: getCasteCertificateType(category, casteSubCategory, caste) || null,
         nigama: casteInfo?.nigama || null,
         rd_number: rdNumber || null,
         caste_cert_issue_date: casteCertIssueDate || null,

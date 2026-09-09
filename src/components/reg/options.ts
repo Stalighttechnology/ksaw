@@ -307,7 +307,13 @@ export const RELIGIONS = ["Buddhist", "Christian", "Hindu", "Jain", "Muslim", "O
 
 export const CATEGORIES = ["General", "SC", "ST", "OBC", "Minority"] as const;
 
-export const CASTE_CERTIFICATE_TYPES = ["RD Number", "Upload Physical Document"] as const;
+export const CASTE_CERTIFICATE_TYPES = [
+  "Form-E (Income & Caste)",
+  "Form-F (Category 1)",
+  "Form-D (SC/ST)",
+  "RD Number",
+  "Upload Physical Document",
+] as const;
 
 export const SPECIALLY_ABLED_TYPES = [
   "Visual",

@@ -770,3 +770,55 @@ export function getNigamaAliases(canonicalName: string): string[] {
   }
   return [canonicalName];
 }
+
+export function getCasteCertificateType(
+  category?: string | null,
+  subCategory?: string | null,
+  casteName?: string | null,
+): string {
+  const cat = (category || "").trim();
+  const sub = (subCategory || "").trim().toUpperCase();
+
+  if (cat.toLowerCase() === "general") {
+    return "";
+  }
+
+  // If subCategory or category is explicitly Category 1
+  if (sub === "1" || sub === "CAT-1" || sub === "CAT 1" || sub === "CATEGORY 1" || cat === "1" || cat === "Cat-1") {
+    return "Form-F (Category 1)";
+  }
+
+  // If subCategory is 2A, 2B, 3A, 3B
+  if (["2A", "2B", "3A", "3B"].includes(sub)) {
+    return `Form-E (Category ${sub})`;
+  }
+
+  // If category is SC or ST
+  if (cat.toUpperCase() === "SC" || sub === "SC") {
+    return "Form-D (SC)";
+  }
+  if (cat.toUpperCase() === "ST" || sub === "ST") {
+    return "Form-D (ST)";
+  }
+
+  // Fallback check from casteName in CASTES list
+  if (casteName) {
+    const found = CASTES.find(
+      (c) =>
+        c.name.toLowerCase() === casteName.trim().toLowerCase() ||
+        c.name.split(" - ")[0]?.trim().toLowerCase() === casteName.trim().toLowerCase(),
+    );
+    if (found && found.category) {
+      const foundCat = found.category.trim().toUpperCase();
+      if (foundCat === "1") return "Form-F (Category 1)";
+      if (["2A", "2B", "3A", "3B"].includes(foundCat)) return `Form-E (Category ${foundCat})`;
+    }
+  }
+
+  // Default for OBC
+  if (cat === "OBC") {
+    return "Form-E (Income & Caste)";
+  }
+
+  return "";
+}

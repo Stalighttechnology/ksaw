@@ -12,6 +12,7 @@ import {
   LAST_SALARY,
   CASTE_CERTIFICATE_TYPES,
 } from "@/components/reg/options";
+import { CASTE_CATEGORIES } from "@/components/reg/castes";
 
 export type ColumnDef = {
   key: string;
@@ -54,6 +55,7 @@ export const COLUMNS: ColumnDef[] = [
   { key: "religion", label: "Religion", group: "Personal", type: "select", options: RELIGIONS },
   { key: "category", label: "Category", group: "Personal", type: "select", options: CATEGORIES },
   { key: "caste", label: "Caste", group: "Personal" },
+  { key: "caste_sub_category", label: "Sub Category", group: "Personal", type: "select", options: CASTE_CATEGORIES },
   { key: "nigama", label: "Nigama", group: "Personal" },
   { key: "rd_number", label: "RD Number", group: "Personal" },
   { key: "caste_cert_type", label: "Caste Certificate Type", group: "Personal", type: "select", options: CASTE_CERTIFICATE_TYPES },
