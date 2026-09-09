@@ -537,7 +537,7 @@ function AdminPage() {
 
   const processSafImport = async () => {
     if (!pendingSafData) return;
-    if (safPassword !== "Gleamator@2025") {
+    if (safPassword.trim() !== "Gleamator@2025") {
       setSafPasswordError("Incorrect password. Verification required.");
       return;
     }
@@ -549,7 +549,8 @@ function AdminPage() {
 
       const { data: portalRows, error } = await supabase
         .from("registrations")
-        .select("id, reference_number, aadhaar_number, saf_number, first_name, last_name");
+        .select("id, reference_number, aadhaar_number, saf_number, first_name, last_name")
+        .limit(10000);
 
       if (error || !portalRows) {
         throw new Error(error?.message || "Failed to fetch registrations for matching.");
@@ -1550,7 +1551,7 @@ function AdminPage() {
                   setSafPasswordError("");
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") void executeSafUpdate();
+                  if (e.key === "Enter") void processSafImport();
                 }}
                 className="w-full form-ctrl text-xs h-9"
                 autoFocus
@@ -1577,7 +1578,7 @@ function AdminPage() {
               <button
                 type="button"
                 disabled={isImportingSaf || !safPassword}
-                onClick={() => void executeSafUpdate()}
+                onClick={() => void processSafImport()}
                 className="px-4 py-2 text-xs font-semibold rounded-md bg-indigo-600 hover:bg-indigo-700 text-white transition-colors cursor-pointer shadow-xs disabled:opacity-50 inline-flex items-center gap-1.5"
               >
                 <span>{isImportingSaf ? "⏳" : "✓"}</span>
