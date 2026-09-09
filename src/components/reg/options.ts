@@ -43,6 +43,7 @@ export const COLLEGES = [
   "Shanikethan College - Ramnagara",
   "Government first grade College Ramnagar",
   "New expert college , Ramanagar",
+  "GT Ramanagara",
 ] as const;
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
@@ -244,6 +245,12 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "Oxford College, Banglore",
     "OXFORD COLLEGE BANGLORE",
     "OXFORD COLLEGE BANGALORE",
+  ],
+  "GT Ramanagara": [
+    "GT Ramanagara",
+    "GT RAMANAGARA",
+    "GT Ramanagar",
+    "GT College Ramanagara",
   ],
 };
 

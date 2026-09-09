@@ -154,18 +154,59 @@ function AdminPage() {
   const statsQuery = useQuery({
     queryKey: ["registration-stats"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // 1. Get exact total count first directly from PostgreSQL
+      const { count: exactTotal, error: countErr } = await supabase
         .from("registrations")
-        .select("status, skill_sought, gender, category, created_at, cur_district, center_location, institution_name, nigama")
-        .limit(10000);
-      if (error) throw error;
-      return data ?? [];
+        .select("*", { count: "exact", head: true });
+      if (countErr) throw countErr;
+
+      const totalCount = exactTotal ?? 0;
+      if (totalCount === 0) {
+        return { rows: [], totalCount: 0 };
+      }
+
+      // 2. Fetch records in parallel chunks of 1,000 for analytics breakdowns
+      const CHUNK_SIZE = 1000;
+      const numChunks = Math.ceil(totalCount / CHUNK_SIZE);
+      const chunkPromises = [];
+
+      for (let i = 0; i < numChunks; i++) {
+        const from = i * CHUNK_SIZE;
+        const to = from + CHUNK_SIZE - 1;
+        chunkPromises.push(
+          supabase
+            .from("registrations")
+            .select("status, skill_sought, gender, category, created_at, cur_district, center_location, institution_name, nigama")
+            .range(from, to)
+        );
+      }
+
+      const results = await Promise.all(chunkPromises);
+      const allRows: Array<{
+        status: string | null;
+        skill_sought: string | null;
+        gender: string | null;
+        category: string | null;
+        created_at: string;
+        cur_district: string | null;
+        center_location: string | null;
+        institution_name: string | null;
+        nigama: string | null;
+      }> = [];
+
+      for (const res of results) {
+        if (res.error) throw res.error;
+        if (res.data) allRows.push(...res.data);
+      }
+
+      return { rows: allRows, totalCount: Math.max(allRows.length, totalCount) };
     },
     staleTime: 60_000,
   });
 
   const stats = useMemo(() => {
-    const rows = statsQuery.data ?? [];
+    const rows = statsQuery.data?.rows ?? [];
+    const exactTotal = statsQuery.data?.totalCount ?? rows.length;
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).getTime();
@@ -192,12 +233,12 @@ function AdminPage() {
       if (t >= startOfToday) today += 1;
       if (t >= startOfWeek) week += 1;
     }
-    return { total: rows.length, today, week, byStatus, byCourse, byGender, byCenter, byPartner, byNigama };
+    return { total: exactTotal, today, week, byStatus, byCourse, byGender, byCenter, byPartner, byNigama };
   }, [statsQuery.data]);
 
   // Dynamic filter options based on existing applications and interdependent active selections
   const dynamicFilterOptions = useMemo(() => {
-    const rawRows = statsQuery.data ?? [];
+    const rawRows = statsQuery.data?.rows ?? [];
     const rows = rawRows.map((r) => ({
       ...r,
       normalizedPartner: normalizeCollegeName(r.institution_name) || r.institution_name || "",
@@ -371,46 +412,64 @@ function AdminPage() {
     try {
       setIsExporting(true);
       const selectCols = ["id", ...COLUMNS.map((c) => c.key)].join(",");
-      let q = supabase.from("registrations").select(selectCols);
-      if (filters.status) q = q.eq("status", filters.status);
-      if (filters.gender) q = q.eq("gender", filters.gender);
-      if (filters.course) q = q.eq("skill_sought", filters.course);
-      if (filters.category) q = q.eq("category", filters.category);
-      if (filters.centerLocation) {
-        q = q.or(`center_location.ilike.%${filters.centerLocation}%,cur_district.ilike.%${filters.centerLocation}%`);
-      }
-      if (filters.safStatus === "Empty / Missing") {
-        q = q.or("saf_number.is.null,saf_number.eq.,saf_number.eq.N/A,saf_number.eq.NA,saf_number.not.ilike.SAF%");
-      } else if (filters.safStatus === "Filled / Present") {
-        q = q.ilike("saf_number", "SAF%");
-      }
-      if (filters.nigama) {
-        const nigamaAliases = getNigamaAliases(filters.nigama);
-        q = q.in("nigama", Array.from(new Set([filters.nigama, ...nigamaAliases])));
-      }
-      if (filters.partner) {
-        const aliases = getCollegeAliases(filters.partner);
-        q = q.in("institution_name", Array.from(new Set([filters.partner, ...aliases])));
-      }
-      if (filters.dateFilter === "today") {
-        const now = new Date();
-        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-        q = q.gte("created_at", startOfToday);
-      } else if (filters.dateFilter === "week") {
-        const now = new Date();
-        const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).toISOString();
-        q = q.gte("created_at", startOfWeek);
-      }
-      if (filters.search) {
-        const s = filters.search.replace(/[%,()]/g, "");
-        q = q.or(
-          `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,gender.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,caste_sub_category.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
-        );
-      }
-      const { data, error } = await q.order("created_at", { ascending: !sortDesc }).limit(20000);
-      if (error) throw error;
+      const allExportRows: Row[] = [];
+      const CHUNK_SIZE = 1000;
+      let from = 0;
+      let hasMore = true;
 
-      const rows = ((data ?? []) as Row[]).map((r) => ({
+      while (hasMore) {
+        let q = supabase.from("registrations").select(selectCols);
+        if (filters.status) q = q.eq("status", filters.status);
+        if (filters.gender) q = q.eq("gender", filters.gender);
+        if (filters.course) q = q.eq("skill_sought", filters.course);
+        if (filters.category) q = q.eq("category", filters.category);
+        if (filters.centerLocation) {
+          q = q.or(`center_location.ilike.%${filters.centerLocation}%,cur_district.ilike.%${filters.centerLocation}%`);
+        }
+        if (filters.safStatus === "Empty / Missing") {
+          q = q.or("saf_number.is.null,saf_number.eq.,saf_number.eq.N/A,saf_number.eq.NA,saf_number.not.ilike.SAF%");
+        } else if (filters.safStatus === "Filled / Present") {
+          q = q.ilike("saf_number", "SAF%");
+        }
+        if (filters.nigama) {
+          const nigamaAliases = getNigamaAliases(filters.nigama);
+          q = q.in("nigama", Array.from(new Set([filters.nigama, ...nigamaAliases])));
+        }
+        if (filters.partner) {
+          const aliases = getCollegeAliases(filters.partner);
+          q = q.in("institution_name", Array.from(new Set([filters.partner, ...aliases])));
+        }
+        if (filters.dateFilter === "today") {
+          const now = new Date();
+          const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+          q = q.gte("created_at", startOfToday);
+        } else if (filters.dateFilter === "week") {
+          const now = new Date();
+          const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).toISOString();
+          q = q.gte("created_at", startOfWeek);
+        }
+        if (filters.search) {
+          const s = filters.search.replace(/[%,()]/g, "");
+          q = q.or(
+            `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,gender.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,caste_sub_category.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
+          );
+        }
+        const { data, error } = await q.order("created_at", { ascending: !sortDesc }).range(from, from + CHUNK_SIZE - 1);
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          hasMore = false;
+        } else {
+          allExportRows.push(...(data as Row[]));
+          if (data.length < CHUNK_SIZE) {
+            hasMore = false;
+          } else {
+            from += CHUNK_SIZE;
+          }
+        }
+      }
+
+      const rows = allExportRows.map((r) => ({
         ...r,
         institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
         nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
