@@ -17,15 +17,9 @@ import {
   getCollegeAliases,
   normalizeCollegeName,
 } from "@/components/reg/options";
-import {
-  NIGAMAS,
-  CASTES,
-  CASTE_NAMES,
-  CASTE_CATEGORIES,
-  normalizeNigamaName,
-  getNigamaAliases,
-} from "@/components/reg/castes";
+import { NIGAMAS, CASTES, CASTE_NAMES, CASTE_CATEGORIES, normalizeNigamaName, getNigamaAliases } from "@/components/reg/castes";
 import { supabase } from "@/integrations/supabase/client";
+import { read, utils } from "xlsx";
 
 const title = "Registrations Dashboard | Admin";
 const description = "Browse, search, filter, edit and export all student registration submissions.";
@@ -422,6 +416,175 @@ function AdminPage() {
     );
   };
 
+  const [isImportingSaf, setIsImportingSaf] = useState(false);
+  const [safConfirmModalOpen, setSafConfirmModalOpen] = useState(false);
+  const [safPassword, setSafPassword] = useState("");
+  const [safPasswordError, setSafPasswordError] = useState("");
+  const [pendingSafData, setPendingSafData] = useState<{
+    file: File;
+    totalRows: number;
+    rows: any[];
+    refIdx: number;
+    safIdx: number;
+    aadhaarIdx: number;
+    fnIdx: number;
+    lnIdx: number;
+  } | null>(null);
+
+  const [safImportModalOpen, setSafImportModalOpen] = useState(false);
+  const [safImportReport, setSafImportReport] = useState<{
+    total: number;
+    updated: number;
+    unchanged: number;
+    unmatched: Array<{ ref: string; aadhaar: string; name: string; saf: string }>;
+  } | null>(null);
+  const safFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSafFileSelect = async (file: File) => {
+    try {
+      const buffer = await file.arrayBuffer();
+      const wb = read(buffer, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rawRows: any[] = utils.sheet_to_json(ws, { header: 1 });
+
+      if (rawRows.length < 2) {
+        toast.error("The selected Excel file is empty or has no data rows.");
+        return;
+      }
+
+      const headers: string[] = (rawRows[0] || []).map((h: any) => String(h || "").trim().toLowerCase());
+      const refIdx = headers.findIndex((h) => h.includes("reference") || h.includes("ref"));
+      const safIdx = headers.findIndex((h) => h.includes("saf"));
+      const aadhaarIdx = headers.findIndex((h) => h.includes("aadhaar") || h.includes("adhaar") || h.includes("aadhar"));
+      const fnIdx = headers.findIndex((h) => h.includes("first name") || h.includes("name"));
+      const lnIdx = headers.findIndex((h) => h.includes("last name"));
+
+      if (refIdx === -1 || safIdx === -1 || aadhaarIdx === -1) {
+        toast.error("Excel must contain Reference ID, SAF Number, and Aadhaar Number columns.");
+        return;
+      }
+
+      // Valid data rows count (exclude header and blanks)
+      const dataRows = rawRows.slice(1).filter((r) => r && (r[refIdx] || r[aadhaarIdx]));
+
+      setPendingSafData({
+        file,
+        totalRows: dataRows.length,
+        rows: rawRows,
+        refIdx,
+        safIdx,
+        aadhaarIdx,
+        fnIdx,
+        lnIdx,
+      });
+      setSafPassword("");
+      setSafPasswordError("");
+      setSafConfirmModalOpen(true);
+    } catch (err: any) {
+      console.error("Error reading Excel:", err);
+      toast.error(`Could not read Excel file: ${err.message || err}`);
+    } finally {
+      if (safFileInputRef.current) safFileInputRef.current.value = "";
+    }
+  };
+
+  const executeSafUpdate = async () => {
+    if (!pendingSafData) return;
+    if (safPassword !== "Gleamator@2025") {
+      setSafPasswordError("Incorrect password. Verification required.");
+      return;
+    }
+
+    try {
+      setIsImportingSaf(true);
+      setSafPasswordError("");
+      const { rows: rawRows, refIdx, safIdx, aadhaarIdx, fnIdx, lnIdx } = pendingSafData;
+
+      // Fetch all portal registrations
+      const { data: portalRows, error } = await supabase
+        .from("registrations")
+        .select("id, reference_number, aadhaar_number, saf_number, first_name, last_name");
+
+      if (error || !portalRows) {
+        throw new Error(error?.message || "Failed to fetch registrations for matching.");
+      }
+
+      const cleanRef = (s?: string | null) => (s || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+      const cleanAadhaar = (s?: string | null) => (s || "").replace(/[^0-9]/g, "");
+
+      let updatedCount = 0;
+      let unchangedCount = 0;
+      const unmatchedList: Array<{ ref: string; aadhaar: string; name: string; saf: string }> = [];
+
+      for (let i = 1; i < rawRows.length; i++) {
+        const row = rawRows[i];
+        if (!row || !row.length) continue;
+
+        const refVal = String(row[refIdx] ?? "").trim();
+        const safVal = String(row[safIdx] ?? "").trim();
+        const aadhaarVal = String(row[aadhaarIdx] ?? "").trim();
+        const nameVal = `${String(row[fnIdx] ?? "").trim()} ${lnIdx !== -1 ? String(row[lnIdx] ?? "").trim() : ""}`.trim();
+
+        if (!refVal && !aadhaarVal) continue;
+
+        const cRef = cleanRef(refVal);
+        const cAadhaar = cleanAadhaar(aadhaarVal);
+
+        const match = portalRows.find((p) => {
+          const pRef = cleanRef(p.reference_number);
+          const pAadhaar = cleanAadhaar(p.aadhaar_number);
+          return cRef && cAadhaar && pRef === cRef && pAadhaar === cAadhaar;
+        });
+
+        if (!match) {
+          unmatchedList.push({ ref: refVal, aadhaar: aadhaarVal, name: nameVal, saf: safVal });
+          continue;
+        }
+
+        if (match.saf_number?.trim() === safVal) {
+          unchangedCount++;
+          continue;
+        }
+
+        const { error: updateErr } = await supabase
+          .from("registrations")
+          .update({ saf_number: safVal })
+          .eq("id", match.id);
+
+        if (updateErr) {
+          console.error(`Error updating record ${match.reference_number}:`, updateErr);
+          unmatchedList.push({ ref: refVal, aadhaar: aadhaarVal, name: `${nameVal} (Update Error: ${updateErr.message})`, saf: safVal });
+        } else {
+          updatedCount++;
+        }
+      }
+
+      setSafConfirmModalOpen(false);
+      setPendingSafData(null);
+      setSafImportReport({
+        total: updatedCount + unchangedCount + unmatchedList.length,
+        updated: updatedCount,
+        unchanged: unchangedCount,
+        unmatched: unmatchedList,
+      });
+      setSafImportModalOpen(true);
+
+      void qc.invalidateQueries({ queryKey: ["registrations"] });
+      void qc.invalidateQueries({ queryKey: ["registration-stats"] });
+
+      if (updatedCount > 0) {
+        toast.success(`Successfully updated SAF Numbers for ${updatedCount} matched applicant(s)!`);
+      } else if (unchangedCount > 0 && unmatchedList.length === 0) {
+        toast.info("All records already match the uploaded Excel SAF numbers.");
+      }
+    } catch (err: any) {
+      console.error("SAF Import Error:", err);
+      toast.error(`Import failed: ${err.message || err}`);
+    } finally {
+      setIsImportingSaf(false);
+    }
+  };
+
   return (
     <div className="kk-page min-h-screen bg-muted/20">
       <SiteHeader />
@@ -509,6 +672,7 @@ function AdminPage() {
               <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary">
                 {listQuery.isLoading ? "Loading…" : `${total} Record${total === 1 ? "" : "s"} Found`}
               </span>
+
               <button
                 type="button"
                 disabled={isExporting || total === 0}
@@ -519,6 +683,28 @@ function AdminPage() {
                 <span className="text-sm sm:text-base">{isExporting ? "⏳" : "📥"}</span>
                 <span>{isExporting ? "Exporting Data…" : "Export Filtered CSV"}</span>
               </button>
+
+              <input
+                type="file"
+                ref={safFileInputRef}
+                accept=".xlsx,.xls,.csv"
+                className="sr-only"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void handleSafFileSelect(f);
+                }}
+              />
+              <button
+                type="button"
+                disabled={isImportingSaf}
+                onClick={() => safFileInputRef.current?.click()}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                title="Upload SAF Excel to match and update registrations"
+              >
+                <span className="text-sm sm:text-base">{isImportingSaf ? "⏳" : "📊"}</span>
+                <span>{isImportingSaf ? "Processing…" : "Import & Match SAF Excel"}</span>
+              </button>
+
               {selectedIds.length > 0 && (
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium text-muted-foreground">
@@ -1122,6 +1308,158 @@ function AdminPage() {
                 className="px-4 py-2 text-xs font-semibold rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors cursor-pointer shadow-xs"
               >
                 Yes, Delete Permanently
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {safConfirmModalOpen && pendingSafData ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-2xl border border-border">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-indigo-500/15 text-indigo-600 text-xl font-bold">
+                📊
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-foreground">Confirm SAF Excel Upload</h3>
+                <p className="text-xs text-muted-foreground">Admin authorization required</p>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-3 rounded-lg bg-muted/40 p-3.5 border border-border text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">Selected File:</span>
+                <span className="font-semibold text-foreground truncate max-w-[200px]" title={pendingSafData.file.name}>
+                  {pendingSafData.file.name}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">Total Rows to Match:</span>
+                <span className="font-bold text-primary px-2 py-0.5 rounded bg-primary/10">
+                  {pendingSafData.totalRows} Student Record(s)
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">Matching Rule:</span>
+                <span className="font-semibold text-emerald-700">Ref ID + Aadhaar (Exact)</span>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-1.5">
+              <label className="text-xs font-semibold text-foreground block">
+                Enter Admin Password to Proceed:
+              </label>
+              <input
+                type="password"
+                placeholder="Enter password..."
+                value={safPassword}
+                onChange={(e) => {
+                  setSafPassword(e.target.value);
+                  setSafPasswordError("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void executeSafUpdate();
+                }}
+                className="w-full form-ctrl text-xs h-9"
+                autoFocus
+              />
+              {safPasswordError && (
+                <p className="text-xs text-destructive font-medium mt-1">⚠️ {safPasswordError}</p>
+              )}
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                disabled={isImportingSaf}
+                onClick={() => {
+                  setSafConfirmModalOpen(false);
+                  setPendingSafData(null);
+                  setSafPassword("");
+                  setSafPasswordError("");
+                }}
+                className="px-4 py-2 text-xs font-semibold rounded-md border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isImportingSaf || !safPassword}
+                onClick={() => void executeSafUpdate()}
+                className="px-4 py-2 text-xs font-semibold rounded-md bg-indigo-600 hover:bg-indigo-700 text-white transition-colors cursor-pointer shadow-xs disabled:opacity-50 inline-flex items-center gap-1.5"
+              >
+                <span>{isImportingSaf ? "⏳" : "✓"}</span>
+                <span>{isImportingSaf ? "Updating Records…" : "Verify & Update SAF Numbers"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {safImportModalOpen && safImportReport ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4">
+          <div className="w-full max-w-xl rounded-xl bg-card p-6 shadow-2xl border border-border">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="text-2xl">📊</span>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">SAF Excel Import &amp; Match Report</h3>
+                  <p className="text-xs text-muted-foreground">Reconciliation summary</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="text-sm font-semibold text-muted-foreground hover:text-foreground"
+                onClick={() => setSafImportModalOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3">
+                <div className="text-xl font-bold text-emerald-600">{safImportReport.updated}</div>
+                <div className="text-xs font-semibold text-emerald-700">Updated</div>
+              </div>
+              <div className="rounded-lg bg-sky-500/10 border border-sky-500/20 p-3">
+                <div className="text-xl font-bold text-sky-600">{safImportReport.unchanged}</div>
+                <div className="text-xs font-semibold text-sky-700">Already Current</div>
+              </div>
+              <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3">
+                <div className="text-xl font-bold text-red-600">{safImportReport.unmatched.length}</div>
+                <div className="text-xs font-semibold text-red-700">Unmatched / Errors</div>
+              </div>
+            </div>
+
+            {safImportReport.unmatched.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <div className="text-xs font-semibold text-destructive">
+                  Unmatched records (not updated):
+                </div>
+                <div className="max-h-48 overflow-y-auto rounded-md border border-border bg-muted/30 p-2 text-xs divide-y divide-border/60">
+                  {safImportReport.unmatched.map((u, i) => (
+                    <div key={i} className="py-1.5 flex items-center justify-between gap-2">
+                      <div>
+                        <span className="font-semibold text-foreground">{u.name || "Unknown"}</span>{" "}
+                        <span className="text-muted-foreground">(Ref: {u.ref || "N/A"}, Aadhaar: {u.aadhaar || "N/A"})</span>
+                      </div>
+                      <span className="text-[11px] font-mono bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
+                        {u.saf}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSafImportModalOpen(false)}
+                className="btn-kk btn-primary-kk text-xs px-4 py-2"
+              >
+                Done
               </button>
             </div>
           </div>
