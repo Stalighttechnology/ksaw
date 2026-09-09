@@ -608,13 +608,39 @@ function AdminPage() {
       setSafPasswordError("");
       const { rows: fileRows, refIdx, safIdx, aadhaarIdx, fnIdx, lnIdx } = pendingSafData;
 
-      const { data: portalRows, error } = await supabase
-        .from("registrations")
-        .select("id, reference_number, aadhaar_number, saf_number, first_name, last_name")
-        .limit(10000);
+      const portalRows: Array<{
+        id: string;
+        reference_number: string | null;
+        aadhaar_number: string | null;
+        saf_number: string | null;
+        first_name: string | null;
+        last_name: string | null;
+      }> = [];
 
-      if (error || !portalRows) {
-        throw new Error(error?.message || "Failed to fetch registrations for matching.");
+      let from = 0;
+      const CHUNK_SIZE = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data: chunk, error } = await supabase
+          .from("registrations")
+          .select("id, reference_number, aadhaar_number, saf_number, first_name, last_name")
+          .range(from, from + CHUNK_SIZE - 1);
+
+        if (error) {
+          throw new Error(error.message || "Failed to fetch registrations for matching.");
+        }
+
+        if (!chunk || chunk.length === 0) {
+          hasMore = false;
+        } else {
+          portalRows.push(...chunk);
+          if (chunk.length < CHUNK_SIZE) {
+            hasMore = false;
+          } else {
+            from += CHUNK_SIZE;
+          }
+        }
       }
 
       const cleanRef = (s?: string | null) => (s || "").toUpperCase().replace(/[^A-Z0-9]/g, "");

@@ -10,7 +10,6 @@ import {
   TRAINING_DURATIONS,
   PASSING_YEARS,
   LAST_SALARY,
-  CASTE_CERTIFICATE_TYPES,
 } from "@/components/reg/options";
 import { CASTE_CATEGORIES } from "@/components/reg/castes";
 
@@ -58,7 +57,6 @@ export const COLUMNS: ColumnDef[] = [
   { key: "caste_sub_category", label: "Sub Category", group: "Personal", type: "select", options: CASTE_CATEGORIES },
   { key: "nigama", label: "Nigama", group: "Personal" },
   { key: "rd_number", label: "RD Number", group: "Personal" },
-  { key: "caste_cert_type", label: "Caste Certificate Type", group: "Personal", type: "select", options: CASTE_CERTIFICATE_TYPES },
   { key: "caste_cert_issue_date", label: "Caste Certificate Issue Date", group: "Personal", type: "date" },
   { key: "caste_cert_expiry_date", label: "Caste Certificate Expiry Date", group: "Personal", type: "date" },
   { key: "caste_proof", label: "Caste Proof", group: "Personal" },
