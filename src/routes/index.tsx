@@ -36,6 +36,7 @@ import {
   TRAINING_DURATIONS,
   normalizeCollegeName,
 } from "@/components/reg/options";
+import { useColleges } from "@/lib/useColleges";
 
 
 const title = "Registration Form | Karnataka Skill Development Corporation";
@@ -83,6 +84,8 @@ const emptyAddress = (): Address => ({
 type Errors = Record<string, string>;
 
 function RegistrationPage() {
+  const { colleges } = useColleges();
+
   // Center / Institution
   const [institutionName, setInstitutionName] = useState("");
   const [centerLocation, setCenterLocation] = useState("");
@@ -1027,7 +1030,7 @@ function RegistrationPage() {
                   searchable
                   single
                   placeholder="Select College / Institute / University"
-                  options={COLLEGES}
+                  options={colleges}
                   value={institutionName ? [institutionName] : []}
                   onChange={(v) => setInstitutionName(v[0] ?? "")}
                   error={errors["institutionName"]}

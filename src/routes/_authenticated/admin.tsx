@@ -19,6 +19,7 @@ import {
 } from "@/components/reg/options";
 import { NIGAMAS, CASTES, CASTE_NAMES, CASTE_CATEGORIES, normalizeNigamaName, getNigamaAliases, getCasteCertificateType } from "@/components/reg/castes";
 import { supabase } from "@/integrations/supabase/client";
+import { useColleges } from "@/lib/useColleges";
 import { read, utils } from "xlsx";
 
 const title = "Registrations Dashboard | Admin";
@@ -52,6 +53,9 @@ const PAGE_SIZES = [
 function AdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+
+  const { colleges, customColleges, addCollege, removeCollege, isAdding, isRemoving } = useColleges();
+  const [collegeModalOpen, setCollegeModalOpen] = useState(false);
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
@@ -286,6 +290,12 @@ function AdminPage() {
       if (r.normalizedCenter && matchesFilter(r, "center")) centerSet.add(r.normalizedCenter);
     }
 
+    if (!partner) {
+      for (const c of colleges) {
+        partnerSet.add(c);
+      }
+    }
+
     const sortAlpha = (arr: string[]) => arr.sort((a, b) => a.localeCompare(b));
 
     return {
@@ -301,7 +311,7 @@ function AdminPage() {
       categories: sortAlpha(Array.from(categorySet)),
       centers: sortAlpha(Array.from(centerSet)),
     };
-  }, [statsQuery.data, nigama, status, partner, course, category, centerLocation]);
+  }, [statsQuery.data, nigama, status, partner, course, category, centerLocation, colleges]);
 
   const total = listQuery.data?.count ?? 0;
   const pageCount = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
@@ -1144,6 +1154,16 @@ function AdminPage() {
                 <span>{isImportingSaf ? "Processing…" : "Import & Match SAF Excel"}</span>
               </button>
 
+              <button
+                type="button"
+                onClick={() => setCollegeModalOpen(true)}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-xs hover:shadow-md transition-all active:scale-95 cursor-pointer"
+                title="Manage College / University List"
+              >
+                <span>🏢</span>
+                <span>Manage Colleges</span>
+              </button>
+
               {selectedIds.length > 0 && (
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium text-muted-foreground">
@@ -1744,6 +1764,166 @@ function AdminPage() {
           </div>
         </div>
       ) : null}
+
+      <ManageCollegesModal
+        open={collegeModalOpen}
+        onClose={() => setCollegeModalOpen(false)}
+        colleges={colleges}
+        customColleges={customColleges}
+        onAdd={addCollege}
+        onRemove={removeCollege}
+        isAdding={isAdding}
+        isRemoving={isRemoving}
+      />
+    </div>
+  );
+}
+
+function ManageCollegesModal({
+  open,
+  onClose,
+  colleges,
+  customColleges,
+  onAdd,
+  onRemove,
+  isAdding,
+  isRemoving,
+}: {
+  open: boolean;
+  onClose: () => void;
+  colleges: string[];
+  customColleges: string[];
+  onAdd: (name: string) => Promise<unknown>;
+  onRemove: (name: string) => Promise<unknown>;
+  isAdding: boolean;
+  isRemoving: boolean;
+}) {
+  const [newCollegeName, setNewCollegeName] = useState("");
+  const [filterQuery, setFilterQuery] = useState("");
+
+  if (!open) return null;
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = newCollegeName.trim();
+    if (!trimmed) {
+      toast.error("Please enter a college name");
+      return;
+    }
+    try {
+      await onAdd(trimmed);
+      setNewCollegeName("");
+    } catch {
+      // Toast already shown in mutation
+    }
+  };
+
+  const filteredCustom = customColleges.filter((c) =>
+    c.toLowerCase().includes(filterQuery.toLowerCase())
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4">
+      <div className="w-full max-w-2xl rounded-2xl bg-card p-6 shadow-2xl border border-border">
+        <div className="flex items-center justify-between border-b border-border pb-3.5">
+          <div className="flex items-center gap-2.5">
+            <span className="text-2xl">🏢</span>
+            <div>
+              <h3 className="text-base font-bold text-foreground">
+                Manage Colleges / Universities
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Add new institutions to the public applicant registration form &amp; admin filters.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="text-sm font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
+            onClick={onClose}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Add College Form */}
+        <form onSubmit={handleAdd} className="mt-4 flex flex-col sm:flex-row gap-2">
+          <input
+            type="text"
+            placeholder="Type College / Institute / University Name..."
+            value={newCollegeName}
+            onChange={(e) => setNewCollegeName(e.target.value)}
+            className="flex-1 form-ctrl text-xs sm:text-sm h-10 rounded-xl"
+            autoFocus
+          />
+          <button
+            type="submit"
+            disabled={isAdding || !newCollegeName.trim()}
+            className="px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white transition-colors cursor-pointer shadow-xs disabled:opacity-50 inline-flex items-center justify-center gap-1.5 shrink-0"
+          >
+            <span>{isAdding ? "⏳" : "+"}</span>
+            <span>{isAdding ? "Adding…" : "Add College"}</span>
+          </button>
+        </form>
+
+        {/* List of Custom Added Colleges */}
+        <div className="mt-5 space-y-2">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
+              Admin-Added Colleges ({customColleges.length})
+            </h4>
+            {customColleges.length > 3 && (
+              <input
+                type="text"
+                placeholder="Search custom list..."
+                value={filterQuery}
+                onChange={(e) => setFilterQuery(e.target.value)}
+                className="text-xs h-7 px-2.5 rounded-lg border border-border bg-background"
+              />
+            )}
+          </div>
+
+          {customColleges.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border/80 bg-muted/20 p-6 text-center text-xs text-muted-foreground">
+              No custom colleges added yet. Use the input above to add a new institution name. All built-in colleges ({colleges.length}) are active by default.
+            </div>
+          ) : (
+            <div className="max-h-60 overflow-y-auto rounded-xl border border-border bg-muted/20 p-2 text-xs divide-y divide-border/60">
+              {filteredCustom.map((c) => (
+                <div key={c} className="py-2 px-2 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-emerald-600 font-bold">✓</span>
+                    <span className="font-semibold text-foreground">{c}</span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isRemoving}
+                    onClick={() => {
+                      if (confirm(`Remove "${c}" from custom colleges list?`)) {
+                        void onRemove(c);
+                      }
+                    }}
+                    className="text-xs text-destructive hover:underline font-semibold cursor-pointer shrink-0 disabled:opacity-50"
+                  >
+                    🗑️ Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-5 flex items-center justify-between border-t border-border pt-3.5 text-xs text-muted-foreground">
+          <span>Total active institutions: <strong className="text-foreground">{colleges.length}</strong></span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn-kk btn-primary-kk text-xs px-4 py-2"
+          >
+            Done
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -2454,6 +2634,7 @@ function SearchableDropdown({
 }
 
 function EditDialog({ row, onClose, onSaved }: { row: Row; onClose: () => void; onSaved: () => void }) {
+  const { colleges } = useColleges();
   const [form, setForm] = useState<Record<string, unknown>>({
     ...row,
     institution_name: normalizeCollegeName(row["institution_name"] as string) || row["institution_name"],
@@ -2571,7 +2752,9 @@ function EditDialog({ row, onClose, onSaved }: { row: Row; onClose: () => void; 
 
                 // Compute dynamic options for contextual fields
                 let dynamicOptions = c.options ? [...c.options] : undefined;
-                if (c.key === "caste") {
+                if (c.key === "institution_name") {
+                  dynamicOptions = [...colleges];
+                } else if (c.key === "caste") {
                   dynamicOptions = [...CASTE_NAMES];
                 } else if (c.key === "nigama") {
                   dynamicOptions = [...NIGAMAS];
