@@ -44,6 +44,8 @@ export const COLLEGES = [
   "Government first grade College Ramnagar",
   "New expert college , Ramanagar",
   "GT Ramanagara",
+  "VISHWA GANGA COMPUTER TRAINING CENTRE YADGIR",
+  "Lingeri Konappa education trust Women's Art science and commerce degree college yadgir",
 ] as const;
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
@@ -251,6 +253,24 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "GT RAMANAGARA",
     "GT Ramanagar",
     "GT College Ramanagara",
+  ],
+  "VISHWA GANGA COMPUTER TRAINING CENTRE YADGIR": [
+    "VISHWA GANGA COMPUTER TRAINING CENTRE YADGIR",
+    "Vishwa Ganga Computer Training Centre Yadgir",
+    "VISHWA GANGA COMPUTER TRAINING CENTRE",
+    "Vishwa Ganga Computer Training Centre",
+    "VISHWA GANGA COMPUTER TRAINING CENTRE YADGIR NEW BUS STAND OPP, AXIS BANK BESIDE, HYDRABAD ROAD YADGIR",
+    "Vishwa Ganga Computer Training Centre, New Bus Stand Opp, Axis Bank Beside, Hydrabad Road Yadgir",
+  ],
+  "Lingeri Konappa education trust Women's Art science and commerce degree college yadgir": [
+    "Lingeri Konappa education trust Women's Art science and commerce degree college yadgir",
+    "Lingeri Konappa Education Trust Women's Arts, Science and Commerce Degree College Yadgir",
+    "Lingeri Konappa Education Trust Women's Art Science and Commerce Degree College Yadgir",
+    "Lingeri Konappa Education Trust Women's College Yadgir",
+    "Lingeri Konappa Education Trust Yadgir",
+    "LINGERI KONAPPA EDUCATION TRUST WOMEN'S ART SCIENCE AND COMMERCE DEGREE COLLEGE YADGIR",
+    "Lingeri Konappa education trust Women's Art science and commerce degree college yadgir OPP, tahasil office main road yadgir",
+    "Lingeri Konappa education trust Women's Art science and commerce degree college yadgir, OPP, tahasil office main road yadgir",
   ],
 };
 
