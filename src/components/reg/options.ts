@@ -3,9 +3,8 @@ export const COLLEGES = [
   "TERESIAN COLLEGE MYSORE",
   "CENTRAL COMMERCE COLLEGE HASSAN",
   "MALNAD COLLEGE OF ENGINEERING HASSAN",
-  "PES COLLEGE MANDYA",
   "Government College for Women (Autonomous), Mandya",
-  "P.E.S College of Science, Arts & Commerce, Mandya",
+  "P.E.S. College of Science, Arts & Commerce, Mandya",
   "GOVT COLLEGE CHANNARAYAPATNA",
   "GOVT FIRST GRADE WOMENS COLLEGE YADGIRI",
   "MARI MALLAPPA WOMENS COLLEGE MYSORE",
@@ -179,18 +178,25 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "SHIVAKUMAR E",
     "SHIVAKUMAR. A",
   ],
-  "PES COLLEGE MANDYA": ["PES COLLEGE MANDYA"],
   "Government College for Women (Autonomous), Mandya": [
     "Government College for Women (Autonomous), Mandya",
     "Government College for Women Mandya",
     "Govt College for Women Mandya",
     "GCW Mandya",
   ],
-  "P.E.S College of Science, Arts & Commerce, Mandya": [
+  "P.E.S. College of Science, Arts & Commerce, Mandya": [
+    "P.E.S. College of Science, Arts & Commerce, Mandya",
     "P.E.S College of Science, Arts & Commerce, Mandya",
     "PES College of Science, Arts & Commerce, Mandya",
     "PES College of Science Arts & Commerce Mandya",
     "PES College of Science Arts and Commerce Mandya",
+    "PES College of Science, Arts and Commerce, Mandya",
+    "PES COLLEGE MANDYA",
+    "PES College Mandya",
+    "PES College, Mandya",
+    "P.E.S. College, Mandya",
+    "P.E.S College, Mandya",
+    "PES Commerce College Mandya",
   ],
   "GOVT COLLEGE CHANNARAYAPATNA": [
     "GOVT COLLEGE CHANNARAYAPATNA",
@@ -306,7 +312,7 @@ export function normalizeCollegeName(rawName?: string | null): string {
   if (upper.includes("KEMPEGOWDA") && (upper.includes("MANAGEMENT") || upper.includes("RESEARCH") || upper.includes("STUDIES"))) return "Kempegowda Institute of Management Studies & Research-Bangalore";
   if (upper.includes("SHIVAKUMAR")) return "Shivakumar";
   if (upper.includes("KSAW")) return "KSAWU VIJAYAPURA";
-  if (upper.includes("PES") && upper.includes("MANDYA")) return "PES COLLEGE MANDYA";
+  if (upper.includes("PES") && upper.includes("MANDYA")) return "P.E.S. College of Science, Arts & Commerce, Mandya";
   if (upper.includes("BGS")) return "BGS College Channarayapatna";
   if (upper.includes("CHANNARAYAPATNA")) return "GOVT COLLEGE CHANNARAYAPATNA";
   if (upper.includes("YADGIR")) return "GOVT FIRST GRADE WOMENS COLLEGE YADGIRI";
