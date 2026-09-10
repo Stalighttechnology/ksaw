@@ -108,9 +108,9 @@ function AdminPage() {
         q = q.or(`center_location.ilike.%${filters.centerLocation}%,cur_district.ilike.%${filters.centerLocation}%`);
       }
       if (filters.safStatus === "Empty / Missing") {
-        q = q.or("saf_number.is.null,saf_number.eq.,saf_number.eq.N/A,saf_number.eq.NA,saf_number.not.ilike.SAF%");
+        q = q.or("saf_number.is.null,saf_number.eq.,saf_number.eq.N/A,saf_number.eq.NA,saf_number.not.ilike.%SAF%");
       } else if (filters.safStatus === "Filled / Present") {
-        q = q.ilike("saf_number", "SAF%");
+        q = q.ilike("saf_number", "%SAF%");
       }
       if (filters.nigama) {
         const nigamaAliases = getNigamaAliases(filters.nigama);
@@ -144,12 +144,24 @@ function AdminPage() {
       }
       const { data, error, count } = await req;
       if (error) throw error;
-      const rows = ((data ?? []) as Row[]).map((r) => ({
+      let rows = ((data ?? []) as Row[]).map((r) => ({
         ...r,
         institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
         nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
         caste_cert_type: (r.caste_cert_type as string) || getCasteCertificateType(r.category as string, r.caste_sub_category as string, r.caste as string) || r.caste_cert_type,
       }));
+
+      if (filters.safStatus === "Empty / Missing") {
+        rows = rows.filter((r) => {
+          const s = String(r.saf_number ?? "").trim().toUpperCase();
+          return !s || s === "N/A" || s === "NA" || !s.includes("SAF");
+        });
+      } else if (filters.safStatus === "Filled / Present") {
+        rows = rows.filter((r) => {
+          const s = String(r.saf_number ?? "").trim().toUpperCase();
+          return s.includes("SAF");
+        });
+      }
       return { rows, count: count ?? 0 };
     },
     staleTime: 30_000,
@@ -437,9 +449,9 @@ function AdminPage() {
           q = q.or(`center_location.ilike.%${filters.centerLocation}%,cur_district.ilike.%${filters.centerLocation}%`);
         }
         if (filters.safStatus === "Empty / Missing") {
-          q = q.or("saf_number.is.null,saf_number.eq.,saf_number.eq.N/A,saf_number.eq.NA,saf_number.not.ilike.SAF%");
+          q = q.or("saf_number.is.null,saf_number.eq.,saf_number.eq.N/A,saf_number.eq.NA,saf_number.not.ilike.%SAF%");
         } else if (filters.safStatus === "Filled / Present") {
-          q = q.ilike("saf_number", "SAF%");
+          q = q.ilike("saf_number", "%SAF%");
         }
         if (filters.nigama) {
           const nigamaAliases = getNigamaAliases(filters.nigama);
