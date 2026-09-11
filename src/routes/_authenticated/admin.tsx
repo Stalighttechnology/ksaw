@@ -58,6 +58,7 @@ function AdminPage() {
   const { isMaintenance, toggleMaintenance, isUpdating: isTogglingMaintenance } = useMaintenance();
   const { colleges, customColleges, addCollege, removeCollege, isAdding, isRemoving } = useColleges();
   const [collegeModalOpen, setCollegeModalOpen] = useState(false);
+  const [maintenanceConfirmOpen, setMaintenanceConfirmOpen] = useState(false);
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
@@ -849,7 +850,7 @@ function AdminPage() {
             <button
               type="button"
               disabled={isTogglingMaintenance}
-              onClick={() => toggleMaintenance(false)}
+              onClick={() => setMaintenanceConfirmOpen(true)}
               className="text-xs font-bold px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-all cursor-pointer shrink-0 shadow-2xs hover:shadow-xs active:scale-95"
             >
               Reopen Applicant Form Now
@@ -1847,7 +1848,7 @@ function AdminPage() {
             role="switch"
             aria-checked={isMaintenance}
             disabled={isTogglingMaintenance}
-            onClick={() => toggleMaintenance()}
+            onClick={() => setMaintenanceConfirmOpen(true)}
             className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
               isMaintenance ? "bg-amber-500" : "bg-slate-300 dark:bg-slate-700"
             } ${isTogglingMaintenance ? "opacity-50 cursor-not-allowed" : ""}`}
@@ -1863,6 +1864,81 @@ function AdminPage() {
           </button>
         </div>
       </aside>
+
+      {/* Portal Status Confirmation Modal */}
+      {maintenanceConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-2xl bg-card p-5 sm:p-6 shadow-2xl border border-border text-card-foreground animate-in zoom-in-95 duration-200">
+            <div className="flex items-start gap-3.5 mb-4">
+              <div
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-2xl shadow-inner ${
+                  isMaintenance
+                    ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                    : "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                }`}
+              >
+                {isMaintenance ? "🚀" : "🚧"}
+              </div>
+              <div className="flex-1">
+                <h3 className="text-base font-bold text-foreground">
+                  {isMaintenance ? "Reopen Applicant Registration Portal?" : "Activate Portal Maintenance Mode?"}
+                </h3>
+                <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  {isMaintenance
+                    ? "This will make the applicant registration form LIVE. Public candidates will immediately be able to fill out and submit new applications."
+                    : "This will temporarily CLOSE the public registration form. Applicants visiting the portal will see the 'Under Maintenance' notice and submissions will be paused."}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border/80 bg-muted/40 p-3 mb-5 text-xs">
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>Target Status:</span>
+                <span className={`font-bold inline-flex items-center gap-1.5 ${isMaintenance ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                  <span className={`h-2 w-2 rounded-full ${isMaintenance ? "bg-emerald-500" : "bg-amber-500"}`} />
+                  {isMaintenance ? "Live (Open for Submissions)" : "Maintenance (Closed for Submissions)"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setMaintenanceConfirmOpen(false)}
+                disabled={isTogglingMaintenance}
+                className="px-4 py-2 rounded-xl border border-border bg-background hover:bg-muted font-semibold text-xs text-foreground transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isTogglingMaintenance}
+                onClick={async () => {
+                  try {
+                    await toggleMaintenance();
+                    setMaintenanceConfirmOpen(false);
+                  } catch {
+                    // Toast handled by useMaintenance hook
+                  }
+                }}
+                className={`px-4 py-2 rounded-xl font-bold text-xs text-white shadow-md transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 ${
+                  isMaintenance
+                    ? "bg-emerald-600 hover:bg-emerald-700"
+                    : "bg-amber-600 hover:bg-amber-700"
+                }`}
+              >
+                {isTogglingMaintenance ? (
+                  <span>Saving Changes...</span>
+                ) : (
+                  <span>
+                    {isMaintenance ? "Yes, Reopen Portal Now" : "Yes, Activate Maintenance"}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
