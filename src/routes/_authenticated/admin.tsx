@@ -803,50 +803,6 @@ function AdminPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
-            {/* Maintenance Mode Toggle Switch */}
-            <div
-              className={`flex items-center gap-2.5 rounded-xl border px-3 py-1.5 shadow-2xs transition-all ${
-                isMaintenance
-                  ? "border-amber-500/50 bg-amber-500/10 text-amber-900 dark:text-amber-200"
-                  : "border-border/80 bg-card text-foreground"
-              }`}
-              title="Toggle public applicant registration form maintenance mode"
-            >
-              <div className="flex flex-col text-left">
-                <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground leading-none">
-                  Portal Status
-                </span>
-                <span className="text-xs font-semibold flex items-center gap-1.5 mt-0.5">
-                  <span
-                    className={`h-2 w-2 rounded-full ${
-                      isMaintenance ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
-                    }`}
-                  />
-                  {isMaintenance ? "Maintenance (Closed)" : "Live (Open)"}
-                </span>
-              </div>
-
-              <button
-                type="button"
-                role="switch"
-                aria-checked={isMaintenance}
-                disabled={isTogglingMaintenance}
-                onClick={() => toggleMaintenance()}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                  isMaintenance ? "bg-amber-500" : "bg-slate-300 dark:bg-slate-700"
-                } ${isTogglingMaintenance ? "opacity-50 cursor-not-allowed" : ""}`}
-                title={isMaintenance ? "Click to disable maintenance mode (open form)" : "Click to enable maintenance mode (close form)"}
-              >
-                <span className="sr-only">Toggle maintenance mode</span>
-                <span
-                  aria-hidden="true"
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                    isMaintenance ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
-              </button>
-            </div>
-
             <div className="hidden sm:flex items-center gap-2 rounded-xl border border-border/80 bg-card px-3.5 py-2 shadow-2xs text-xs font-semibold text-foreground">
               <span className="text-base text-muted-foreground">📅</span>
               <span>{formattedDate}</span>
@@ -1861,6 +1817,52 @@ function AdminPage() {
         isAdding={isAdding}
         isRemoving={isRemoving}
       />
+
+      {/* Floating Maintenance Mode Toggle - Full Bottom Right */}
+      <aside aria-label="Portal status control" className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div
+          className={`flex items-center gap-3 rounded-2xl border px-3.5 py-2.5 shadow-2xl backdrop-blur-md transition-all ${
+            isMaintenance
+              ? "border-amber-500/70 bg-amber-500/15 text-amber-950 dark:text-amber-100 ring-2 ring-amber-500/30 shadow-amber-500/20"
+              : "border-border/90 bg-card/95 text-foreground shadow-black/15 hover:border-border"
+          }`}
+          title="Toggle public applicant registration form maintenance mode"
+        >
+          <div className="flex flex-col text-left select-none">
+            <span className="text-[10px] uppercase tracking-wider font-extrabold text-muted-foreground leading-none">
+              Portal Status
+            </span>
+            <span className="text-xs font-bold flex items-center gap-1.5 mt-0.5">
+              <span
+                className={`h-2.5 w-2.5 rounded-full ${
+                  isMaintenance ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
+                }`}
+              />
+              {isMaintenance ? "Maintenance (Closed)" : "Live (Open)"}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isMaintenance}
+            disabled={isTogglingMaintenance}
+            onClick={() => toggleMaintenance()}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+              isMaintenance ? "bg-amber-500" : "bg-slate-300 dark:bg-slate-700"
+            } ${isTogglingMaintenance ? "opacity-50 cursor-not-allowed" : ""}`}
+            title={isMaintenance ? "Click to open applicant form (Live)" : "Click to close applicant form (Maintenance)"}
+          >
+            <span className="sr-only">Toggle maintenance mode</span>
+            <span
+              aria-hidden="true"
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                isMaintenance ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
+        </div>
+      </aside>
     </div>
   );
 }
