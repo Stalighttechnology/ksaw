@@ -566,6 +566,7 @@ function AdminPage() {
     total: number;
     updated: number;
     unchanged: number;
+    skipped: number;
     unmatched: Array<{ ref: string; aadhaar: string; name: string; saf: string }>;
   } | null>(null);
   const safFileInputRef = useRef<HTMLInputElement>(null);
@@ -671,8 +672,33 @@ function AdminPage() {
       const cleanRef = (s?: string | null) => (s || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
       const cleanAadhaar = (s?: string | null) => (s || "").replace(/[^0-9]/g, "");
 
+      const isValidSaf = (s?: string | null): boolean => {
+        if (!s) return false;
+        const clean = s.trim().toUpperCase();
+        if (
+          !clean ||
+          clean === "N/A" ||
+          clean === "NA" ||
+          clean === "-" ||
+          clean === "--" ||
+          clean === "---" ||
+          clean === "NULL" ||
+          clean === "NONE" ||
+          clean === "0" ||
+          clean === "N.A." ||
+          clean === "N / A" ||
+          clean === "NOT APPLICABLE" ||
+          clean === "NIL" ||
+          clean === "UNDEFINED"
+        ) {
+          return false;
+        }
+        return true;
+      };
+
       let updatedCount = 0;
       let unchangedCount = 0;
+      let skippedCount = 0;
       const unmatchedList: Array<{ ref: string; aadhaar: string; name: string; saf: string }> = [];
 
       for (let i = 0; i < fileRows.length; i++) {
@@ -684,7 +710,11 @@ function AdminPage() {
         const aadhaarVal = aadhaarIdx !== -1 ? String(row[aadhaarIdx] ?? "").trim() : "";
         const nameVal = `${fnIdx !== -1 ? String(row[fnIdx] ?? "").trim() : ""} ${lnIdx !== -1 ? String(row[lnIdx] ?? "").trim() : ""}`.trim();
 
-        if (!safVal) continue;
+        // If the Excel SAF column has no valid SAF (empty, N/A, NA, -, etc.), NEVER overwrite database records!
+        if (!isValidSaf(safVal)) {
+          skippedCount++;
+          continue;
+        }
 
         const cRef = cleanRef(refVal);
         const cAadhaar = cleanAadhaar(aadhaarVal);
@@ -700,7 +730,8 @@ function AdminPage() {
           continue;
         }
 
-        if (match.saf_number?.trim() === safVal) {
+        // If the matched applicant already has this exact SAF number, no update needed
+        if (match.saf_number?.trim().toUpperCase() === safVal.toUpperCase()) {
           unchangedCount++;
           continue;
         }
@@ -721,9 +752,10 @@ function AdminPage() {
       setSafConfirmModalOpen(false);
       setPendingSafData(null);
       setSafImportReport({
-        total: updatedCount + unchangedCount + unmatchedList.length,
+        total: updatedCount + unchangedCount + skippedCount + unmatchedList.length,
         updated: updatedCount,
         unchanged: unchangedCount,
+        skipped: skippedCount,
         unmatched: unmatchedList,
       });
       setSafImportModalOpen(true);
@@ -1759,18 +1791,22 @@ function AdminPage() {
               </button>
             </div>
 
-            <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-              <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3">
-                <div className="text-xl font-bold text-emerald-600">{safImportReport.updated}</div>
-                <div className="text-xs font-semibold text-emerald-700">Updated</div>
+            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
+              <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-2.5">
+                <div className="text-lg font-bold text-emerald-600">{safImportReport.updated}</div>
+                <div className="text-[11px] font-semibold text-emerald-700">Updated</div>
               </div>
-              <div className="rounded-lg bg-sky-500/10 border border-sky-500/20 p-3">
-                <div className="text-xl font-bold text-sky-600">{safImportReport.unchanged}</div>
-                <div className="text-xs font-semibold text-sky-700">Already Current</div>
+              <div className="rounded-lg bg-sky-500/10 border border-sky-500/20 p-2.5">
+                <div className="text-lg font-bold text-sky-600">{safImportReport.unchanged}</div>
+                <div className="text-[11px] font-semibold text-sky-700">Already Current</div>
               </div>
-              <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3">
-                <div className="text-xl font-bold text-red-600">{safImportReport.unmatched.length}</div>
-                <div className="text-xs font-semibold text-red-700">Unmatched / Errors</div>
+              <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-2.5" title="Rows in Excel with empty or N/A SAF numbers were safely skipped without overwriting existing data">
+                <div className="text-lg font-bold text-amber-600">{safImportReport.skipped}</div>
+                <div className="text-[11px] font-semibold text-amber-700">Skipped (Empty/NA)</div>
+              </div>
+              <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-2.5">
+                <div className="text-lg font-bold text-red-600">{safImportReport.unmatched.length}</div>
+                <div className="text-[11px] font-semibold text-red-700">Unmatched / Errors</div>
               </div>
             </div>
 
