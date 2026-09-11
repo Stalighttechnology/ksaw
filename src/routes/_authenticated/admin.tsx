@@ -20,6 +20,7 @@ import {
 import { NIGAMAS, CASTES, CASTE_NAMES, CASTE_CATEGORIES, normalizeNigamaName, getNigamaAliases, getCasteCertificateType } from "@/components/reg/castes";
 import { supabase } from "@/integrations/supabase/client";
 import { useColleges } from "@/lib/useColleges";
+import { useMaintenance } from "@/lib/useMaintenance";
 import { read, utils } from "xlsx";
 
 const title = "Registrations Dashboard | Admin";
@@ -54,6 +55,7 @@ function AdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
+  const { isMaintenance, toggleMaintenance, isUpdating: isTogglingMaintenance } = useMaintenance();
   const { colleges, customColleges, addCollege, removeCollege, isAdding, isRemoving } = useColleges();
   const [collegeModalOpen, setCollegeModalOpen] = useState(false);
 
@@ -801,6 +803,50 @@ function AdminPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
+            {/* Maintenance Mode Toggle Switch */}
+            <div
+              className={`flex items-center gap-2.5 rounded-xl border px-3 py-1.5 shadow-2xs transition-all ${
+                isMaintenance
+                  ? "border-amber-500/50 bg-amber-500/10 text-amber-900 dark:text-amber-200"
+                  : "border-border/80 bg-card text-foreground"
+              }`}
+              title="Toggle public applicant registration form maintenance mode"
+            >
+              <div className="flex flex-col text-left">
+                <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground leading-none">
+                  Portal Status
+                </span>
+                <span className="text-xs font-semibold flex items-center gap-1.5 mt-0.5">
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      isMaintenance ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
+                    }`}
+                  />
+                  {isMaintenance ? "Maintenance (Closed)" : "Live (Open)"}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isMaintenance}
+                disabled={isTogglingMaintenance}
+                onClick={() => toggleMaintenance()}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                  isMaintenance ? "bg-amber-500" : "bg-slate-300 dark:bg-slate-700"
+                } ${isTogglingMaintenance ? "opacity-50 cursor-not-allowed" : ""}`}
+                title={isMaintenance ? "Click to disable maintenance mode (open form)" : "Click to enable maintenance mode (close form)"}
+              >
+                <span className="sr-only">Toggle maintenance mode</span>
+                <span
+                  aria-hidden="true"
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                    isMaintenance ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+
             <div className="hidden sm:flex items-center gap-2 rounded-xl border border-border/80 bg-card px-3.5 py-2 shadow-2xs text-xs font-semibold text-foreground">
               <span className="text-base text-muted-foreground">📅</span>
               <span>{formattedDate}</span>
@@ -826,6 +872,34 @@ function AdminPage() {
             </button>
           </div>
         </div>
+
+        {/* Maintenance Mode Active Alert Banner */}
+        {isMaintenance && (
+          <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-900 dark:text-amber-200 shadow-xs animate-in fade-in duration-300">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🚧</span>
+              <div>
+                <p className="text-xs sm:text-sm font-bold flex items-center gap-2">
+                  <span>Applicant Form Maintenance Mode is Currently ACTIVE</span>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-white uppercase tracking-wider">
+                    Closed
+                  </span>
+                </p>
+                <p className="text-xs text-amber-800/90 dark:text-amber-300/90 mt-0.5">
+                  Public applicants attempting to register will see the "Under Maintenance" notice. Toggle the switch above when you want to reopen public registrations.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              disabled={isTogglingMaintenance}
+              onClick={() => toggleMaintenance(false)}
+              className="text-xs font-bold px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-all cursor-pointer shrink-0 shadow-2xs hover:shadow-xs active:scale-95"
+            >
+              Reopen Applicant Form Now
+            </button>
+          </div>
+        )}
 
         {/* 8 Top KPI Stat Cards (Clean, Professional 4x2 Grid) */}
         <section className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-3.5">

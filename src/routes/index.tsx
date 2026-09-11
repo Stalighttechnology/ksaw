@@ -37,6 +37,7 @@ import {
   normalizeCollegeName,
 } from "@/components/reg/options";
 import { useColleges } from "@/lib/useColleges";
+import { useMaintenance } from "@/lib/useMaintenance";
 
 
 const title = "Registration Form | Karnataka Skill Development Corporation";
@@ -85,6 +86,7 @@ type Errors = Record<string, string>;
 
 function RegistrationPage() {
   const { colleges } = useColleges();
+  const { isMaintenance, message: maintenanceMessage } = useMaintenance();
 
   // Center / Institution
   const [institutionName, setInstitutionName] = useState("");
@@ -729,7 +731,7 @@ function RegistrationPage() {
           // ignore RPC fallback
         }
 
-        // Robust client-side fallback: inspect latest submitted records to find highest numeric ID + 1
+        // Robust fallback: inspect latest submitted records to find highest numeric ID + 1
         if (!refId) {
           const { data: rows } = await supabase
             .from("registrations")
@@ -750,8 +752,43 @@ function RegistrationPage() {
               }
             }
           }
-          const nextNum = maxNum + 1;
+          const nextNum = Math.max(maxNum, 1924) + 1;
           refId = `KSAW ${String(nextNum).padStart(3, "0")}`;
+        }
+
+        // Absolute safeguard: Prevent stale client bundles from reusing KSAW 1813 or existing IDs
+        if (refId) {
+          const digits = refId.replace(/\D/g, "");
+          const num = parseInt(digits, 10);
+
+          let needsNewRef = isNaN(num) || num <= 1813;
+          if (!needsNewRef) {
+            const { data: dupCheck } = await supabase
+              .from("registrations")
+              .select("id")
+              .eq("reference_number", refId)
+              .limit(1);
+            if (dupCheck && dupCheck.length > 0) {
+              needsNewRef = true;
+            }
+          }
+
+          if (needsNewRef) {
+            const { data: latestRows } = await supabase
+              .from("registrations")
+              .select("reference_number")
+              .not("reference_number", "is", null)
+              .order("created_at", { ascending: false })
+              .limit(50);
+
+            let curMax = 1924;
+            for (const r of latestRows ?? []) {
+              const d = (r.reference_number || "").replace(/\D/g, "");
+              const p = parseInt(d, 10);
+              if (!isNaN(p) && p > curMax) curMax = p;
+            }
+            refId = `KSAW ${String(curMax + 1).padStart(3, "0")}`;
+          }
         }
       }
 
@@ -1023,7 +1060,73 @@ function RegistrationPage() {
             </div>
           ) : null}
 
-          <form onSubmit={onSubmit} noValidate>
+          {isMaintenance && !isEditing ? (
+            <div className="my-8 sm:my-12 mx-auto max-w-2xl text-center animate-in fade-in zoom-in-95 duration-300">
+              <div className="rounded-3xl border border-amber-500/30 bg-card p-6 sm:p-10 shadow-xl backdrop-blur-sm relative overflow-hidden">
+                {/* Top accent line */}
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-400 via-[#EE5D1D] to-amber-500" />
+
+                <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-500/10 border border-amber-500/20 text-4xl shadow-inner">
+                  🚧
+                </div>
+
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 mb-4">
+                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-ping" />
+                  Scheduled Maintenance Mode
+                </div>
+
+                <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight mb-3">
+                  Portal Under Maintenance
+                </h2>
+
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-lg mx-auto mb-8">
+                  {maintenanceMessage ||
+                    "The applicant registration portal is temporarily offline for scheduled system updates and maintenance. Submissions are temporarily paused. Please check back shortly."}
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left mb-8">
+                  <div className="rounded-xl border border-border/80 bg-muted/30 p-3.5">
+                    <div className="text-base mb-1">⏱️</div>
+                    <div className="text-xs font-bold text-foreground">Status</div>
+                    <div className="text-[11px] text-muted-foreground">Routine updates in progress</div>
+                  </div>
+                  <div className="rounded-xl border border-border/80 bg-muted/30 p-3.5">
+                    <div className="text-base mb-1">🔒</div>
+                    <div className="text-xs font-bold text-foreground">Data Protected</div>
+                    <div className="text-[11px] text-muted-foreground">All prior submissions safe</div>
+                  </div>
+                  <div className="rounded-xl border border-border/80 bg-muted/30 p-3.5">
+                    <div className="text-base mb-1">📞</div>
+                    <div className="text-xs font-bold text-foreground">Helpdesk</div>
+                    <div className="text-[11px] text-muted-foreground">Support staff available</div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => window.location.reload()}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#EE5D1D] hover:bg-[#D94F12] text-white font-semibold px-6 py-2.5 shadow-md transition-all active:scale-95 cursor-pointer text-sm"
+                  >
+                    <span>🔄 Refresh Status</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowLinkModal(true)}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-background hover:bg-muted font-semibold px-5 py-2.5 transition-all text-sm text-foreground cursor-pointer"
+                  >
+                    <span>🔍 Check Existing Application</span>
+                  </button>
+                </div>
+
+                <div className="mt-8 pt-5 border-t border-border/60 text-[11px] text-muted-foreground">
+                  Government of Karnataka • Karnataka Skill Development Corporation (KSAW)
+                </div>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={onSubmit} noValidate>
             <Section title="Center / Institute Details">
               <Row>
                 <MultiSelect
@@ -1625,6 +1728,7 @@ function RegistrationPage() {
               </div>
             </Section>
           </form>
+          )}
         </div>
       </main>
       </div>
