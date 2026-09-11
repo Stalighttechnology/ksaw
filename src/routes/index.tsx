@@ -729,12 +729,14 @@ function RegistrationPage() {
           // ignore RPC fallback
         }
 
-        // Robust client-side fallback if RPC is not run yet: find highest numeric ID in DB + 1
+        // Robust client-side fallback: inspect latest submitted records to find highest numeric ID + 1
         if (!refId) {
           const { data: rows } = await supabase
             .from("registrations")
             .select("reference_number")
-            .not("reference_number", "is", null);
+            .not("reference_number", "is", null)
+            .order("created_at", { ascending: false })
+            .limit(50);
 
           let maxNum = 0;
           if (rows && rows.length > 0) {
