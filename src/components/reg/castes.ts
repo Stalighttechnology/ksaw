@@ -724,6 +724,8 @@ export const CASTES: readonly CasteEntry[] = [
   { name: "Raju - ರಾಜು", category: "2A", nigama: "Devraj Urs" },
   { name: "Rajuwar/Rajavar/Rajeva - ರಾಜುವರ್/ರಾಜವರ್/ ರಾಜೀವಾ", category: "2A", nigama: "Devraj Urs" },
   { name: "Somavamsha Kshatriya - ಸೋಮವಂಶ ಕ್ಷತ್ರಿಯ", category: "2A", nigama: "Devraj Urs" },
+  { name: "Bhavasara Kshatriya - ಭಾವಸಾರ ಕ್ಷತ್ರಿಯ", category: "2A", nigama: "Devraj Urs" },
+  { name: "Dhanagar - ಧನಗರ", category: "2A", nigama: "Devraj Urs" },
   { name: "Sthaanika - ಸ್ಥಾನಿಕ", category: "2A", nigama: "Devraj Urs" },
   { name: "Tulu - ತುಳು", category: "2A", nigama: "Devraj Urs" },
   { name: "Tulva - ತುಳುವ", category: "2A", nigama: "Devraj Urs" },
