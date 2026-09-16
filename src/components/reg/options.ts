@@ -45,6 +45,7 @@ export const COLLEGES = [
   "GT Ramanagara",
   "VISHWA GANGA COMPUTER TRAINING CENTRE YADGIR",
   "Lingeri Konappa education trust Women's Art science and commerce degree college yadgir",
+  "Basaveshwar science college, Bagalkote",
 ] as const;
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
@@ -278,6 +279,33 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "Lingeri Konappa education trust Women's Art science and commerce degree college yadgir OPP, tahasil office main road yadgir",
     "Lingeri Konappa education trust Women's Art science and commerce degree college yadgir, OPP, tahasil office main road yadgir",
   ],
+  "Basaveshwar science college, Bagalkote": [
+    "Basaveshwar science college, Bagalkote",
+    "Basaveshwar science college Bagalkote",
+    "Basaveshwar Science College, Bagalkote",
+    "Basaveshwar Science College Bagalkote",
+    "Basaveshwar science college, Bagalkot",
+    "Basaveshwar science college Bagalkot",
+    "Basaveshwar Science College, Bagalkot",
+    "Basaveshwar Science College Bagalkot",
+    "BASAVESHWAR SCIENCE COLLEGE BAGALKOTE",
+    "BASAVESHWAR SCIENCE COLLEGE BAGALKOT",
+    "BASAVESHWAR SCIENCE COLLEGE",
+    "Basaveshwar Science College",
+    "Basaveshwar science college",
+    "Basaveshwara Science College, Bagalkote",
+    "Basaveshwara Science College Bagalkote",
+    "Basaveshwara Science College, Bagalkot",
+    "Basaveshwara Science College Bagalkot",
+    "BVVS Basaveshwar Science College Bagalkote",
+    "BVVS Basaveshwar Science College, Bagalkote",
+    "BVVS Basaveshwar Science College Bagalkot",
+    "BVVS Basaveshwar Science College, Bagalkot",
+    "B.V.V.S Basaveshwar Science College Bagalkote",
+    "B.V.V.S. Basaveshwar Science College, Bagalkote",
+    "B.V.V.S Basaveshwar Science College Bagalkot",
+    "B.V.V.S. Basaveshwar Science College, Bagalkot",
+  ],
 };
 
 export function normalizeCollegeName(rawName?: string | null): string {
@@ -293,6 +321,7 @@ export function normalizeCollegeName(rawName?: string | null): string {
   }
 
   const upper = trimmed.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (upper.includes("BASAVESHWAR") || upper.includes("BASAVESHWARA")) return "Basaveshwar science college, Bagalkote";
   if (upper.includes("NEWEXPERT")) return "New expert college , Ramanagar";
   if (upper.includes("BYRAPUR") || upper.includes("BAIRAPUR")) return "GFGC Byrapur , Mysore";
   if (upper.includes("OXFORD") && !upper.includes("PU")) return "Oxford college Banglore";
