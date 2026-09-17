@@ -46,6 +46,9 @@ export const COLLEGES = [
   "VISHWA GANGA COMPUTER TRAINING CENTRE YADGIR",
   "Lingeri Konappa education trust Women's Art science and commerce degree college yadgir",
   "Basaveshwar science college, Bagalkote",
+  "SADGURU SIDDHAROODH WOMENS DEGREE COLLEGE, GUMPA BIDAR",
+  "GOVT. FIRST GRADE COLLEGE FOR WOMEN, NAUBAD BIDAR",
+  "Shanti Vardhak Education Society Akkaamahadevi Mahila Mahavidya Bidar, Udgir Road BIDAR",
 ] as const;
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
@@ -306,6 +309,66 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "B.V.V.S Basaveshwar Science College Bagalkot",
     "B.V.V.S. Basaveshwar Science College, Bagalkot",
   ],
+  "SADGURU SIDDHAROODH WOMENS DEGREE COLLEGE, GUMPA BIDAR": [
+    "SADGURU SIDDHAROODH WOMENS DEGREE COLLEGE, GUMPA BIDAR",
+    "SADGURU SIDDHAROODH WOMENS DEGREE COLLEGE GUMPA BIDAR",
+    "SADGURU SIDDHAROODH WOMENS DEGREE COLLEGE",
+    "Sadguru Siddharoodh Womens Degree College, Gumpa Bidar",
+    "Sadguru Siddharoodh Womens Degree College Gumpa Bidar",
+    "Sadguru Siddharoodh Womens Degree College",
+    "Sadguru Siddharoodh Women's Degree College, Gumpa Bidar",
+    "Sadguru Siddharoodh Women's Degree College Gumpa Bidar",
+    "Sadguru Siddharoodh Women's Degree College",
+    "Sadguru Siddharoodha Women's Degree College, Gumpa Bidar",
+    "Sadguru Siddharoodha Womens Degree College, Gumpa Bidar",
+    "Sadguru Siddharoodha Womens Degree College Gumpa Bidar",
+    "Sadguru Siddharoodha Degree College Bidar",
+    "SSWDC Gumpa Bidar",
+    "SSWDC Bidar",
+  ],
+  "GOVT. FIRST GRADE COLLEGE FOR WOMEN, NAUBAD BIDAR": [
+    "GOVT. FIRST GRADE COLLEGE FOR WOMEN, NAUBAD BIDAR",
+    "GOVT. FIRST GRADE COLLEGE FOR WOMEN NAUBAD BIDAR",
+    "GOVT FIRST GRADE COLLEGE FOR WOMEN NAUBAD BIDAR",
+    "GOVT FIRST GRADE COLLEGE FOR WOMEN, NAUBAD BIDAR",
+    "GOVT. FIRST GRADE COLLEGE FOR WOMEN",
+    "GOVT FIRST GRADE COLLEGE FOR WOMEN",
+    "Government First Grade College for Women, Naubad Bidar",
+    "Government First Grade College for Women Naubad Bidar",
+    "Government First Grade College for Women, Naubad, Bidar",
+    "Government First Grade College for Women's, Naubad Bidar",
+    "Government First Grade College for Women's, Naubad, Bidar",
+    "Govt First Grade College for Women Naubad Bidar",
+    "Govt. First Grade College for Women Naubad Bidar",
+    "Govt First Grade College for Women, Naubad Bidar",
+    "GFGC Women Naubad Bidar",
+    "GFGC Women Naubad",
+    "GFGC Women's Naubad Bidar",
+    "GFGC FOR WOMEN NAUBAD BIDAR",
+    "GFGC NAUBAD BIDAR",
+    "GFGC NAUBAD",
+    "GOVT FIRST GRADE COLLEGE FOR WOMEN BIDAR",
+    "Government First Grade College for Women Bidar",
+  ],
+  "Shanti Vardhak Education Society Akkaamahadevi Mahila Mahavidya Bidar, Udgir Road BIDAR": [
+    "Shanti Vardhak Education Society Akkaamahadevi Mahila Mahavidya Bidar, Udgir Road BIDAR",
+    "Shanti Vardhak Education Society Akkaamahadevi Mahila Mahavidya Bidar, Udgir Road Bidar",
+    "Shanti Vardhak Education Society Akkaamahadevi Mahila Mahavidya Bidar",
+    "Shanti Vardhak Education Society Akkaamahadevi Mahila Mahavidyalaya Bidar",
+    "Shanti Vardhak Education Society Akkamahadevi Mahila Mahavidyalaya, Udgir Road Bidar",
+    "Shanti Vardhak Education Society Akkamahadevi Mahila Mahavidyalaya, Udgir Road, Bidar",
+    "Shanti Vardhak Education Society Akkamahadevi Mahila Mahavidyalaya Bidar",
+    "Shanti Vardhak Education Society, Akkamahadevi Mahila Mahavidyalaya, Bidar",
+    "Akkamahadevi Mahila Mahavidyalaya Bidar",
+    "Akkamahadevi Mahila Mahavidyalaya, Udgir Road Bidar",
+    "Akkamahadevi Mahila Mahavidyalaya, Bidar",
+    "Akkaamahadevi Mahila Mahavidya Bidar",
+    "Akkaamahadevi Mahila Mahavidya, Udgir Road Bidar",
+    "SVES Akkamahadevi Mahila Mahavidyalaya Bidar",
+    "SVES Akkamahadevi College Bidar",
+    "SHANTI VARDHAK EDUCATION SOCIETY AKKAAMAHADEVI MAHILA MAHAVIDYA BIDAR",
+    "SHANTI VARDHAK EDUCATION SOCIETY AKKAMAHADEVI MAHILA MAHAVIDYALAYA BIDAR",
+  ],
 };
 
 export function normalizeCollegeName(rawName?: string | null): string {
@@ -322,6 +385,9 @@ export function normalizeCollegeName(rawName?: string | null): string {
 
   const upper = trimmed.toUpperCase().replace(/[^A-Z0-9]/g, "");
   if (upper.includes("BASAVESHWAR") || upper.includes("BASAVESHWARA")) return "Basaveshwar science college, Bagalkote";
+  if (upper.includes("SIDDHAROODH") || upper.includes("SIDDHAROODHA") || upper.includes("GUMPA")) return "SADGURU SIDDHAROODH WOMENS DEGREE COLLEGE, GUMPA BIDAR";
+  if (upper.includes("NAUBAD") || (upper.includes("WOMEN") && upper.includes("BIDAR") && (upper.includes("GFGC") || upper.includes("FIRSTGRADE") || upper.includes("GOVT")))) return "GOVT. FIRST GRADE COLLEGE FOR WOMEN, NAUBAD BIDAR";
+  if (upper.includes("AKKAAMAHADEVI") || upper.includes("AKKAMAHADEVI") || upper.includes("SHANTIVARDHAK") || upper.includes("UDGIR") || upper.includes("SVES")) return "Shanti Vardhak Education Society Akkaamahadevi Mahila Mahavidya Bidar, Udgir Road BIDAR";
   if (upper.includes("NEWEXPERT")) return "New expert college , Ramanagar";
   if (upper.includes("BYRAPUR") || upper.includes("BAIRAPUR")) return "GFGC Byrapur , Mysore";
   if (upper.includes("OXFORD") && !upper.includes("PU")) return "Oxford college Banglore";
@@ -346,7 +412,7 @@ export function normalizeCollegeName(rawName?: string | null): string {
   if (upper.includes("CHANNARAYAPATNA")) return "GOVT COLLEGE CHANNARAYAPATNA";
   if (upper.includes("YADGIR")) return "GOVT FIRST GRADE WOMENS COLLEGE YADGIRI";
   if (upper.includes("MALLAPPA")) return "MARI MALLAPPA WOMENS COLLEGE MYSORE";
-  if (upper.includes("SIDHARTHA") || upper.includes("BIDAR")) return "SIDHARTHA COLLEGE BIDAR";
+  if (upper.includes("SIDHARTHA") || upper.includes("SIDDHARTHA")) return "SIDHARTHA COLLEGE BIDAR";
   if (upper.includes("DADAPHEER")) return "Dadapheer Huballi";
   if (upper.includes("HUBBALLI") || upper.includes("HUBBALI")) return "Hubballi Center ";
   if (upper.includes("ANGADI") || upper.includes("AITM")) return "Angadi Institute of Technology Belagavi";
