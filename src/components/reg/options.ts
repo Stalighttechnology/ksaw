@@ -49,6 +49,7 @@ export const COLLEGES = [
   "SADGURU SIDDHAROODH WOMENS DEGREE COLLEGE, GUMPA BIDAR",
   "GOVT. FIRST GRADE COLLEGE FOR WOMEN, NAUBAD BIDAR",
   "Shanti Vardhak Education Society Akkaamahadevi Mahila Mahavidya Bidar, Udgir Road BIDAR",
+  "Vizutech Solutions Pvt Ltd.",
 ] as const;
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
@@ -369,6 +370,18 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "SHANTI VARDHAK EDUCATION SOCIETY AKKAAMAHADEVI MAHILA MAHAVIDYA BIDAR",
     "SHANTI VARDHAK EDUCATION SOCIETY AKKAMAHADEVI MAHILA MAHAVIDYALAYA BIDAR",
   ],
+  "Vizutech Solutions Pvt Ltd.": [
+    "Vizutech Solutions Pvt Ltd.",
+    "Vizutech Solutions Pvt Ltd",
+    "Vizutech Solutions Private Limited",
+    "Vizutech Solutions Pvt. Ltd.",
+    "Vizutech Solutions",
+    "VIZUTECH SOLUTIONS PVT LTD",
+    "VIZUTECH SOLUTIONS PRIVATE LIMITED",
+    "VIZUTECH SOLUTIONS",
+    "VIZUTECH",
+    "Vizutech",
+  ],
 };
 
 export function normalizeCollegeName(rawName?: string | null): string {
@@ -384,6 +397,7 @@ export function normalizeCollegeName(rawName?: string | null): string {
   }
 
   const upper = trimmed.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (upper.includes("VIZUTECH")) return "Vizutech Solutions Pvt Ltd.";
   if (upper.includes("BASAVESHWAR") || upper.includes("BASAVESHWARA")) return "Basaveshwar science college, Bagalkote";
   if (upper.includes("SIDDHAROODH") || upper.includes("SIDDHAROODHA") || upper.includes("GUMPA")) return "SADGURU SIDDHAROODH WOMENS DEGREE COLLEGE, GUMPA BIDAR";
   if (upper.includes("NAUBAD") || (upper.includes("WOMEN") && upper.includes("BIDAR") && (upper.includes("GFGC") || upper.includes("FIRSTGRADE") || upper.includes("GOVT")))) return "GOVT. FIRST GRADE COLLEGE FOR WOMEN, NAUBAD BIDAR";

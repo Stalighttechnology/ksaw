@@ -82,11 +82,18 @@ const emptyAddress = (): Address => ({
   zip: "",
 });
 
+// Temporarily paused Nigamas in the registration form only (can be emptied anytime to re-enable)
+const PAUSED_NIGAMAS = ["Devraj Urs", "Kumbara Abhivrudhi"] as const;
+
 type Errors = Record<string, string>;
 
 function RegistrationPage() {
   const { colleges } = useColleges();
   const { isMaintenance, message: maintenanceMessage } = useMaintenance();
+
+  const activeCasteNames = useMemo(() => {
+    return CASTES.filter((c) => !(PAUSED_NIGAMAS as readonly string[]).includes(c.nigama)).map((c) => c.name);
+  }, []);
 
   // Center / Institution
   const [institutionName, setInstitutionName] = useState("");
@@ -254,7 +261,11 @@ function RegistrationPage() {
     }
     if (category !== "General") {
       if (category === "OBC") {
-        if (!caste) e["caste"] = "Caste is required";
+        if (!caste) {
+          e["caste"] = "Caste is required";
+        } else if (casteInfo && (PAUSED_NIGAMAS as readonly string[]).includes(casteInfo.nigama)) {
+          e["caste"] = "Applications under this corporation are temporarily paused";
+        }
         if (!casteSubCategory) e["casteSubCategory"] = "Category is required";
       }
       if (!rdNumber.trim()) e["rdNumber"] = "RD number is required";
@@ -658,7 +669,7 @@ function RegistrationPage() {
         const { error: directErr } = await (supabase.from("registrations") as any)
           .update({ saf_number: fullSafNumber, updated_at: new Date().toISOString() })
           .ilike("reference_number", selectedLinkRecord.reference_number.trim());
-        
+
         if (directErr && rpcErr) throw (rpcErr || directErr);
       }
 
@@ -703,7 +714,7 @@ function RegistrationPage() {
           .from("registrations")
           .select("reference_number, first_name, last_name")
           .eq("aadhaar_number", cleanAadhaar);
-        
+
         if (isEditing && activeEditingRef) {
           q = q.neq("reference_number", activeEditingRef);
         }
@@ -1022,715 +1033,715 @@ function RegistrationPage() {
         />
 
         <main className="kk-form">
-        <div className="kk-wrap">
-          {isEditing && (
-            <div className="mb-4 rounded-xl border border-primary/30 bg-primary/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                  ✏️
+          <div className="kk-wrap">
+            {isEditing && (
+              <div className="mb-4 rounded-xl border border-primary/30 bg-primary/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                    ✏️
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">
+                      Editing Application: <span className="font-mono text-primary">{activeEditingRef}</span>
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      You can edit any personal, address, course details, or re-upload documents.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-foreground">
-                    Editing Application: <span className="font-mono text-primary">{activeEditingRef}</span>
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    You can edit any personal, address, course details, or re-upload documents.
+                <button
+                  type="button"
+                  onClick={() => resetForm()}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer w-max"
+                >
+                  ✕ Cancel Edit & Clear Form
+                </button>
+              </div>
+            )}
+
+            {submitted ? (
+              <div className="kk-alert" role="status">
+                Your registration details have been {isEditing ? "updated" : "submitted"} successfully.
+              </div>
+            ) : null}
+
+            {submitError ? (
+              <div className="kk-alert" role="status" style={{ backgroundColor: "#fee2e2", color: "#991b1b", borderColor: "#fecaca" }}>
+                Error saving form: {submitError}
+              </div>
+            ) : null}
+
+            {isMaintenance && !isEditing ? (
+              <div className="my-8 sm:my-12 mx-auto max-w-2xl text-center animate-in fade-in zoom-in-95 duration-300">
+                <div className="rounded-3xl border border-amber-500/30 bg-card p-6 sm:p-10 shadow-xl backdrop-blur-sm relative overflow-hidden">
+                  {/* Top accent line */}
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-400 via-[#EE5D1D] to-amber-500" />
+
+                  <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-500/10 border border-amber-500/20 text-4xl shadow-inner">
+                    🚧
+                  </div>
+
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 mb-4">
+                    <span className="h-2 w-2 rounded-full bg-amber-500 animate-ping" />
+                    Scheduled Maintenance Mode
+                  </div>
+
+                  <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight mb-3">
+                    Portal Under Maintenance
+                  </h2>
+
+                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-lg mx-auto mb-8">
+                    {maintenanceMessage ||
+                      "The applicant registration portal is temporarily offline for scheduled system updates and maintenance. Submissions are temporarily paused. Please check back shortly."}
                   </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left mb-8">
+                    <div className="rounded-xl border border-border/80 bg-muted/30 p-3.5">
+                      <div className="text-base mb-1">⏱️</div>
+                      <div className="text-xs font-bold text-foreground">Status</div>
+                      <div className="text-[11px] text-muted-foreground">Routine updates in progress</div>
+                    </div>
+                    <div className="rounded-xl border border-border/80 bg-muted/30 p-3.5">
+                      <div className="text-base mb-1">🔒</div>
+                      <div className="text-xs font-bold text-foreground">Data Protected</div>
+                      <div className="text-[11px] text-muted-foreground">All prior submissions safe</div>
+                    </div>
+                    <div className="rounded-xl border border-border/80 bg-muted/30 p-3.5">
+                      <div className="text-base mb-1">📞</div>
+                      <div className="text-xs font-bold text-foreground">Helpdesk</div>
+                      <div className="text-[11px] text-muted-foreground">Support staff available</div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => window.location.reload()}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#EE5D1D] hover:bg-[#D94F12] text-white font-semibold px-6 py-2.5 shadow-md transition-all active:scale-95 cursor-pointer text-sm"
+                    >
+                      <span>🔄 Refresh Status</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowLinkModal(true)}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-background hover:bg-muted font-semibold px-5 py-2.5 transition-all text-sm text-foreground cursor-pointer"
+                    >
+                      <span>🔍 Check Existing Application</span>
+                    </button>
+                  </div>
+
+                  <div className="mt-8 pt-5 border-t border-border/60 text-[11px] text-muted-foreground">
+                    Government of Karnataka • Karnataka Skill Development Corporation (KSAW)
+                  </div>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => resetForm()}
-                className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer w-max"
-              >
-                ✕ Cancel Edit & Clear Form
-              </button>
-            </div>
-          )}
-
-          {submitted ? (
-            <div className="kk-alert" role="status">
-              Your registration details have been {isEditing ? "updated" : "submitted"} successfully.
-            </div>
-          ) : null}
-
-          {submitError ? (
-            <div className="kk-alert" role="status" style={{ backgroundColor: "#fee2e2", color: "#991b1b", borderColor: "#fecaca" }}>
-              Error saving form: {submitError}
-            </div>
-          ) : null}
-
-          {isMaintenance && !isEditing ? (
-            <div className="my-8 sm:my-12 mx-auto max-w-2xl text-center animate-in fade-in zoom-in-95 duration-300">
-              <div className="rounded-3xl border border-amber-500/30 bg-card p-6 sm:p-10 shadow-xl backdrop-blur-sm relative overflow-hidden">
-                {/* Top accent line */}
-                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-400 via-[#EE5D1D] to-amber-500" />
-
-                <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-500/10 border border-amber-500/20 text-4xl shadow-inner">
-                  🚧
-                </div>
-
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 mb-4">
-                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-ping" />
-                  Scheduled Maintenance Mode
-                </div>
-
-                <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight mb-3">
-                  Portal Under Maintenance
-                </h2>
-
-                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-lg mx-auto mb-8">
-                  {maintenanceMessage ||
-                    "The applicant registration portal is temporarily offline for scheduled system updates and maintenance. Submissions are temporarily paused. Please check back shortly."}
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left mb-8">
-                  <div className="rounded-xl border border-border/80 bg-muted/30 p-3.5">
-                    <div className="text-base mb-1">⏱️</div>
-                    <div className="text-xs font-bold text-foreground">Status</div>
-                    <div className="text-[11px] text-muted-foreground">Routine updates in progress</div>
-                  </div>
-                  <div className="rounded-xl border border-border/80 bg-muted/30 p-3.5">
-                    <div className="text-base mb-1">🔒</div>
-                    <div className="text-xs font-bold text-foreground">Data Protected</div>
-                    <div className="text-[11px] text-muted-foreground">All prior submissions safe</div>
-                  </div>
-                  <div className="rounded-xl border border-border/80 bg-muted/30 p-3.5">
-                    <div className="text-base mb-1">📞</div>
-                    <div className="text-xs font-bold text-foreground">Helpdesk</div>
-                    <div className="text-[11px] text-muted-foreground">Support staff available</div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => window.location.reload()}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#EE5D1D] hover:bg-[#D94F12] text-white font-semibold px-6 py-2.5 shadow-md transition-all active:scale-95 cursor-pointer text-sm"
-                  >
-                    <span>🔄 Refresh Status</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowLinkModal(true)}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-background hover:bg-muted font-semibold px-5 py-2.5 transition-all text-sm text-foreground cursor-pointer"
-                  >
-                    <span>🔍 Check Existing Application</span>
-                  </button>
-                </div>
-
-                <div className="mt-8 pt-5 border-t border-border/60 text-[11px] text-muted-foreground">
-                  Government of Karnataka • Karnataka Skill Development Corporation (KSAW)
-                </div>
-              </div>
-            </div>
-          ) : (
-            <form onSubmit={onSubmit} noValidate>
-            <Section title="Center / Institute Details">
-              <Row>
-                <MultiSelect
-                  label="Name of College / Institute / University"
-                  required
-                  searchable
-                  single
-                  placeholder="Select College / Institute / University"
-                  options={colleges}
-                  value={institutionName ? [institutionName] : []}
-                  onChange={(v) => setInstitutionName(v[0] ?? "")}
-                  error={errors["institutionName"]}
-                />
-                <SelectField
-                  label="Center Location"
-                  required
-                  value={centerLocation}
-                  onChange={setCenterLocation}
-                  options={DISTRICTS.KARNATAKA}
-                  placeholder="Select District"
-                  error={errors["centerLocation"]}
-                />
-              </Row>
-            </Section>
-
-            <Section title="Personal Details">
-              <Row>
-                <TextField
-                  label="First Name"
-                  required
-                  placeholder="First Name"
-                  value={firstName}
-                  onChange={setFirstName}
-                  error={errors["firstName"]}
-                />
-                <TextField
-                  label="Last Name"
-                  required
-                  placeholder="Last Name"
-                  value={lastName}
-                  onChange={setLastName}
-                  error={errors["lastName"]}
-                />
-                <TextField
-                  label="Phone Number"
-                  required
-                  info="Enter 10 digit mobile number without country code"
-                  placeholder="10 Digit Phone Number"
-                  inputMode="numeric"
-                  maxLength={10}
-                  value={phone}
-                  onChange={(v) => setPhone(v.replace(/\D/g, ""))}
-                  error={errors["phone"]}
-                />
-              </Row>
-              <Row>
-                <TextField
-                  label="Email"
-                  required
-                  type="email"
-                  placeholder="email address"
-                  value={email}
-                  onChange={setEmail}
-                  error={errors["email"]}
-                />
-                {(() => {
-                  const today = new Date();
-                  const maxDob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()).toISOString().split("T")[0];
-                  const minDob = new Date(today.getFullYear() - 25, today.getMonth(), today.getDate() + 1).toISOString().split("T")[0];
-                  return (
-                    <DateField
-                      label="Date of Birth"
+            ) : (
+              <form onSubmit={onSubmit} noValidate>
+                <Section title="Center / Institute Details">
+                  <Row>
+                    <MultiSelect
+                      label="Name of College / Institute / University"
                       required
-                      value={dob}
-                      onChange={setDob}
-                      error={errors["dob"]}
-                      min={minDob}
-                      max={maxDob}
+                      searchable
+                      single
+                      placeholder="Select College / Institute / University"
+                      options={colleges}
+                      value={institutionName ? [institutionName] : []}
+                      onChange={(v) => setInstitutionName(v[0] ?? "")}
+                      error={errors["institutionName"]}
                     />
-                  );
-                })()}
-                <RadioGroup
-                  label="Gender"
-                  required
-                  name="gender"
-                  value={gender}
-                  onChange={setGender}
-                  options={["Male", "Female", "Other"]}
-                />
-              </Row>
-              <Row>
-                <RadioGroup
-                  label="Marital Status"
-                  required
-                  name="marital_status"
-                  value={marital}
-                  onChange={setMarital}
-                  options={["Single", "Married", "Widow"]}
-                />
-                <RadioGroup
-                  label="Specially Abled"
-                  name="is_physically_challenged"
-                  value={speciallyAbled}
-                  onChange={setSpeciallyAbled}
-                  options={["Yes", "No"]}
-                />
-              </Row>
-              {speciallyAbled === "Yes" ? (
-                <Row>
-                  <MultiSelect
-                    label="Specially Abled Types"
-                    required
-                    options={SPECIALLY_ABLED_TYPES}
-                    value={saTypes}
-                    onChange={setSaTypes}
-                    error={errors["saTypes"]}
-                  />
-                  <MultiSelect
-                    label="Specially Abled Sub Types"
-                    required
-                    options={SPECIALLY_ABLED_SUB_TYPES}
-                    value={saSubTypes}
-                    onChange={setSaSubTypes}
-                    error={errors["saSubTypes"]}
-                  />
-                  <FileField label="Proof of Specially Abled Type" value={saProof} onChange={setSaProof} />
-                </Row>
-              ) : null}
-              <Row>
-                <SelectField
-                  label="Religion"
-                  required
-                  value={religion}
-                  onChange={setReligion}
-                  options={RELIGIONS}
-                  error={errors["religion"]}
-                />
-                <TextField
-                  label="Aadhaar Number"
-                  required
-                  info="Enter 12 digit Aadhaar number"
-                  placeholder="12 Digit Aadhaar Number"
-                  inputMode="numeric"
-                  maxLength={12}
-                  value={aadhaarNumber}
-                  onChange={(v) => setAadhaarNumber(v.replace(/\D/g, ""))}
-                  error={errors["aadhaarNumber"]}
-                />
-              </Row>
-              <Row>
-                <div className="fcol fcol-12" style={{ marginBottom: -8 }}>
-                  <span className="blink-text">⚠️ Please refer to your caste certificate and select the correct caste and category.</span>
-                </div>
-                <RadioGroup
-                  label="Category"
-                  required
-                  span={8}
-                  name="category"
-                  value={category}
-                  onChange={setCategory}
-                  options={CATEGORIES}
-                />
-              </Row>
-              {category !== "General" ? (
-                <Row>
-                  {category === "OBC" ? (
-                    <>
+                    <SelectField
+                      label="Center Location"
+                      required
+                      value={centerLocation}
+                      onChange={setCenterLocation}
+                      options={DISTRICTS.KARNATAKA}
+                      placeholder="Select District"
+                      error={errors["centerLocation"]}
+                    />
+                  </Row>
+                </Section>
+
+                <Section title="Personal Details">
+                  <Row>
+                    <TextField
+                      label="First Name"
+                      required
+                      placeholder="First Name"
+                      value={firstName}
+                      onChange={setFirstName}
+                      error={errors["firstName"]}
+                    />
+                    <TextField
+                      label="Last Name"
+                      required
+                      placeholder="Last Name"
+                      value={lastName}
+                      onChange={setLastName}
+                      error={errors["lastName"]}
+                    />
+                    <TextField
+                      label="Phone Number"
+                      required
+                      info="Enter 10 digit mobile number without country code"
+                      placeholder="10 Digit Phone Number"
+                      inputMode="numeric"
+                      maxLength={10}
+                      value={phone}
+                      onChange={(v) => setPhone(v.replace(/\D/g, ""))}
+                      error={errors["phone"]}
+                    />
+                  </Row>
+                  <Row>
+                    <TextField
+                      label="Email"
+                      required
+                      type="email"
+                      placeholder="email address"
+                      value={email}
+                      onChange={setEmail}
+                      error={errors["email"]}
+                    />
+                    {(() => {
+                      const today = new Date();
+                      const maxDob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()).toISOString().split("T")[0];
+                      const minDob = new Date(today.getFullYear() - 25, today.getMonth(), today.getDate() + 1).toISOString().split("T")[0];
+                      return (
+                        <DateField
+                          label="Date of Birth"
+                          required
+                          value={dob}
+                          onChange={setDob}
+                          error={errors["dob"]}
+                          min={minDob}
+                          max={maxDob}
+                        />
+                      );
+                    })()}
+                    <RadioGroup
+                      label="Gender"
+                      required
+                      name="gender"
+                      value={gender}
+                      onChange={setGender}
+                      options={["Male", "Female", "Other"]}
+                    />
+                  </Row>
+                  <Row>
+                    <RadioGroup
+                      label="Marital Status"
+                      required
+                      name="marital_status"
+                      value={marital}
+                      onChange={setMarital}
+                      options={["Single", "Married", "Widow"]}
+                    />
+                    <RadioGroup
+                      label="Specially Abled"
+                      name="is_physically_challenged"
+                      value={speciallyAbled}
+                      onChange={setSpeciallyAbled}
+                      options={["Yes", "No"]}
+                    />
+                  </Row>
+                  {speciallyAbled === "Yes" ? (
+                    <Row>
                       <MultiSelect
-                        label="Caste"
+                        label="Specially Abled Types"
                         required
-                        searchable
-                        single
-                        options={CASTE_NAMES}
-                        value={caste ? [caste] : []}
-                        onChange={(v) => {
-                          const selectedCaste = v[0] ?? "";
-                          setCaste(selectedCaste);
-                          const info = CASTES.find((c) => c.name === selectedCaste);
-                          if (info) {
-                            setCasteSubCategory(info.category);
-                          }
-                        }}
-                        error={errors["caste"]}
+                        options={SPECIALLY_ABLED_TYPES}
+                        value={saTypes}
+                        onChange={setSaTypes}
+                        error={errors["saTypes"]}
                       />
-                      <SelectField
-                        label="Nigama"
-                        value={casteInfo?.nigama ?? ""}
-                        onChange={() => { }}
-                        options={NIGAMAS}
-                        placeholder="Auto-filled from caste"
-                        disabled
+                      <MultiSelect
+                        label="Specially Abled Sub Types"
+                        required
+                        options={SPECIALLY_ABLED_SUB_TYPES}
+                        value={saSubTypes}
+                        onChange={setSaSubTypes}
+                        error={errors["saSubTypes"]}
                       />
-                      <SelectField
-                        label="Category"
-                        value={casteSubCategory}
-                        onChange={setCasteSubCategory}
-                        options={CASTE_CATEGORIES}
-                        placeholder="Select Category"
-                        error={errors["casteSubCategory"]}
+                      <FileField label="Proof of Specially Abled Type" value={saProof} onChange={setSaProof} />
+                    </Row>
+                  ) : null}
+                  <Row>
+                    <SelectField
+                      label="Religion"
+                      required
+                      value={religion}
+                      onChange={setReligion}
+                      options={RELIGIONS}
+                      error={errors["religion"]}
+                    />
+                    <TextField
+                      label="Aadhaar Number"
+                      required
+                      info="Enter 12 digit Aadhaar number"
+                      placeholder="12 Digit Aadhaar Number"
+                      inputMode="numeric"
+                      maxLength={12}
+                      value={aadhaarNumber}
+                      onChange={(v) => setAadhaarNumber(v.replace(/\D/g, ""))}
+                      error={errors["aadhaarNumber"]}
+                    />
+                  </Row>
+                  <Row>
+                    <div className="fcol fcol-12" style={{ marginBottom: -8 }}>
+                      <span className="blink-text">⚠️ Please refer to your caste certificate and select the correct caste and category.</span>
+                    </div>
+                    <RadioGroup
+                      label="Category"
+                      required
+                      span={8}
+                      name="category"
+                      value={category}
+                      onChange={setCategory}
+                      options={CATEGORIES}
+                    />
+                  </Row>
+                  {category !== "General" ? (
+                    <Row>
+                      {category === "OBC" ? (
+                        <>
+                          <MultiSelect
+                            label="Caste"
+                            required
+                            searchable
+                            single
+                            options={activeCasteNames}
+                            value={caste ? [caste] : []}
+                            onChange={(v) => {
+                              const selectedCaste = v[0] ?? "";
+                              setCaste(selectedCaste);
+                              const info = CASTES.find((c) => c.name === selectedCaste);
+                              if (info) {
+                                setCasteSubCategory(info.category);
+                              }
+                            }}
+                            error={errors["caste"]}
+                          />
+                          <SelectField
+                            label="Nigama"
+                            value={casteInfo?.nigama ?? ""}
+                            onChange={() => { }}
+                            options={NIGAMAS}
+                            placeholder="Auto-filled from caste"
+                            disabled
+                          />
+                          <SelectField
+                            label="Category"
+                            value={casteSubCategory}
+                            onChange={setCasteSubCategory}
+                            options={CASTE_CATEGORIES}
+                            placeholder="Select Category"
+                            error={errors["casteSubCategory"]}
+                          />
+                        </>
+                      ) : null}
+
+                      <TextField
+                        label="RD Number"
+                        required
+                        placeholder="RD Number"
+                        value={rdNumber}
+                        onChange={(v) => setRdNumber(v.toUpperCase())}
+                        error={errors["rdNumber"]}
                       />
+                      <DateField
+                        label="Caste Certificate Issue Date"
+                        required
+                        value={casteCertIssueDate}
+                        onChange={setCasteCertIssueDate}
+                        error={errors["casteCertIssueDate"]}
+                        max={new Date().toISOString().split("T")[0]}
+                      />
+                      <FileField
+                        label="Proof of Caste"
+                        required
+                        hint="Upload your caste certificate"
+                        value={casteProof}
+                        onChange={setCasteProof}
+                        error={errors["casteProof"]}
+                      />
+                    </Row>
+                  ) : null}
+                </Section>
+
+
+
+
+                <Section title="Father/Mother/Guardian Details">
+                  <Row>
+                    <Field span={4}>
+                      <div className="inline-group">
+                        <div className="radio-block">
+                          {["Father", "Mother", "Guardian"].map((o) => (
+                            <label key={o} className="radio-inline">
+                              <input
+                                type="radio"
+                                name="guardianship"
+                                checked={guardianship === o}
+                                onChange={() => setGuardianship(o)}
+                              />
+                              <span>{o}</span>
+                            </label>
+                          ))}
+                        </div>
+                        <select
+                          className="form-ctrl salutation-select"
+                          aria-label="Salutation"
+                          value={salutation}
+                          onChange={(e) => setSalutation(e.target.value)}
+                        >
+                          {SALUTATIONS.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </Field>
+                    <TextField
+                      label="First Name"
+                      required
+                      placeholder="First Name"
+                      value={gFirstName}
+                      onChange={setGFirstName}
+                      error={errors["gFirstName"]}
+                    />
+                    <TextField
+                      label="Last Name"
+                      required
+                      placeholder="Last Name"
+                      value={gLastName}
+                      onChange={setGLastName}
+                      error={errors["gLastName"]}
+                    />
+                  </Row>
+                </Section>
+
+                <Section title="ADDRESS" variant="main" />
+                <Section title="Current Address">{addressBlock("current", current, "cur")}</Section>
+
+                <Section title="Permanent Address">
+                  <Row>
+                    <RadioGroup
+                      label="Is your permanent address same as current address?"
+                      required
+                      span={8}
+                      name="sameas_permanent_address"
+                      value={sameAddress}
+                      onChange={setSameAddress}
+                      options={["Yes", "No"]}
+                    />
+                  </Row>
+                  {sameAddress === "No" ? addressBlock("permanent", permanent, "per") : null}
+                </Section>
+
+                <Section title="EDUCATION" variant="main" />
+                <Section title="Educational Details">
+                  <Row>
+                    <SelectField
+                      label="Education"
+                      required
+                      value={education}
+                      onChange={(v) => {
+                        setEducation(v);
+                        setStream("");
+                        setSubject("");
+                        setSkills([]);
+                      }}
+                      options={EDUCATION_LEVELS}
+                      error={errors["education"]}
+                    />
+                    {education !== "10th" ? (
+                      <>
+                        <SelectField
+                          label="Stream"
+                          required
+                          value={stream}
+                          onChange={(v) => {
+                            setStream(v);
+                            setSubject("");
+                          }}
+                          options={streamOptions}
+                          error={errors["stream"]}
+                        />
+                        <SelectField
+                          label="Subject"
+                          required
+                          value={subject}
+                          onChange={setSubject}
+                          options={subjectOptions}
+                          placeholder={subjectOptions.length ? "Select" : "N/A"}
+                          error={errors["subject"]}
+                        />
+                      </>
+                    ) : null}
+                  </Row>
+                  <Row>
+                    <RadioGroup
+                      label="Language of Instruction"
+                      required
+                      name="language_instruction"
+                      value={langInstruction}
+                      onChange={setLangInstruction}
+                      options={["English", "Kannada", "Other"]}
+                    />
+                    {langInstruction === "Other" ? (
+                      <TextField
+                        label="Other Language"
+                        required
+                        placeholder="Other Language"
+                        value={otherLanguage}
+                        onChange={setOtherLanguage}
+                        error={errors["otherLanguage"]}
+                      />
+                    ) : null}
+                    <SelectField
+                      label="Year of Passing"
+                      required
+                      placeholder="Select Year"
+                      options={PASSING_YEARS}
+                      value={yearOfPassing}
+                      onChange={setYearOfPassing}
+                      error={errors["yearOfPassing"]}
+                    />
+                  </Row>
+                  <Row>
+                    <MultiSelect
+                      label="Languages Known"
+                      required
+                      searchable
+                      options={LANGUAGES_KNOWN}
+                      value={languagesKnown}
+                      onChange={setLanguagesKnown}
+                      error={errors["languagesKnown"]}
+                    />
+                    <RadioGroup
+                      label="Past Skill Experience ?"
+                      name="past_skill_exp"
+                      value={pastSkillExp}
+                      onChange={setPastSkillExp}
+                      options={["Yes", "No"]}
+                    />
+                    {pastSkillExp === "Yes" ? (
+                      <FileField
+                        label="Proof of Past Skill Experience"
+                        required
+                        value={skillExpProof}
+                        onChange={setSkillExpProof}
+                        error={errors["skillExpProof"]}
+                      />
+                    ) : null}
+                  </Row>
+                  <Row>
+                    <MultiSelect
+                      label="Skill Sought / Course"
+                      required
+                      searchable
+                      single
+                      options={useMemo(() => {
+                        if (education === "10th") {
+                          return SKILLS.filter((s) =>
+                            s === "Cisco IT Essentials" ||
+                            s === "Computer Hardware and Networking" ||
+                            s === "Computer Programming"
+                          );
+                        }
+                        if (stream === "Commerce") {
+                          return SKILLS;
+                        }
+                        return SKILLS.filter((s) => s !== "Accounts Executive - Tally ERP 9");
+                      }, [education, stream])}
+                      value={skills}
+                      onChange={setSkills}
+                      error={errors["skills"]}
+                    />
+                    <SelectField
+                      label="Preferred Duration Of Training Required"
+                      required
+                      value={trainingDuration}
+                      onChange={setTrainingDuration}
+                      options={TRAINING_DURATIONS}
+                      error={errors["trainingDuration"]}
+                    />
+                    <RadioGroup
+                      label="Willing To Take Apprenticeship ?"
+                      required
+                      name="apprenticeship"
+                      value={apprenticeship}
+                      onChange={setApprenticeship}
+                      options={["Yes", "No"]}
+                    />
+                  </Row>
+                  <p className="required-text" style={{ marginBottom: 14 }}>
+                    *( You Can Select Only 1 Skill. )
+                  </p>
+                </Section>
+
+                <Section title="EMPLOYMENT" variant="main">
+                  <Row>
+                    <RadioGroup
+                      label="Currently Employed"
+                      name="currently_employed"
+                      value={currentlyEmployed}
+                      onChange={setCurrentlyEmployed}
+                      options={["Yes", "No"]}
+                    />
+                    {currentlyEmployed === "Yes" ? (
+                      <>
+                        <DateField
+                          label="Employed From"
+                          required
+                          value={employedFrom}
+                          onChange={setEmployedFrom}
+                          error={errors["employedFrom"]}
+                        />
+                        <TextField
+                          label="Name Of Current Employer"
+                          required
+                          placeholder="Name Of Current Employer"
+                          value={currentEmployer}
+                          onChange={setCurrentEmployer}
+                          error={errors["currentEmployer"]}
+                        />
+                        <TextField
+                          label="Current Designation"
+                          required
+                          placeholder="Current Designation"
+                          value={currentDesignation}
+                          onChange={setCurrentDesignation}
+                          error={errors["currentDesignation"]}
+                        />
+                      </>
+                    ) : null}
+                  </Row>
+                  <Row>
+                    <RadioGroup
+                      label="Have You Been Previously Employed"
+                      required
+                      name="previously_employed"
+                      value={previouslyEmployed}
+                      onChange={setPreviouslyEmployed}
+                      options={["Yes", "No"]}
+                    />
+                  </Row>
+                  {previouslyEmployed === "Yes" ? (
+                    <>
+                      <Row>
+                        <TextField
+                          label="Total Years Of Work Experience"
+                          required
+                          placeholder="Total Years Of Work Experience"
+                          value={workExperience}
+                          onChange={setWorkExperience}
+                          error={errors["workExperience"]}
+                        />
+                        <TextField
+                          label="Name Of Last Employer"
+                          required
+                          placeholder="Name Of Last Employer"
+                          value={lastEmployer}
+                          onChange={setLastEmployer}
+                          error={errors["lastEmployer"]}
+                        />
+                        <TextField
+                          label="Last Designation"
+                          required
+                          placeholder="Last Designation"
+                          value={lastDesignation}
+                          onChange={setLastDesignation}
+                          error={errors["lastDesignation"]}
+                        />
+                      </Row>
+                      <Row>
+                        <SelectField
+                          label="Last Drawn Salary In Rs"
+                          required
+                          value={lastSalary}
+                          onChange={setLastSalary}
+                          options={LAST_SALARY}
+                          error={errors["lastSalary"]}
+                        />
+                        <Field label="Address Of Last Employer" required error={errors["lastEmployerAddress"]} span={4}>
+                          <textarea
+                            className={`form-ctrl${errors["lastEmployerAddress"] ? " is-invalid" : ""}`}
+                            style={{ height: "auto", minHeight: 76 }}
+                            value={lastEmployerAddress}
+                            onChange={(e) => setLastEmployerAddress(e.target.value)}
+                          />
+                        </Field>
+                        <FileField
+                          label="Proof of Experience"
+                          required
+                          value={empProof}
+                          onChange={setEmpProof}
+                          error={errors["empProof"]}
+                        />
+                      </Row>
                     </>
                   ) : null}
-
-                  <TextField
-                    label="RD Number"
-                    required
-                    placeholder="RD Number"
-                    value={rdNumber}
-                    onChange={(v) => setRdNumber(v.toUpperCase())}
-                    error={errors["rdNumber"]}
-                  />
-                  <DateField
-                    label="Caste Certificate Issue Date"
-                    required
-                    value={casteCertIssueDate}
-                    onChange={setCasteCertIssueDate}
-                    error={errors["casteCertIssueDate"]}
-                    max={new Date().toISOString().split("T")[0]}
-                  />
-                  <FileField
-                    label="Proof of Caste"
-                    required
-                    hint="Upload your caste certificate"
-                    value={casteProof}
-                    onChange={setCasteProof}
-                    error={errors["casteProof"]}
-                  />
-                </Row>
-              ) : null}
-            </Section>
-
-
-
-
-            <Section title="Father/Mother/Guardian Details">
-              <Row>
-                <Field span={4}>
-                  <div className="inline-group">
-                    <div className="radio-block">
-                      {["Father", "Mother", "Guardian"].map((o) => (
-                        <label key={o} className="radio-inline">
-                          <input
-                            type="radio"
-                            name="guardianship"
-                            checked={guardianship === o}
-                            onChange={() => setGuardianship(o)}
-                          />
-                          <span>{o}</span>
-                        </label>
-                      ))}
-                    </div>
-                    <select
-                      className="form-ctrl salutation-select"
-                      aria-label="Salutation"
-                      value={salutation}
-                      onChange={(e) => setSalutation(e.target.value)}
-                    >
-                      {SALUTATIONS.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </Field>
-                <TextField
-                  label="First Name"
-                  required
-                  placeholder="First Name"
-                  value={gFirstName}
-                  onChange={setGFirstName}
-                  error={errors["gFirstName"]}
-                />
-                <TextField
-                  label="Last Name"
-                  required
-                  placeholder="Last Name"
-                  value={gLastName}
-                  onChange={setGLastName}
-                  error={errors["gLastName"]}
-                />
-              </Row>
-            </Section>
-
-            <Section title="ADDRESS" variant="main" />
-            <Section title="Current Address">{addressBlock("current", current, "cur")}</Section>
-
-            <Section title="Permanent Address">
-              <Row>
-                <RadioGroup
-                  label="Is your permanent address same as current address?"
-                  required
-                  span={8}
-                  name="sameas_permanent_address"
-                  value={sameAddress}
-                  onChange={setSameAddress}
-                  options={["Yes", "No"]}
-                />
-              </Row>
-              {sameAddress === "No" ? addressBlock("permanent", permanent, "per") : null}
-            </Section>
-
-            <Section title="EDUCATION" variant="main" />
-            <Section title="Educational Details">
-              <Row>
-                <SelectField
-                  label="Education"
-                  required
-                  value={education}
-                  onChange={(v) => {
-                    setEducation(v);
-                    setStream("");
-                    setSubject("");
-                    setSkills([]);
-                  }}
-                  options={EDUCATION_LEVELS}
-                  error={errors["education"]}
-                />
-                {education !== "10th" ? (
-                  <>
-                    <SelectField
-                      label="Stream"
-                      required
-                      value={stream}
-                      onChange={(v) => {
-                        setStream(v);
-                        setSubject("");
-                      }}
-                      options={streamOptions}
-                      error={errors["stream"]}
-                    />
-                    <SelectField
-                      label="Subject"
-                      required
-                      value={subject}
-                      onChange={setSubject}
-                      options={subjectOptions}
-                      placeholder={subjectOptions.length ? "Select" : "N/A"}
-                      error={errors["subject"]}
-                    />
-                  </>
-                ) : null}
-              </Row>
-              <Row>
-                <RadioGroup
-                  label="Language of Instruction"
-                  required
-                  name="language_instruction"
-                  value={langInstruction}
-                  onChange={setLangInstruction}
-                  options={["English", "Kannada", "Other"]}
-                />
-                {langInstruction === "Other" ? (
-                  <TextField
-                    label="Other Language"
-                    required
-                    placeholder="Other Language"
-                    value={otherLanguage}
-                    onChange={setOtherLanguage}
-                    error={errors["otherLanguage"]}
-                  />
-                ) : null}
-                <SelectField
-                  label="Year of Passing"
-                  required
-                  placeholder="Select Year"
-                  options={PASSING_YEARS}
-                  value={yearOfPassing}
-                  onChange={setYearOfPassing}
-                  error={errors["yearOfPassing"]}
-                />
-              </Row>
-              <Row>
-                <MultiSelect
-                  label="Languages Known"
-                  required
-                  searchable
-                  options={LANGUAGES_KNOWN}
-                  value={languagesKnown}
-                  onChange={setLanguagesKnown}
-                  error={errors["languagesKnown"]}
-                />
-                <RadioGroup
-                  label="Past Skill Experience ?"
-                  name="past_skill_exp"
-                  value={pastSkillExp}
-                  onChange={setPastSkillExp}
-                  options={["Yes", "No"]}
-                />
-                {pastSkillExp === "Yes" ? (
-                  <FileField
-                    label="Proof of Past Skill Experience"
-                    required
-                    value={skillExpProof}
-                    onChange={setSkillExpProof}
-                    error={errors["skillExpProof"]}
-                  />
-                ) : null}
-              </Row>
-              <Row>
-                <MultiSelect
-                  label="Skill Sought / Course"
-                  required
-                  searchable
-                  single
-                  options={useMemo(() => {
-                    if (education === "10th") {
-                      return SKILLS.filter((s) =>
-                        s === "Cisco IT Essentials" ||
-                        s === "Computer Hardware and Networking" ||
-                        s === "Computer Programming"
-                      );
-                    }
-                    if (stream === "Commerce") {
-                      return SKILLS;
-                    }
-                    return SKILLS.filter((s) => s !== "Accounts Executive - Tally ERP 9");
-                  }, [education, stream])}
-                  value={skills}
-                  onChange={setSkills}
-                  error={errors["skills"]}
-                />
-                <SelectField
-                  label="Preferred Duration Of Training Required"
-                  required
-                  value={trainingDuration}
-                  onChange={setTrainingDuration}
-                  options={TRAINING_DURATIONS}
-                  error={errors["trainingDuration"]}
-                />
-                <RadioGroup
-                  label="Willing To Take Apprenticeship ?"
-                  required
-                  name="apprenticeship"
-                  value={apprenticeship}
-                  onChange={setApprenticeship}
-                  options={["Yes", "No"]}
-                />
-              </Row>
-              <p className="required-text" style={{ marginBottom: 14 }}>
-                *( You Can Select Only 1 Skill. )
-              </p>
-            </Section>
-
-            <Section title="EMPLOYMENT" variant="main">
-              <Row>
-                <RadioGroup
-                  label="Currently Employed"
-                  name="currently_employed"
-                  value={currentlyEmployed}
-                  onChange={setCurrentlyEmployed}
-                  options={["Yes", "No"]}
-                />
-                {currentlyEmployed === "Yes" ? (
-                  <>
-                    <DateField
-                      label="Employed From"
-                      required
-                      value={employedFrom}
-                      onChange={setEmployedFrom}
-                      error={errors["employedFrom"]}
-                    />
-                    <TextField
-                      label="Name Of Current Employer"
-                      required
-                      placeholder="Name Of Current Employer"
-                      value={currentEmployer}
-                      onChange={setCurrentEmployer}
-                      error={errors["currentEmployer"]}
-                    />
-                    <TextField
-                      label="Current Designation"
-                      required
-                      placeholder="Current Designation"
-                      value={currentDesignation}
-                      onChange={setCurrentDesignation}
-                      error={errors["currentDesignation"]}
-                    />
-                  </>
-                ) : null}
-              </Row>
-              <Row>
-                <RadioGroup
-                  label="Have You Been Previously Employed"
-                  required
-                  name="previously_employed"
-                  value={previouslyEmployed}
-                  onChange={setPreviouslyEmployed}
-                  options={["Yes", "No"]}
-                />
-              </Row>
-              {previouslyEmployed === "Yes" ? (
-                <>
                   <Row>
-                    <TextField
-                      label="Total Years Of Work Experience"
-                      required
-                      placeholder="Total Years Of Work Experience"
-                      value={workExperience}
-                      onChange={setWorkExperience}
-                      error={errors["workExperience"]}
-                    />
-                    <TextField
-                      label="Name Of Last Employer"
-                      required
-                      placeholder="Name Of Last Employer"
-                      value={lastEmployer}
-                      onChange={setLastEmployer}
-                      error={errors["lastEmployer"]}
-                    />
-                    <TextField
-                      label="Last Designation"
-                      required
-                      placeholder="Last Designation"
-                      value={lastDesignation}
-                      onChange={setLastDesignation}
-                      error={errors["lastDesignation"]}
-                    />
-                  </Row>
-                  <Row>
-                    <SelectField
-                      label="Last Drawn Salary In Rs"
-                      required
-                      value={lastSalary}
-                      onChange={setLastSalary}
-                      options={LAST_SALARY}
-                      error={errors["lastSalary"]}
-                    />
-                    <Field label="Address Of Last Employer" required error={errors["lastEmployerAddress"]} span={4}>
-                      <textarea
-                        className={`form-ctrl${errors["lastEmployerAddress"] ? " is-invalid" : ""}`}
-                        style={{ height: "auto", minHeight: 76 }}
-                        value={lastEmployerAddress}
-                        onChange={(e) => setLastEmployerAddress(e.target.value)}
-                      />
-                    </Field>
                     <FileField
-                      label="Proof of Experience"
+                      label="Proof of Education (Highest Qualification Marksheet Or Convocation Certificate)"
                       required
-                      value={empProof}
-                      onChange={setEmpProof}
-                      error={errors["empProof"]}
+                      value={eduProof}
+                      onChange={setEduProof}
+                      error={errors["eduProof"]}
+                    />
+                    <FileField
+                      label="Proof of Age (Upload Aadhaar Photo)"
+                      required
+                      hint="PDF only, max 1 MB"
+                      accept="application/pdf"
+                      maxSizeMb={1}
+                      value={ageProof}
+                      onChange={setAgeProof}
+                      error={errors["ageProof"]}
+                    />
+                    <FileField
+                      label="Profile Image (Upload Latest Passport Image)"
+                      required
+                      accept="application/pdf,image/jpeg,image/png,image/jpg,image/*,.pdf,.jpg,.jpeg,.png"
+                      hint="PDF or JPG/PNG, max 1 MB"
+                      value={profileImg}
+                      onChange={setProfileImg}
+                      error={errors["profileImg"]}
                     />
                   </Row>
-                </>
-              ) : null}
-              <Row>
-                <FileField
-                  label="Proof of Education (Highest Qualification Marksheet Or Convocation Certificate)"
-                  required
-                  value={eduProof}
-                  onChange={setEduProof}
-                  error={errors["eduProof"]}
-                />
-                <FileField
-                  label="Proof of Age (Upload Aadhaar Photo)"
-                  required
-                  hint="PDF only, max 1 MB"
-                  accept="application/pdf"
-                  maxSizeMb={1}
-                  value={ageProof}
-                  onChange={setAgeProof}
-                  error={errors["ageProof"]}
-                />
-                <FileField
-                  label="Profile Image (Upload Latest Passport Image)"
-                  required
-                  accept="application/pdf,image/jpeg,image/png,image/jpg,image/*,.pdf,.jpg,.jpeg,.png"
-                  hint="PDF or JPG/PNG, max 1 MB"
-                  value={profileImg}
-                  onChange={setProfileImg}
-                  error={errors["profileImg"]}
-                />
-              </Row>
 
-              <div className="declaration">
-                <input
-                  id="declaration"
-                  type="checkbox"
-                  checked={declaration}
-                  onChange={(e) => setDeclaration(e.target.checked)}
-                />
-                <label htmlFor="declaration">
-                  <a href="#">Acknowledgement &amp; Aadhaar Consent</a> — I hereby declare that the details &amp;
-                  documents furnished in Kaushalkar.com are true and correct to the best of my knowledge and belief.
-                </label>
-              </div>
-              {errors["declaration"] ? <p className="err-msg">{errors["declaration"]}</p> : null}
-              {submitError && <p className="err-msg">{submitError}</p>}
-              {submitted && <p className="success-msg">Registration submitted successfully!</p>}
+                  <div className="declaration">
+                    <input
+                      id="declaration"
+                      type="checkbox"
+                      checked={declaration}
+                      onChange={(e) => setDeclaration(e.target.checked)}
+                    />
+                    <label htmlFor="declaration">
+                      <a href="#">Acknowledgement &amp; Aadhaar Consent</a> — I hereby declare that the details &amp;
+                      documents furnished in Kaushalkar.com are true and correct to the best of my knowledge and belief.
+                    </label>
+                  </div>
+                  {errors["declaration"] ? <p className="err-msg">{errors["declaration"]}</p> : null}
+                  {submitError && <p className="err-msg">{submitError}</p>}
+                  {submitted && <p className="success-msg">Registration submitted successfully!</p>}
 
-              <div className="kk-actions">
-                <button type="button" className="btn-kk btn-cancel-kk" onClick={onCancel}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn-kk btn-primary-kk" disabled={submitting}>
-                  {submitting ? (isEditing ? "Saving Changes..." : "Submitting...") : isEditing ? "💾 Save Changes" : "Submit"}
-                </button>
-              </div>
-            </Section>
-          </form>
-          )}
-        </div>
-      </main>
+                  <div className="kk-actions">
+                    <button type="button" className="btn-kk btn-cancel-kk" onClick={onCancel}>
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn-kk btn-primary-kk" disabled={submitting}>
+                      {submitting ? (isEditing ? "Saving Changes..." : "Submitting...") : isEditing ? "💾 Save Changes" : "Submit"}
+                    </button>
+                  </div>
+                </Section>
+              </form>
+            )}
+          </div>
+        </main>
       </div>
 
       {/* Password Authentication Modal for Edit & Link SAF */}
@@ -1809,7 +1820,7 @@ function RegistrationPage() {
             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl mb-2">
               🔍
             </div>
-            
+
             <h3 className="text-lg font-bold text-foreground">Edit Your Application</h3>
             <p className="text-xs text-muted-foreground mt-1">
               Search by Application Reference ID (e.g. <strong>KSAW 001</strong>), candidate name, or phone number.
@@ -1910,7 +1921,7 @@ function RegistrationPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            
+
             <h3 className="text-xl font-bold text-foreground">
               {isEditing ? "Application Updated Successfully!" : "Application Submitted Successfully!"}
             </h3>
@@ -1934,11 +1945,10 @@ function RegistrationPage() {
                     setTimeout(() => setCopied(false), 2500);
                   }
                 }}
-                className={`mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-xs ${
-                  copied
-                    ? "bg-emerald-600 text-white"
-                    : "bg-primary text-primary-foreground hover:bg-primary/90"
-                }`}
+                className={`mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-xs ${copied
+                  ? "bg-emerald-600 text-white"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"
+                  }`}
               >
                 {copied ? "✓ Copied to Clipboard" : "📋 Copy Reference ID"}
               </button>
@@ -1976,7 +1986,7 @@ function RegistrationPage() {
             <div className="h-12 w-12 rounded-full bg-emerald-500/15 flex items-center justify-center text-emerald-600 text-xl mb-2">
               🔗
             </div>
-            
+
             <h3 className="text-lg font-bold text-foreground">Link Reference ID to SAF Number</h3>
             <p className="text-xs text-muted-foreground mt-1">
               Search by Application Reference ID, candidate name, or phone number.
