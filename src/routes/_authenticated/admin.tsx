@@ -70,7 +70,7 @@ function AdminPage() {
   const [safStatus, setSafStatus] = useState("");
   const [gender, setGender] = useState("");
   const [dateFilter, setDateFilter] = useState<"today" | "week" | "">("");
-  const [sortDesc, setSortDesc] = useState(true);
+  const [sortBy, setSortBy] = useState<"created_desc" | "created_asc" | "ref_desc" | "ref_asc">("created_desc");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
   const [editing, setEditing] = useState<Row | null>(null);
@@ -99,7 +99,7 @@ function AdminPage() {
   const filters = { search: search.trim(), status, course, category, centerLocation, nigama, partner, safStatus, gender, dateFilter };
 
   const listQuery = useQuery({
-    queryKey: ["registrations", filters, page, pageSize, sortDesc],
+    queryKey: ["registrations", filters, page, pageSize, sortBy],
     queryFn: async () => {
       const selectCols = ["id", ...COLUMNS.map((c) => c.key)].join(",");
       let q = supabase.from("registrations").select(selectCols, { count: "exact" });
@@ -138,7 +138,16 @@ function AdminPage() {
           `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,gender.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,caste_sub_category.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
         );
       }
-      let req = q.order("created_at", { ascending: !sortDesc });
+      let req = q;
+      if (sortBy === "ref_desc") {
+        req = req.order("reference_number", { ascending: false });
+      } else if (sortBy === "ref_asc") {
+        req = req.order("reference_number", { ascending: true });
+      } else if (sortBy === "created_asc") {
+        req = req.order("created_at", { ascending: true });
+      } else {
+        req = req.order("created_at", { ascending: false });
+      }
       if (pageSize > 0) {
         const from = page * pageSize;
         req = req.range(from, from + pageSize - 1);
@@ -479,7 +488,19 @@ function AdminPage() {
             `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,gender.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,caste_sub_category.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
           );
         }
-        const { data, error } = await q.order("created_at", { ascending: !sortDesc }).range(from, from + CHUNK_SIZE - 1);
+        let orderCol = "created_at";
+        let ascending = false;
+        if (sortBy === "ref_desc") {
+          orderCol = "reference_number";
+          ascending = false;
+        } else if (sortBy === "ref_asc") {
+          orderCol = "reference_number";
+          ascending = true;
+        } else if (sortBy === "created_asc") {
+          orderCol = "created_at";
+          ascending = true;
+        }
+        const { data, error } = await q.order(orderCol, { ascending }).range(from, from + CHUNK_SIZE - 1);
         if (error) throw error;
 
         if (!data || data.length === 0) {
@@ -1256,15 +1277,21 @@ function AdminPage() {
             </div>
 
             <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5">
-              <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border text-xs">
-                <button
-                  type="button"
-                  onClick={() => setSortDesc((v) => !v)}
-                  className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-card border border-border/60 hover:bg-muted text-foreground transition-colors shadow-2xs cursor-pointer flex items-center gap-1"
+              <div className="flex items-center gap-1.5 bg-muted/40 p-1 rounded-xl border border-border text-xs">
+                <span className="text-muted-foreground font-semibold pl-1.5 hidden sm:inline">Sort:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => {
+                    setSortBy(e.target.value as any);
+                    setPage(0);
+                  }}
+                  className="bg-card border border-border/60 py-1 px-2.5 text-xs font-semibold rounded-lg text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer shadow-2xs"
                 >
-                  <span>Sort:</span>
-                  <span className="font-bold text-primary">{sortDesc ? "Newest" : "Oldest"}</span>
-                </button>
+                  <option value="created_desc">🕒 Date: Newest First</option>
+                  <option value="created_asc">🕒 Date: Oldest First</option>
+                  <option value="ref_desc">🔢 Ref ID: High → Low</option>
+                  <option value="ref_asc">🔢 Ref ID: Low → High</option>
+                </select>
 
                 <span className="text-border px-0.5">|</span>
 
@@ -1344,11 +1371,43 @@ function AdminPage() {
                   <th className="sticky left-12 z-10 bg-muted px-3 py-3 text-left font-semibold border-r border-border min-w-[150px] shadow-[2px_0_4px_rgba(0,0,0,0.04)]">
                     Actions
                   </th>
-                  {COLUMNS.map((c) => (
-                    <th key={c.key} className="whitespace-nowrap px-3 py-3 text-left font-semibold">
-                      {c.label}
-                    </th>
-                  ))}
+                  {COLUMNS.map((c) => {
+                    const isRef = c.key === "reference_number";
+                    const isDate = c.key === "created_at";
+                    const isSortable = isRef || isDate;
+                    return (
+                      <th
+                        key={c.key}
+                        onClick={() => {
+                          if (isRef) {
+                            setSortBy((prev) => (prev === "ref_desc" ? "ref_asc" : "ref_desc"));
+                            setPage(0);
+                          } else if (isDate) {
+                            setSortBy((prev) => (prev === "created_desc" ? "created_asc" : "created_desc"));
+                            setPage(0);
+                          }
+                        }}
+                        className={`whitespace-nowrap px-3 py-3 text-left font-semibold ${
+                          isSortable ? "cursor-pointer select-none hover:bg-muted/80 hover:text-primary transition-colors" : ""
+                        }`}
+                        title={isSortable ? "Click to toggle sort" : undefined}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span>{c.label}</span>
+                          {isRef && (
+                            <span className="text-xs text-primary font-bold">
+                              {sortBy === "ref_desc" ? "▼" : sortBy === "ref_asc" ? "▲" : "⇅"}
+                            </span>
+                          )}
+                          {isDate && (
+                            <span className="text-xs text-primary font-bold">
+                              {sortBy === "created_desc" ? "▼" : sortBy === "created_asc" ? "▲" : "⇅"}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                    );
+                  })}
                   <th className="whitespace-nowrap px-3 py-3 text-left font-semibold min-w-[240px] bg-muted/90">
                     Decision / Review
                   </th>
