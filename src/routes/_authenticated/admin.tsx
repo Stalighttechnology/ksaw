@@ -51,6 +51,61 @@ const PAGE_SIZES = [
   { label: "View All", value: -1 },
 ];
 
+function extractRefNum(val: unknown): number {
+  if (!val) return 0;
+  const digits = String(val).replace(/\D/g, "");
+  return digits ? parseInt(digits, 10) : 0;
+}
+
+function compareRegistrationRows(a: Row, b: Row, colKey: string, order: "asc" | "desc"): number {
+  const valA = a[colKey];
+  const valB = b[colKey];
+
+  // Handle null / undefined / empty
+  const isAEmpty = valA === null || valA === undefined || valA === "";
+  const isBEmpty = valB === null || valB === undefined || valB === "";
+  if (isAEmpty && isBEmpty) return 0;
+  if (isAEmpty) return 1;
+  if (isBEmpty) return -1;
+
+  // Natural numeric comparison for Reference ID and SAF Number
+  if (colKey === "reference_number" || colKey === "saf_number") {
+    const numA = extractRefNum(valA);
+    const numB = extractRefNum(valB);
+    if (numA !== numB) {
+      return order === "desc" ? numB - numA : numA - numB;
+    }
+  }
+
+  // Date comparison
+  if (colKey === "created_at" || colKey === "dob" || colKey === "caste_cert_issue_date" || colKey === "caste_cert_expiry_date" || colKey === "employed_from") {
+    const tA = new Date(String(valA)).getTime();
+    const tB = new Date(String(valB)).getTime();
+    if (!isNaN(tA) && !isNaN(tB) && tA !== tB) {
+      return order === "desc" ? tB - tA : tA - tB;
+    }
+  }
+
+  // Boolean comparison
+  if (typeof valA === "boolean" || typeof valB === "boolean") {
+    const bA = valA ? 1 : 0;
+    const bB = valB ? 1 : 0;
+    return order === "desc" ? bB - bA : bA - bB;
+  }
+
+  // Number comparison
+  if (typeof valA === "number" && typeof valB === "number") {
+    return order === "desc" ? (valB as number) - (valA as number) : (valA as number) - (valB as number);
+  }
+
+  // String comparison with natural numeric sorting
+  const strA = String(valA).trim();
+  const strB = String(valB).trim();
+  return order === "desc"
+    ? strB.localeCompare(strA, undefined, { numeric: true, sensitivity: "base" })
+    : strA.localeCompare(strB, undefined, { numeric: true, sensitivity: "base" });
+}
+
 function AdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -70,13 +125,24 @@ function AdminPage() {
   const [safStatus, setSafStatus] = useState("");
   const [gender, setGender] = useState("");
   const [dateFilter, setDateFilter] = useState<"today" | "week" | "">("");
-  const [sortDesc, setSortDesc] = useState(true);
+  const [sortColumn, setSortColumn] = useState<string>("reference_number");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
   const [editing, setEditing] = useState<Row | null>(null);
   const [viewing, setViewing] = useState<Row | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<{ ids: string[]; name: string } | null>(null);
+
+  const handleColumnHeaderClick = (colKey: string) => {
+    if (sortColumn === colKey) {
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortColumn(colKey);
+      setSortOrder(colKey === "reference_number" || colKey === "created_at" || colKey === "saf_number" ? "desc" : "asc");
+    }
+    setPage(0);
+  };
 
   const tableSectionRef = useRef<HTMLElement>(null);
 
@@ -99,7 +165,7 @@ function AdminPage() {
   const filters = { search: search.trim(), status, course, category, centerLocation, nigama, partner, safStatus, gender, dateFilter };
 
   const listQuery = useQuery({
-    queryKey: ["registrations", filters, page, pageSize, sortDesc],
+    queryKey: ["registrations", filters, page, pageSize, sortColumn, sortOrder],
     queryFn: async () => {
       const selectCols = ["id", ...COLUMNS.map((c) => c.key)].join(",");
       let q = supabase.from("registrations").select(selectCols, { count: "exact" });
@@ -138,16 +204,66 @@ function AdminPage() {
           `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,gender.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,caste_sub_category.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
         );
       }
-      let req = q.order("created_at", { ascending: !sortDesc });
-      if (pageSize > 0) {
-        const from = page * pageSize;
-        req = req.range(from, from + pageSize - 1);
-      } else {
-        req = req.limit(10000);
+
+      const { data: firstChunk, error: firstErr, count } = await q.range(0, 999);
+      if (firstErr) throw firstErr;
+
+      const totalCount = count ?? (firstChunk?.length || 0);
+      let allRows: Row[] = (firstChunk ?? []) as Row[];
+
+      if (totalCount > 1000) {
+        const CHUNK_SIZE = 1000;
+        const numChunks = Math.ceil(totalCount / CHUNK_SIZE);
+        const chunkPromises = [];
+        for (let i = 1; i < numChunks; i++) {
+          const from = i * CHUNK_SIZE;
+          const to = from + CHUNK_SIZE - 1;
+          let qChunk = supabase.from("registrations").select(selectCols);
+          if (filters.status) qChunk = qChunk.eq("status", filters.status);
+          if (filters.gender) qChunk = qChunk.eq("gender", filters.gender);
+          if (filters.course) qChunk = qChunk.eq("skill_sought", filters.course);
+          if (filters.category) qChunk = qChunk.eq("category", filters.category);
+          if (filters.centerLocation) {
+            qChunk = qChunk.or(`center_location.ilike.%${filters.centerLocation}%,cur_district.ilike.%${filters.centerLocation}%`);
+          }
+          if (filters.safStatus === "Empty / Missing") {
+            qChunk = qChunk.or("saf_number.is.null,saf_number.eq.,saf_number.eq.N/A,saf_number.eq.NA,saf_number.not.ilike.%SAF%");
+          } else if (filters.safStatus === "Filled / Present") {
+            qChunk = qChunk.ilike("saf_number", "%SAF%");
+          }
+          if (filters.nigama) {
+            const nigamaAliases = getNigamaAliases(filters.nigama);
+            qChunk = qChunk.in("nigama", Array.from(new Set([filters.nigama, ...nigamaAliases])));
+          }
+          if (filters.partner) {
+            const aliases = getCollegeAliases(filters.partner);
+            qChunk = qChunk.in("institution_name", Array.from(new Set([filters.partner, ...aliases])));
+          }
+          if (filters.dateFilter === "today") {
+            const now = new Date();
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+            qChunk = qChunk.gte("created_at", startOfToday);
+          } else if (filters.dateFilter === "week") {
+            const now = new Date();
+            const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).toISOString();
+            qChunk = qChunk.gte("created_at", startOfWeek);
+          }
+          if (filters.search) {
+            const s = filters.search.replace(/[%,()]/g, "");
+            qChunk = qChunk.or(
+              `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,gender.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,caste_sub_category.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
+            );
+          }
+          chunkPromises.push(qChunk.range(from, to));
+        }
+        const chunkResults = await Promise.all(chunkPromises);
+        for (const res of chunkResults) {
+          if (res.error) throw res.error;
+          if (res.data) allRows.push(...(res.data as Row[]));
+        }
       }
-      const { data, error, count } = await req;
-      if (error) throw error;
-      let rows = ((data ?? []) as Row[]).map((r) => ({
+
+      let normalizedRows = allRows.map((r) => ({
         ...r,
         institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
         nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
@@ -155,17 +271,24 @@ function AdminPage() {
       }));
 
       if (filters.safStatus === "Empty / Missing") {
-        rows = rows.filter((r) => {
+        normalizedRows = normalizedRows.filter((r) => {
           const s = String(r.saf_number ?? "").trim().toUpperCase();
           return !s || s === "N/A" || s === "NA" || !s.includes("SAF");
         });
       } else if (filters.safStatus === "Filled / Present") {
-        rows = rows.filter((r) => {
+        normalizedRows = normalizedRows.filter((r) => {
           const s = String(r.saf_number ?? "").trim().toUpperCase();
           return s.includes("SAF");
         });
       }
-      return { rows, count: count ?? 0 };
+
+      // Natural Sort by active column & order
+      normalizedRows.sort((a, b) => compareRegistrationRows(a, b, sortColumn, sortOrder));
+
+      const finalCount = normalizedRows.length;
+      const pagedRows = pageSize > 0 ? normalizedRows.slice(page * pageSize, (page + 1) * pageSize) : normalizedRows;
+
+      return { rows: pagedRows, count: finalCount };
     },
     staleTime: 30_000,
   });
@@ -479,7 +602,7 @@ function AdminPage() {
             `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,gender.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,caste_sub_category.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
           );
         }
-        const { data, error } = await q.order("created_at", { ascending: !sortDesc }).range(from, from + CHUNK_SIZE - 1);
+        const { data, error } = await q.range(from, from + CHUNK_SIZE - 1);
         if (error) throw error;
 
         if (!data || data.length === 0) {
@@ -494,12 +617,15 @@ function AdminPage() {
         }
       }
 
-      const rows = allExportRows.map((r) => ({
+      let rows = allExportRows.map((r) => ({
         ...r,
         institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
         nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
         caste_cert_type: (r.caste_cert_type as string) || getCasteCertificateType(r.category as string, r.caste_sub_category as string, r.caste as string) || r.caste_cert_type,
       }));
+
+      // Apply current sort order to exported rows
+      rows.sort((a, b) => compareRegistrationRows(a, b, sortColumn, sortOrder));
 
       if (!rows.length) {
         toast.error("No matching records found to export.");
@@ -1256,19 +1382,39 @@ function AdminPage() {
             </div>
 
             <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5">
-              <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border text-xs">
-                <button
-                  type="button"
-                  onClick={() => setSortDesc((v) => !v)}
-                  className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-card border border-border/60 hover:bg-muted text-foreground transition-colors shadow-2xs cursor-pointer flex items-center gap-1"
-                >
+              <div className="flex items-center gap-1.5 bg-muted/40 p-1 rounded-xl border border-border text-xs">
+                <span className="text-[11px] font-semibold text-muted-foreground pl-1.5 flex items-center gap-1">
                   <span>Sort:</span>
-                  <span className="font-bold text-primary">{sortDesc ? "Newest" : "Oldest"}</span>
-                </button>
+                </span>
+                <select
+                  aria-label="Sort applicants by column"
+                  className="bg-card border border-border/60 py-1 pl-2 pr-6 text-xs font-semibold text-foreground rounded-lg focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer shadow-2xs"
+                  value={`${sortColumn}-${sortOrder}`}
+                  onChange={(e) => {
+                    const parts = e.target.value.split("-");
+                    const ord = parts.pop() as "asc" | "desc";
+                    const col = parts.join("-");
+                    setSortColumn(col);
+                    setSortOrder(ord);
+                    setPage(0);
+                  }}
+                >
+                  <option value="reference_number-desc">🔢 Reference ID (Highest First)</option>
+                  <option value="reference_number-asc">🔢 Reference ID (Lowest First)</option>
+                  <option value="created_at-desc">📅 Submitted Date (Newest First)</option>
+                  <option value="created_at-asc">📅 Submitted Date (Oldest First)</option>
+                  <option value="first_name-asc">🔤 First Name (A → Z)</option>
+                  <option value="first_name-desc">🔤 First Name (Z → A)</option>
+                  <option value="status-asc">📋 Status (A → Z)</option>
+                  <option value="saf_number-desc">🏷️ SAF Number (Highest First)</option>
+                  <option value="saf_number-asc">🏷️ SAF Number (Lowest First)</option>
+                  <option value="institution_name-asc">🏢 College Name (A → Z)</option>
+                </select>
 
                 <span className="text-border px-0.5">|</span>
 
                 <select
+                  aria-label="Records per page"
                   className="bg-transparent border-0 py-1 pl-1 pr-5 text-xs font-semibold text-foreground focus:outline-hidden focus:ring-0 cursor-pointer"
                   value={pageSize}
                   onChange={(e) => {
@@ -1344,11 +1490,34 @@ function AdminPage() {
                   <th className="sticky left-12 z-10 bg-muted px-3 py-3 text-left font-semibold border-r border-border min-w-[150px] shadow-[2px_0_4px_rgba(0,0,0,0.04)]">
                     Actions
                   </th>
-                  {COLUMNS.map((c) => (
-                    <th key={c.key} className="whitespace-nowrap px-3 py-3 text-left font-semibold">
-                      {c.label}
-                    </th>
-                  ))}
+                  {COLUMNS.map((c) => {
+                    const isCurrentSort = sortColumn === c.key;
+                    return (
+                      <th
+                        key={c.key}
+                        onClick={() => handleColumnHeaderClick(c.key)}
+                        className={`whitespace-nowrap px-3 py-3 text-left font-semibold cursor-pointer select-none transition-colors group ${
+                          isCurrentSort
+                            ? "bg-primary/10 text-primary border-b-2 border-primary"
+                            : "hover:bg-muted/90 hover:text-foreground"
+                        }`}
+                        title={`Click to sort by ${c.label} (${isCurrentSort && sortOrder === "desc" ? "Lowest first" : "Highest / Newest first"})`}
+                      >
+                        <div className="inline-flex items-center gap-1.5">
+                          <span>{c.label}</span>
+                          {isCurrentSort ? (
+                            <span className="inline-flex items-center text-xs font-bold text-primary px-1 py-0.5 rounded bg-primary/20">
+                              {sortOrder === "desc" ? "▼" : "▲"}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                              ↕
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                    );
+                  })}
                   <th className="whitespace-nowrap px-3 py-3 text-left font-semibold min-w-[240px] bg-muted/90">
                     Decision / Review
                   </th>
