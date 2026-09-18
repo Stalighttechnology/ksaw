@@ -125,12 +125,8 @@ function AdminPage() {
   const [safStatus, setSafStatus] = useState("");
   const [gender, setGender] = useState("");
   const [dateFilter, setDateFilter] = useState<"today" | "week" | "">("");
-<<<<<<< HEAD
   const [sortColumn, setSortColumn] = useState<string>("reference_number");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-=======
-  const [sortBy, setSortBy] = useState<"created_desc" | "created_asc" | "ref_desc" | "ref_asc">("created_desc");
->>>>>>> 730d6b2058f7f0c376fb7c228bc08fc3f40e133d
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
   const [editing, setEditing] = useState<Row | null>(null);
@@ -169,11 +165,7 @@ function AdminPage() {
   const filters = { search: search.trim(), status, course, category, centerLocation, nigama, partner, safStatus, gender, dateFilter };
 
   const listQuery = useQuery({
-<<<<<<< HEAD
     queryKey: ["registrations", filters, page, pageSize, sortColumn, sortOrder],
-=======
-    queryKey: ["registrations", filters, page, pageSize, sortBy],
->>>>>>> 730d6b2058f7f0c376fb7c228bc08fc3f40e133d
     queryFn: async () => {
       const selectCols = ["id", ...COLUMNS.map((c) => c.key)].join(",");
       let q = supabase.from("registrations").select(selectCols, { count: "exact" });
@@ -212,7 +204,6 @@ function AdminPage() {
           `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,gender.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,caste_sub_category.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
         );
       }
-<<<<<<< HEAD
 
       const { data: firstChunk, error: firstErr, count } = await q.range(0, 999);
       if (firstErr) throw firstErr;
@@ -270,23 +261,6 @@ function AdminPage() {
           if (res.error) throw res.error;
           if (res.data) allRows.push(...(res.data as Row[]));
         }
-=======
-      let req = q;
-      if (sortBy === "ref_desc") {
-        req = req.order("reference_number", { ascending: false });
-      } else if (sortBy === "ref_asc") {
-        req = req.order("reference_number", { ascending: true });
-      } else if (sortBy === "created_asc") {
-        req = req.order("created_at", { ascending: true });
-      } else {
-        req = req.order("created_at", { ascending: false });
-      }
-      if (pageSize > 0) {
-        const from = page * pageSize;
-        req = req.range(from, from + pageSize - 1);
-      } else {
-        req = req.limit(10000);
->>>>>>> 730d6b2058f7f0c376fb7c228bc08fc3f40e133d
       }
 
       let normalizedRows = allRows.map((r) => ({
@@ -628,23 +602,7 @@ function AdminPage() {
             `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,gender.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,caste_sub_category.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
           );
         }
-<<<<<<< HEAD
         const { data, error } = await q.range(from, from + CHUNK_SIZE - 1);
-=======
-        let orderCol = "created_at";
-        let ascending = false;
-        if (sortBy === "ref_desc") {
-          orderCol = "reference_number";
-          ascending = false;
-        } else if (sortBy === "ref_asc") {
-          orderCol = "reference_number";
-          ascending = true;
-        } else if (sortBy === "created_asc") {
-          orderCol = "created_at";
-          ascending = true;
-        }
-        const { data, error } = await q.order(orderCol, { ascending }).range(from, from + CHUNK_SIZE - 1);
->>>>>>> 730d6b2058f7f0c376fb7c228bc08fc3f40e133d
         if (error) throw error;
 
         if (!data || data.length === 0) {
@@ -1425,7 +1383,6 @@ function AdminPage() {
 
             <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5">
               <div className="flex items-center gap-1.5 bg-muted/40 p-1 rounded-xl border border-border text-xs">
-<<<<<<< HEAD
                 <span className="text-[11px] font-semibold text-muted-foreground pl-1.5 flex items-center gap-1">
                   <span>Sort:</span>
                 </span>
@@ -1452,21 +1409,6 @@ function AdminPage() {
                   <option value="saf_number-desc">🏷️ SAF Number (Highest First)</option>
                   <option value="saf_number-asc">🏷️ SAF Number (Lowest First)</option>
                   <option value="institution_name-asc">🏢 College Name (A → Z)</option>
-=======
-                <span className="text-muted-foreground font-semibold pl-1.5 hidden sm:inline">Sort:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => {
-                    setSortBy(e.target.value as any);
-                    setPage(0);
-                  }}
-                  className="bg-card border border-border/60 py-1 px-2.5 text-xs font-semibold rounded-lg text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer shadow-2xs"
-                >
-                  <option value="created_desc">🕒 Date: Newest First</option>
-                  <option value="created_asc">🕒 Date: Oldest First</option>
-                  <option value="ref_desc">🔢 Ref ID: High → Low</option>
-                  <option value="ref_asc">🔢 Ref ID: Low → High</option>
->>>>>>> 730d6b2058f7f0c376fb7c228bc08fc3f40e133d
                 </select>
 
                 <span className="text-border px-0.5">|</span>
@@ -1549,7 +1491,6 @@ function AdminPage() {
                     Actions
                   </th>
                   {COLUMNS.map((c) => {
-<<<<<<< HEAD
                     const isCurrentSort = sortColumn === c.key;
                     return (
                       <th
@@ -1571,38 +1512,6 @@ function AdminPage() {
                           ) : (
                             <span className="text-[10px] text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity">
                               ↕
-=======
-                    const isRef = c.key === "reference_number";
-                    const isDate = c.key === "created_at";
-                    const isSortable = isRef || isDate;
-                    return (
-                      <th
-                        key={c.key}
-                        onClick={() => {
-                          if (isRef) {
-                            setSortBy((prev) => (prev === "ref_desc" ? "ref_asc" : "ref_desc"));
-                            setPage(0);
-                          } else if (isDate) {
-                            setSortBy((prev) => (prev === "created_desc" ? "created_asc" : "created_desc"));
-                            setPage(0);
-                          }
-                        }}
-                        className={`whitespace-nowrap px-3 py-3 text-left font-semibold ${
-                          isSortable ? "cursor-pointer select-none hover:bg-muted/80 hover:text-primary transition-colors" : ""
-                        }`}
-                        title={isSortable ? "Click to toggle sort" : undefined}
-                      >
-                        <div className="flex items-center gap-1.5">
-                          <span>{c.label}</span>
-                          {isRef && (
-                            <span className="text-xs text-primary font-bold">
-                              {sortBy === "ref_desc" ? "▼" : sortBy === "ref_asc" ? "▲" : "⇅"}
-                            </span>
-                          )}
-                          {isDate && (
-                            <span className="text-xs text-primary font-bold">
-                              {sortBy === "created_desc" ? "▼" : sortBy === "created_asc" ? "▲" : "⇅"}
->>>>>>> 730d6b2058f7f0c376fb7c228bc08fc3f40e133d
                             </span>
                           )}
                         </div>
