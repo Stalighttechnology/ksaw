@@ -739,72 +739,13 @@ function RegistrationPage() {
             refId = seqData;
           }
         } catch (_) {
-          // ignore RPC fallback
-        }
-
-        // Robust fallback: inspect latest submitted records to find highest numeric ID + 1
-        if (!refId) {
-          const { data: rows } = await supabase
-            .from("registrations")
-            .select("reference_number")
-            .not("reference_number", "is", null)
-            .order("created_at", { ascending: false })
-            .limit(50);
-
-          let maxNum = 0;
-          if (rows && rows.length > 0) {
-            for (const item of rows) {
-              if (item.reference_number) {
-                const digits = item.reference_number.replace(/\D/g, "");
-                const parsed = parseInt(digits, 10);
-                if (!isNaN(parsed) && parsed > maxNum) {
-                  maxNum = parsed;
-                }
-              }
-            }
-          }
-          const nextNum = Math.max(maxNum, 1924) + 1;
-          refId = `KSAW ${String(nextNum).padStart(3, "0")}`;
-        }
-
-        // Absolute safeguard: Prevent stale client bundles from reusing KSAW 1813 or existing IDs
-        if (refId) {
-          const digits = refId.replace(/\D/g, "");
-          const num = parseInt(digits, 10);
-
-          let needsNewRef = isNaN(num) || num <= 1813;
-          if (!needsNewRef) {
-            const { data: dupCheck } = await supabase
-              .from("registrations")
-              .select("id")
-              .eq("reference_number", refId)
-              .limit(1);
-            if (dupCheck && dupCheck.length > 0) {
-              needsNewRef = true;
-            }
-          }
-
-          if (needsNewRef) {
-            const { data: latestRows } = await supabase
-              .from("registrations")
-              .select("reference_number")
-              .not("reference_number", "is", null)
-              .order("created_at", { ascending: false })
-              .limit(50);
-
-            let curMax = 1924;
-            for (const r of latestRows ?? []) {
-              const d = (r.reference_number || "").replace(/\D/g, "");
-              const p = parseInt(d, 10);
-              if (!isNaN(p) && p > curMax) curMax = p;
-            }
-            refId = `KSAW ${String(curMax + 1).padStart(3, "0")}`;
-          }
+          // If RPC is unavailable, leave refId null so database trigger assigns guaranteed unique sequence
+          refId = null;
         }
       }
 
       const payload: Record<string, any> = {
-        reference_number: refId,
+        reference_number: refId || null,
         institution_name: institutionName.trim() || null,
         center_location: centerLocation || null,
         first_name: firstName,
