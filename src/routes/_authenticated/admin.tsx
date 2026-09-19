@@ -318,7 +318,7 @@ function AdminPage() {
         chunkPromises.push(
           supabase
             .from("registrations")
-            .select("status, skill_sought, gender, category, created_at, cur_district, center_location, institution_name, nigama")
+            .select("status, skill_sought, gender, category, created_at, cur_district, center_location, institution_name, nigama, saf_number")
             .range(from, to)
         );
       }
@@ -334,6 +334,7 @@ function AdminPage() {
         center_location: string | null;
         institution_name: string | null;
         nigama: string | null;
+        saf_number: string | null;
       }> = [];
 
       for (const res of results) {
@@ -391,6 +392,10 @@ function AdminPage() {
       normalizedCenter: r.center_location || r.cur_district || "",
     }));
 
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).getTime();
+
     const matchesFilter = (
       r: (typeof rows)[number],
       excludeKey?: "nigama" | "status" | "partner" | "course" | "category" | "center"
@@ -408,6 +413,21 @@ function AdminPage() {
       if (category && excludeKey !== "category" && r.normalizedCategory !== category) return false;
       if (centerLocation && excludeKey !== "center") {
         if (!r.normalizedCenter.toLowerCase().includes(centerLocation.toLowerCase())) return false;
+      }
+      if (gender && r.gender !== gender) return false;
+      if (safStatus === "Empty / Missing") {
+        const saf = (r.saf_number || "").trim().toUpperCase();
+        if (saf && saf !== "N/A" && saf !== "NA" && saf.includes("SAF")) return false;
+      } else if (safStatus === "Filled / Present") {
+        const saf = (r.saf_number || "").trim().toUpperCase();
+        if (!saf || !saf.includes("SAF") || saf === "N/A" || saf === "NA") return false;
+      }
+      if (dateFilter === "today") {
+        const t = new Date(r.created_at).getTime();
+        if (isNaN(t) || t < startOfToday) return false;
+      } else if (dateFilter === "week") {
+        const t = new Date(r.created_at).getTime();
+        if (isNaN(t) || t < startOfWeek) return false;
       }
       return true;
     };
@@ -428,11 +448,13 @@ function AdminPage() {
       if (r.normalizedCenter && matchesFilter(r, "center")) centerSet.add(r.normalizedCenter);
     }
 
-    if (!partner) {
-      for (const c of colleges) {
-        partnerSet.add(c);
-      }
-    }
+    // Preserve actively selected values in options so selection remains visible
+    if (nigama) nigamaSet.add(nigama);
+    if (status) statusSet.add(status);
+    if (partner) partnerSet.add(partner);
+    if (course) courseSet.add(course);
+    if (category) categorySet.add(category);
+    if (centerLocation) centerSet.add(centerLocation);
 
     const sortAlpha = (arr: string[]) => arr.sort((a, b) => a.localeCompare(b));
 
@@ -449,7 +471,7 @@ function AdminPage() {
       categories: sortAlpha(Array.from(categorySet)),
       centers: sortAlpha(Array.from(centerSet)),
     };
-  }, [statsQuery.data, nigama, status, partner, course, category, centerLocation, colleges]);
+  }, [statsQuery.data, nigama, status, partner, course, category, centerLocation, gender, safStatus, dateFilter]);
 
   const total = listQuery.data?.count ?? 0;
   const pageCount = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
