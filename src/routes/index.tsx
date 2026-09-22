@@ -105,14 +105,14 @@ function RegistrationPage() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [dob, setDob] = useState("");
-  const [gender, setGender] = useState("Female");
+  const [gender, setGender] = useState("Male");
   const [marital, setMarital] = useState("Single");
   const [speciallyAbled, setSpeciallyAbled] = useState("No");
   const [saTypes, setSaTypes] = useState<string[]>([]);
   const [saSubTypes, setSaSubTypes] = useState<string[]>([]);
   const [saProof, setSaProof] = useState("");
   const [religion, setReligion] = useState("");
-  const [category, setCategory] = useState("OBC");
+  const [category, setCategory] = useState("General");
   const [caste, setCaste] = useState("");
   const casteInfo = CASTES.find((c) => c.name === caste);
   const [casteSubCategory, setCasteSubCategory] = useState("");
@@ -320,14 +320,14 @@ function RegistrationPage() {
     setPhone("");
     setEmail("");
     setDob("");
-    setGender("Female");
+    setGender("Male");
     setMarital("Single");
     setSpeciallyAbled("No");
     setSaTypes([]);
     setSaSubTypes([]);
     setSaProof("");
     setReligion("");
-    setCategory("OBC");
+    setCategory("General");
     setCaste("");
     setCasteSubCategory("");
     setRdNumber("");
@@ -449,14 +449,14 @@ function RegistrationPage() {
       setPhone(rowData.phone || "");
       setEmail(rowData.email || "");
       setDob(rowData.dob ? String(rowData.dob).split("T")[0] : "");
-      setGender(rowData.gender || "Female");
+      setGender(rowData.gender || "Male");
       setMarital(rowData.marital_status || "Single");
       setSpeciallyAbled(rowData.specially_abled || "No");
       setSaTypes(rowData.sa_types || []);
       setSaSubTypes(rowData.sa_sub_types || []);
       setSaProof(rowData.sa_proof || "");
       setReligion(rowData.religion || "");
-      setCategory(rowData.category || "OBC");
+      setCategory(rowData.category || "General");
       setCaste(rowData.caste || "");
       setCasteSubCategory(rowData.caste_sub_category || "");
       setRdNumber(rowData.rd_number || "");
@@ -1166,7 +1166,7 @@ function RegistrationPage() {
                       name="gender"
                       value={gender}
                       onChange={setGender}
-                      options={["Female"]}
+                      options={["Male", "Female", "Other"]}
                     />
                   </Row>
                   <Row>
@@ -1239,7 +1239,7 @@ function RegistrationPage() {
                       name="category"
                       value={category}
                       onChange={setCategory}
-                      options={["OBC"]}
+                      options={CATEGORIES}
                     />
                   </Row>
                   {category !== "General" ? (
