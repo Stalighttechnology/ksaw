@@ -1715,6 +1715,67 @@ function AdminPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Bottom Pagination Controls */}
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm pt-3 border-t border-border/70">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>Show:</span>
+              <select
+                aria-label="Rows per page (bottom)"
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(0);
+                }}
+                className="h-8 rounded-lg border border-border/80 bg-background px-2 text-xs font-semibold text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                {PAGE_SIZES.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <span className="ml-2 font-medium">
+                Showing {pageSize === -1 ? total : Math.min((page + 1) * pageSize, total)} of {total} records
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border text-xs">
+              <button
+                type="button"
+                disabled={page === 0 || pageSize === -1}
+                onClick={() => {
+                  setPage((p) => Math.max(0, p - 1));
+                  scrollToTable();
+                }}
+                className="inline-flex items-center justify-center h-7 px-2.5 text-xs font-semibold rounded-lg bg-card border border-border/60 text-foreground hover:bg-muted disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-2xs cursor-pointer"
+              >
+                ← Prev
+              </button>
+              <span className="px-2 text-xs font-medium text-muted-foreground whitespace-nowrap">
+                {pageSize === -1 ? (
+                  <>
+                    All <strong className="text-foreground font-bold">{total}</strong> Records
+                  </>
+                ) : (
+                  <>
+                    Page <strong className="text-foreground font-bold">{page + 1}</strong> of <strong className="text-foreground font-bold">{pageCount}</strong>
+                  </>
+                )}
+              </span>
+              <button
+                type="button"
+                disabled={page + 1 >= pageCount || pageSize === -1}
+                onClick={() => {
+                  setPage((p) => p + 1);
+                  scrollToTable();
+                }}
+                className="inline-flex items-center justify-center h-7 px-2.5 text-xs font-semibold rounded-lg bg-card border border-border/60 text-foreground hover:bg-muted disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-2xs cursor-pointer"
+              >
+                Next →
+              </button>
+            </div>
+          </div>
         </section>
       </main>
 

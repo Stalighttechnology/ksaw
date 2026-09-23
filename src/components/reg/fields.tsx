@@ -295,7 +295,7 @@ export function MultiSelect({
                 <>
                   {(() => {
                     // Ensure any actively selected value is always rendered first if not already in the top slice
-                    const MAX_VISIBLE = 80;
+                    const MAX_VISIBLE = 300;
                     const topSlice = shown.slice(0, MAX_VISIBLE);
                     const missingSelected = value.filter((v) => !topSlice.includes(v) && shown.includes(v));
                     const renderList = [...missingSelected, ...topSlice];

@@ -9,22 +9,58 @@ const COLLEGES_FOLDER = "manifests/colleges";
 const FALLBACK_MANIFEST_FOLDER = "manifests";
 const LOCAL_STORAGE_KEY = "ksaw_custom_colleges_cache";
 
+export const NEW_KSAWU_COLLEGES: readonly string[] = [
+  "KSAWU - BVVS Akkamahadevi Women's Arts, Science & Commerce College, Bagalkot",
+  "KSAWU - Shri Jagadguru Gurusiddeshwara Vidyavardhak & Sanskritika Samsthe's College of Education for Women, Guledgudd",
+  "KSAWU - Sri Hucheshwar Vidyavardhak Sangha's Education College for Women, Kamatgi",
+  "KSAWU - Sri Vijay Mahantesh Arts & Commerce College for Women, Ilkal",
+  "KSAWU - Shri Basaveshwar Education Society's Akkamahadevi Arts College for Women, Bailhongal",
+  "KSAWU - KLE Society's Institute of Fashion Technology and Apparel Design College, Belagavi",
+  "KSAWU - J.M.M's Sundrabai B. Patil Women's College of Education, Tilakwadi, Belgaum",
+  "KSAWU - Smt. Ahalyabai A. Patil Arts & Commerce College for Women, Chikodi",
+  "KSAWU - Smt. Allum Sumangalamma Memorial Degree College for Women, Gandhi Nagar, Ballari",
+  "KSAWU - Gujjam... Education Society's College of Education for Women (B.Ed), Bhalki",
+  "KSAWU - Ramchandra Veerappa Arts & Science College for Women, Humnabad",
+  "KSAWU - Smt. K.S. Jiglur Arts & Dr. (Smt.) S.M. Sheshgiri Commerce College for Women, Dharwad",
+  "KSAWU - S.J.M.V's Business Administration College for Women, J.C. Nagar, Hubli",
+  "KSAWU - S.J.M.V's Arts & Commerce College for Women, J.C. Nagar, Hubli",
+  "KSAWU - Shasthriji Vasati Education College for Women, Okkalgeri, Gadag",
+  "KSAWU - S.J.M.V: B.A.J.S.S Arts & Commerce College for Women, Church Road, Ranebennur",
+  "KSAWU - Raj Rajeshwari Arts & Commerce College for Women, Ranebennur",
+  "KSAWU - Reshmi Educational & Charitable Trust's, Kum. Sharaneshwari Reshmi Women's B.Ed College, Kalaburgi",
+  "KSAWU - Bi Bi Raza Degree College for Women (Arts & Science), Rouza Buzurg, Kalaburgi",
+  "KSAWU - Godutai Dodappa Appa Arts, Commerce and Science Degree College for Women, Kalaburgi",
+  "KSAWU - HKE Society's Smt Veeramma Gangasiri College for Women, PDA Engg College Road, Aiwan-E-Shahi Area, Kalaburgi",
+  "KSAWU - Godutai College of Education for Women, Sharananagar, Kalaburgi",
+  "KSAWU - Reshmi Educational and Charitable Trust's Sharaneshwari Reshmi Women's Degree College, Kalaburgi",
+  "KSAWU - Kudal Sangam Education Societies Arts College for Women, Shahabad",
+  "KSAWU - Sri. Gurubasappa Revanasiddappa Goled Arts & Commerce College for Women, Shahabad",
+  "KSAWU - Kalmath Sri Channabasava Swamy Arts & Commerce College for Women, Gangavati",
+  "KSAWU - Soma Subhadramma Ramagoud Arts & Commerce College for Women, Station Road, Raichur",
+  "KSAWU - Sharda Arts & Commerce College for Women, Adarsh Colony, Sindhanoor",
+  "KSAWU - Shri. Valabellary Channabasaveshwar Educational Trust, Patil Women's Degree College, Sindhanoor",
+  "KSAWU - Smt. Uggama Devi Bhavarlal Theosophical Narhar College for Women, Asundi Bheemrao Nagar, Hampi Road, Hospet",
+  "KSAWU - Shri Padmaraj Vidyavardhak Society's Shri Padmaraj Women's Degree College, Sindagi",
+  "KSAWU - Matoshri Kantamma Sangannagouda Patil (Sasnoor) College of Education for Women, Hirur",
+  "KSAWU - Secab's A.R.S. Inamdar Arts, Science & Commerce College for Women, Noubag, Vijayapura",
+  "KSAWU - Sri. Bapugoud Darshanpur Memorial College for Women, Shahapur",
+  "KSAWU - Shri Amareshwar Education Trust's Janani Arts College for Women, Surpur",
+];
+
 function getLocalCachedColleges(): string[] {
   try {
-    if (typeof window === "undefined") return [];
-    const raw = window.localStorage?.getItem(LOCAL_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
+    const raw = typeof window !== "undefined" ? window.localStorage?.getItem(LOCAL_STORAGE_KEY) : null;
+    const parsed = raw ? JSON.parse(raw) : [];
+    const fromStorage = Array.isArray(parsed) ? parsed : [];
     return Array.from(
       new Set(
-        parsed
+        [...fromStorage, ...NEW_KSAWU_COLLEGES]
           .filter((c): c is string => typeof c === "string" && c.trim().length > 0)
           .map((c) => c.trim())
       )
     );
   } catch {
-    return [];
+    return [...NEW_KSAWU_COLLEGES];
   }
 }
 
@@ -123,7 +159,11 @@ export async function fetchCustomColleges(): Promise<string[]> {
       console.warn("DB institution recovery notice:", dbErr);
     }
 
-    // 4. Include any items from local cache
+    // 4. Include all new KSAWU institutions and local cache
+    for (const c of NEW_KSAWU_COLLEGES) {
+      collectedColleges.add(c);
+    }
+
     const localCached = getLocalCachedColleges();
     for (const c of localCached) {
       if (c.startsWith("__removed__:")) {
@@ -190,8 +230,8 @@ export async function fetchCustomColleges(): Promise<string[]> {
     // Cache locally immediately
     setLocalCachedColleges(finalMasterList);
 
-    // Background-sync the consolidated list to cloud storage if needed
-    if (finalMasterList.length > localCached.length) {
+    // Background-sync the consolidated list to cloud storage
+    if (finalMasterList.length >= localCached.length) {
       void saveCustomColleges(finalMasterList).catch((err) => {
         console.warn("Background manifest sync notice:", err);
       });
