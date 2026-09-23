@@ -162,7 +162,16 @@ function AdminPage() {
     }, 40);
   };
 
-  const filters = { search: search.trim(), status, course, category, centerLocation, nigama, partner, safStatus, gender, dateFilter };
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(0);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const filters = { search: debouncedSearch.trim(), status, course, category, centerLocation, nigama, partner, safStatus, gender, dateFilter };
 
   const listQuery = useQuery({
     queryKey: ["registrations", filters, page, pageSize, sortColumn, sortOrder],
@@ -205,92 +214,28 @@ function AdminPage() {
         );
       }
 
-      const { data: firstChunk, error: firstErr, count } = await q.range(0, 999);
-      if (firstErr) throw firstErr;
-
-      const totalCount = count ?? (firstChunk?.length || 0);
-      let allRows: Row[] = (firstChunk ?? []) as Row[];
-
-      if (totalCount > 1000) {
-        const CHUNK_SIZE = 1000;
-        const numChunks = Math.ceil(totalCount / CHUNK_SIZE);
-        const chunkPromises = [];
-        for (let i = 1; i < numChunks; i++) {
-          const from = i * CHUNK_SIZE;
-          const to = from + CHUNK_SIZE - 1;
-          let qChunk = supabase.from("registrations").select(selectCols);
-          if (filters.status) qChunk = qChunk.eq("status", filters.status);
-          if (filters.gender) qChunk = qChunk.eq("gender", filters.gender);
-          if (filters.course) qChunk = qChunk.eq("skill_sought", filters.course);
-          if (filters.category) qChunk = qChunk.eq("category", filters.category);
-          if (filters.centerLocation) {
-            qChunk = qChunk.or(`center_location.ilike.%${filters.centerLocation}%,cur_district.ilike.%${filters.centerLocation}%`);
-          }
-          if (filters.safStatus === "Empty / Missing") {
-            qChunk = qChunk.or("saf_number.is.null,saf_number.eq.,saf_number.eq.N/A,saf_number.eq.NA,saf_number.not.ilike.%SAF%");
-          } else if (filters.safStatus === "Filled / Present") {
-            qChunk = qChunk.ilike("saf_number", "%SAF%");
-          }
-          if (filters.nigama) {
-            const nigamaAliases = getNigamaAliases(filters.nigama);
-            qChunk = qChunk.in("nigama", Array.from(new Set([filters.nigama, ...nigamaAliases])));
-          }
-          if (filters.partner) {
-            const aliases = getCollegeAliases(filters.partner);
-            qChunk = qChunk.in("institution_name", Array.from(new Set([filters.partner, ...aliases])));
-          }
-          if (filters.dateFilter === "today") {
-            const now = new Date();
-            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-            qChunk = qChunk.gte("created_at", startOfToday);
-          } else if (filters.dateFilter === "week") {
-            const now = new Date();
-            const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).toISOString();
-            qChunk = qChunk.gte("created_at", startOfWeek);
-          }
-          if (filters.search) {
-            const s = filters.search.replace(/[%,()]/g, "");
-            qChunk = qChunk.or(
-              `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,gender.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,caste_sub_category.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
-            );
-          }
-          chunkPromises.push(qChunk.range(from, to));
-        }
-        const chunkResults = await Promise.all(chunkPromises);
-        for (const res of chunkResults) {
-          if (res.error) throw res.error;
-          if (res.data) allRows.push(...(res.data as Row[]));
-        }
+      if (sortColumn) {
+        q = q.order(sortColumn, { ascending: sortOrder === "asc", nullsFirst: false });
+      } else {
+        q = q.order("created_at", { ascending: false });
       }
 
-      let normalizedRows = allRows.map((r) => ({
+      const from = page * pageSize;
+      const to = from + pageSize - 1;
+      const { data, error, count } = await q.range(from, to);
+      if (error) throw error;
+
+      const normalizedRows = ((data ?? []) as Row[]).map((r) => ({
         ...r,
         institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
         nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
         caste_cert_type: (r.caste_cert_type as string) || getCasteCertificateType(r.category as string, r.caste_sub_category as string, r.caste as string) || r.caste_cert_type,
       }));
 
-      if (filters.safStatus === "Empty / Missing") {
-        normalizedRows = normalizedRows.filter((r) => {
-          const s = String(r.saf_number ?? "").trim().toUpperCase();
-          return !s || s === "N/A" || s === "NA" || !s.includes("SAF");
-        });
-      } else if (filters.safStatus === "Filled / Present") {
-        normalizedRows = normalizedRows.filter((r) => {
-          const s = String(r.saf_number ?? "").trim().toUpperCase();
-          return s.includes("SAF");
-        });
-      }
-
-      // Natural Sort by active column & order
-      normalizedRows.sort((a, b) => compareRegistrationRows(a, b, sortColumn, sortOrder));
-
-      const finalCount = normalizedRows.length;
-      const pagedRows = pageSize > 0 ? normalizedRows.slice(page * pageSize, (page + 1) * pageSize) : normalizedRows;
-
-      return { rows: pagedRows, count: finalCount };
+      return { rows: normalizedRows, count: count ?? normalizedRows.length };
     },
-    staleTime: 30_000,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 
   const statsQuery = useQuery({
@@ -344,7 +289,8 @@ function AdminPage() {
 
       return { rows: allRows, totalCount: Math.max(allRows.length, totalCount) };
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
   });
 
   const stats = useMemo(() => {
@@ -2260,6 +2206,14 @@ function ManageCollegesModal({
   const [editDraft, setEditDraft] = useState("");
   const [collegeToDelete, setCollegeToDelete] = useState<string | null>(null);
 
+  const listToDisplay = activeTab === "admin" ? customColleges : colleges;
+  const filteredList = useMemo(() => {
+    if (!open) return [];
+    if (!filterQuery.trim()) return listToDisplay;
+    const q = filterQuery.toLowerCase();
+    return listToDisplay.filter((c) => c.toLowerCase().includes(q));
+  }, [open, listToDisplay, filterQuery]);
+
   if (!open) return null;
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -2305,11 +2259,6 @@ function ManageCollegesModal({
       // Toast shown in mutation
     }
   };
-
-  const listToDisplay = activeTab === "admin" ? customColleges : colleges;
-  const filteredList = listToDisplay.filter((c) =>
-    c.toLowerCase().includes(filterQuery.toLowerCase())
-  );
 
   return (
     <>

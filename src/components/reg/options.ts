@@ -53,6 +53,90 @@ export const COLLEGES = [
 ] as const;
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
+  "KSAWU - Karnataka State Akkamahadevi Women University, Jnana Shakti Campus, Vijayapura": [
+    "KSAWU VIJAYAPURA",
+    "Karnataka State Akkamahadevi Women University, Jnana Shakti Campus, Vijayapura",
+    "KSAWU",
+    "KSAW VIJAYAPURA",
+    "KSAWU - Karnataka State Akkamahadevi Women University, Jnana Shakti Campus, Vijayapura",
+  ],
+  "KSAWU - B.V.V. Sangha's Danammadevi Arts, Commerce and Science College for Women, Mudhol": [
+    "B.V.V Sangha's Danammadevi Arts, Commerce and Science College for Women, Mudhol.",
+    "B.V.V. Sangha's Danammadevi Arts, Commerce and Science College for Women, Mudhol",
+    "B.V.V Sangha's Danammadevi Arts, Commerce and Science College for Women, Mudhol",
+    "KSAWU - B.V.V. Sangha's Danammadevi Arts, Commerce and Science College for Women, Mudhol",
+  ],
+  "KSAWU - Sri Siddrameshwar Education Society's Chandragiri College of Education for Women, Shivabasava Nagar, Belgaum": [
+    "KASWU-Sri. Siddrameshwar Education Society's chandrageri College of Education for Women Shivabasava nagar, Belguam-591 102,",
+    "Sri Siddrameshwar Education Society's Chandragiri College of Education for Women, Shivabasava Nagar, Belgaum",
+    "Sri Siddrameshwar Education Society's Chandragiri College of Education for Women Shivabasava Nagar Belgaum",
+    "KSAWU - Sri Siddrameshwar Education Society's Chandragiri College of Education for Women, Shivabasava Nagar, Belgaum",
+  ],
+  "KSAWU - Akkamahadevi Arts & Commerce College for Women, Basavakalyan": [
+    "Akkamahadevi Arts & Commerce College for Women, Basavakalyan",
+    "Akkamahadevi Arts & Commerce College for Women Basavakalyan",
+    "KSAWU - Akkamahadevi Arts & Commerce College for Women, Basavakalyan",
+  ],
+  "KSAWU - Akkamahadevi Mahila Mahavidyalay, Bidar": [
+    "Akkamahadevi Mahila Mahavidyalay, Bidar-",
+    "Akkamahadevi Mahila Mahavidyalay, Bidar",
+    "Akkamahadevi Mahila Mahavidyalay Bidar",
+    "KSAWU - Akkamahadevi Mahila Mahavidyalay, Bidar",
+  ],
+  "KSAWU - Sri Shivalingeshwar Degree College for Women, Haveri": [
+    "Sri. Shivalingeshwar Degree College for Women, Haveri-",
+    "Sri Shivalingeshwar Degree College for Women, Haveri",
+    "Sri Shivalingeshwar Degree College for Women Haveri",
+    "KSAWU - Sri Shivalingeshwar Degree College for Women, Haveri",
+  ],
+  "KSAWU - B.A.J.S.S. Arts & Commerce College for Women, Ranebennur": [
+    "B.A.J.S.S. Arts & Commerce College for Women Ranebennur",
+    "B.A.J.S.S. Arts & Commerce College for Women, Ranebennur",
+    "KSAWU - B.A.J.S.S. Arts & Commerce College for Women, Ranebennur",
+  ],
+  "KSAWU - Anjuman Degree College for Women, Shamsuddin Circle, Bhatkal": [
+    "Anjuman Degree College for Women, Shamshuddin Circle Near Hotel cola paradise Bhatkal",
+    "Anjuman Degree College for Women, Shamsuddin Circle, Bhatkal",
+    "Anjuman Degree College for Women Shamsuddin Circle Bhatkal",
+    "KSAWU - Anjuman Degree College for Women, Shamsuddin Circle, Bhatkal",
+  ],
+  "KSAWU - Bethel Christian Fellowship Association® Bethel Women's Degree College, Virupapura, Anegundi Road, Gangavati": [
+    "Bethel Christian Fellowship Association ® Bethel Women's Degree College, Virupapura, Anegundi Road, Gangavathi",
+    "Bethel Christian Fellowship Association® Bethel Women's Degree College, Virupapura, Anegundi Road, Gangavati",
+    "KSAWU - Bethel Christian Fellowship Association® Bethel Women's Degree College, Virupapura, Anegundi Road, Gangavati",
+  ],
+  "KSAWU - B.L.D.E's Society's Smt. Bangaramma Sajjan Arts, Commerce and Science College for Women, S.S College Campus, BLDE Hospital Road, Vijayapura": [
+    "B.L.D.E's Society's Smt. Bangaramma Sajjan Arts, Commerce and Science College for Women, S.S College Campus BLDE Hospital Road, Vijayapura",
+    "B.L.D.E's Society's Smt. Bangaramma Sajjan Arts, Commerce and Science College for Women, S.S College Campus, BLDE Hospital Road, Vijayapura",
+    "KSAWU - B.L.D.E's Society's Smt. Bangaramma Sajjan Arts, Commerce and Science College for Women, S.S College Campus, BLDE Hospital Road, Vijayapura",
+  ],
+  "KSAWU - B.D.E Society's Arts and Commerce College for Women, Vijayapura": [
+    "B.D.E Society's Arts Science and Commerce College foe Women, Vijayapur",
+    "B.D.E Society's Arts and Commerce College for Women, Vijayapura",
+    "KSAWU - B.D.E Society's Arts and Commerce College for Women, Vijayapura",
+  ],
+  "Balaji Degree College -Hanumanth Nagar": [
+    "Balaji Degree College -Hanumanth Nagar",
+    "Balaji Degree College ,Hanumanth Nagar",
+    "Balaji Degree College, Hanumanth Nagar",
+    "Balaji Degree College - Hanumanth Nagar",
+    "Balaji Degree College Hanumanth Nagar",
+    "BALAJI DEGREE COLLEGE HANUMANTH NAGAR",
+  ],
+  "AMC Engineering College Bannerghatta Road, Bengaluru 560083 Autonomous Institution": [
+    "AMC Engineering College Bannerghatta Road, Bengaluru 560083 Autonomous Institution",
+    "AMC Engineering College Bannerghatta Road, Bengaluru 560083 Autonomous",
+    "AMC Engineering College Bannerghatta Road, Bengaluru 560083",
+    "AMC Engineering College",
+    "AMC ENGINEERING COLLEGE",
+  ],
+  "BES College , Jayanagar": [
+    "BES College , Jayanagar",
+    "BES College , Jayanagarr",
+    "BES College Jayanagar",
+    "BES College, Jayanagar",
+    "BES COLLEGE JAYANAGAR",
+  ],
   "Angadi Institute of Technology Belagavi": [
     "Angadi Institute of Technology Belagavi",
     "ANGADI INSTITUTE OF TECHNOLOGY BELAGAVI",
@@ -393,17 +477,22 @@ export function normalizeCollegeName(rawName?: string | null): string {
   const trimmed = rawName.trim();
   if (!trimmed) return "";
 
+  const cleanAlphaNumeric = trimmed.toLowerCase().replace(/[^a-z0-9]/g, "");
+
   for (const [canonical, aliases] of Object.entries(COLLEGE_ALIASES)) {
     if (canonical.trim().toLowerCase() === trimmed.toLowerCase()) return canonical;
-    if (aliases.some((a) => a.trim().toLowerCase() === trimmed.toLowerCase())) {
+    if (canonical.toLowerCase().replace(/[^a-z0-9]/g, "") === cleanAlphaNumeric) return canonical;
+    if (
+      aliases.some((a) => {
+        const aTrim = a.trim().toLowerCase();
+        return aTrim === trimmed.toLowerCase() || a.toLowerCase().replace(/[^a-z0-9]/g, "") === cleanAlphaNumeric;
+      })
+    ) {
       return canonical;
     }
   }
 
   const upper = trimmed.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  // IMPORTANT: all known aliases are already handled by COLLEGE_ALIASES above (exact match).
-  // Use === here (not includes) so a new admin-chosen name like "Shivkumar Arts College"
-  // is not accidentally re-mapped back to "Shivkumar" when saving edits.
   if (upper === "SHIVAKUMAR" || upper === "SHIVKUMAR") return "Shivkumar";
   if (upper.includes("VIZUTECH")) return "Vizutech Solutions Pvt Ltd.";
   if (upper.includes("BASAVESHWAR") || upper.includes("BASAVESHWARA")) return "Basaveshwar science college, Bagalkote";

@@ -1,5 +1,6 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { COLLEGES as DEFAULT_COLLEGES, getCollegeAliases } from "@/components/reg/options";
+import { COLLEGES as DEFAULT_COLLEGES, getCollegeAliases, normalizeCollegeName } from "@/components/reg/options";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -10,7 +11,8 @@ const LOCAL_STORAGE_KEY = "ksaw_custom_colleges_cache";
 
 function getLocalCachedColleges(): string[] {
   try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (typeof window === "undefined") return [];
+    const raw = window.localStorage?.getItem(LOCAL_STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -28,69 +30,201 @@ function getLocalCachedColleges(): string[] {
 
 function setLocalCachedColleges(list: string[]): void {
   try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(list));
+    if (typeof window === "undefined") return;
+    window.localStorage?.setItem(LOCAL_STORAGE_KEY, JSON.stringify(list));
   } catch {
     // Ignore localStorage write errors
   }
 }
 
-// Fetch the latest custom colleges manifest from Supabase Storage (checks manifests/colleges with fallback to manifests)
+// Fetch custom colleges with cross-folder manifest union and database recovery
 export async function fetchCustomColleges(): Promise<string[]> {
   try {
-    let folder = COLLEGES_FOLDER;
-    let { data: files, error } = await supabase.storage
-      .from(STORAGE_BUCKET)
-      .list(folder, { limit: 100 });
+    const folders = [COLLEGES_FOLDER, FALLBACK_MANIFEST_FOLDER];
+    const targetFiles: { folder: string; name: string }[] = [];
 
-    if (error || !files || files.length === 0) {
-      folder = FALLBACK_MANIFEST_FOLDER;
-      const res = await supabase.storage
-        .from(STORAGE_BUCKET)
-        .list(folder, { limit: 100 });
-      files = res.data;
-      error = res.error;
+    // 1. Scan manifest folders in cloud storage (pick recent timestamped manifests)
+    for (const folder of folders) {
+      try {
+        const { data: files } = await supabase.storage
+          .from(STORAGE_BUCKET)
+          .list(folder, { limit: 100 });
+
+        if (files && files.length > 0) {
+          const jsonFiles = files
+            .filter((f) => f.name.endsWith(".json"))
+            .sort((a, b) => {
+              const tsA = parseInt(a.name.replace(/\D/g, ""), 10) || 0;
+              const tsB = parseInt(b.name.replace(/\D/g, ""), 10) || 0;
+              return tsB - tsA;
+            });
+
+          // Take the top 5 most recent manifests from each folder for instant merging
+          for (const f of jsonFiles.slice(0, 5)) {
+            targetFiles.push({ folder, name: f.name });
+          }
+        }
+      } catch (scanErr) {
+        console.warn(`Storage folder scan error for ${folder}:`, scanErr);
+      }
     }
 
-    if (error || !files || files.length === 0) {
-      return getLocalCachedColleges();
-    }
+    const collectedColleges = new Set<string>();
+    const removedMarkers = new Set<string>();
 
-    const manifestFiles = files
-      .filter((f) => f.name.startsWith("colleges_") && f.name.endsWith(".json"))
-      .sort((a, b) => {
-        const tsA = parseInt(a.name.replace(/\D/g, ""), 10) || 0;
-        const tsB = parseInt(b.name.replace(/\D/g, ""), 10) || 0;
-        return tsB - tsA;
-      });
-
-    if (manifestFiles.length === 0) {
-      return getLocalCachedColleges();
-    }
-
-    const latest = manifestFiles[0];
-    if (!latest) return getLocalCachedColleges();
-    const { data: fileBlob, error: dlError } = await supabase.storage
-      .from(STORAGE_BUCKET)
-      .download(`${folder}/${latest.name}`);
-
-    if (dlError || !fileBlob) {
-      return getLocalCachedColleges();
-    }
-
-    const text = await fileBlob.text();
-    const parsed = JSON.parse(text);
-    if (Array.isArray(parsed)) {
-      const clean = Array.from(
-        new Set(
-          parsed
-            .filter((c): c is string => typeof c === "string" && c.trim().length > 0)
-            .map((c) => c.trim())
-        )
+    // 2. Download and merge colleges from discovered storage manifests in parallel
+    if (targetFiles.length > 0) {
+      const downloads = await Promise.allSettled(
+        targetFiles.map(async (item) => {
+          const { data: blob } = await supabase.storage
+            .from(STORAGE_BUCKET)
+            .download(`${item.folder}/${item.name}`);
+          if (!blob) return null;
+          const text = await blob.text();
+          return JSON.parse(text);
+        })
       );
-      setLocalCachedColleges(clean);
-      return clean;
+
+      for (const res of downloads) {
+        if (res.status === "fulfilled" && Array.isArray(res.value)) {
+          for (const raw of res.value) {
+            if (typeof raw === "string") {
+              const trimmed = raw.trim();
+              if (!trimmed) continue;
+              if (trimmed.startsWith("__removed__:")) {
+                removedMarkers.add(trimmed);
+              } else {
+                collectedColleges.add(trimmed);
+              }
+            }
+          }
+        }
+      }
     }
-    return getLocalCachedColleges();
+
+    // 3. Recover any custom institution names from existing database registrations
+    try {
+      const { data: dbRecords } = await supabase
+        .from("registrations")
+        .select("institution_name")
+        .not("institution_name", "is", null)
+        .limit(1000);
+
+      if (dbRecords && dbRecords.length > 0) {
+        const defaultLower = new Set(DEFAULT_COLLEGES.map((c) => c.toLowerCase()));
+        for (const record of dbRecords) {
+          const inst = record.institution_name?.trim();
+          if (inst && !defaultLower.has(inst.toLowerCase())) {
+            collectedColleges.add(inst);
+          }
+        }
+      }
+    } catch (dbErr) {
+      console.warn("DB institution recovery notice:", dbErr);
+    }
+
+    // 4. Include any items from local cache
+    const localCached = getLocalCachedColleges();
+    for (const c of localCached) {
+      if (c.startsWith("__removed__:")) {
+        removedMarkers.add(c);
+      } else {
+        collectedColleges.add(c);
+      }
+    }
+
+    // 5. Remove any colleges explicitly marked as removed and resolve aliases to canonical single names
+    const removedNamesLower = new Set(
+      Array.from(removedMarkers).map((m) =>
+        m.replace("__removed__:", "").trim().toLowerCase()
+      )
+    );
+
+    const activeColleges: string[] = [];
+    const seenLower = new Set<string>();
+    const seenAlphaNumeric = new Set<string>();
+    const defaultLower = new Set(DEFAULT_COLLEGES.map((c) => c.toLowerCase()));
+    const defaultAlphaNumeric = new Set(
+      DEFAULT_COLLEGES.map((c) => c.toLowerCase().replace(/[^a-z0-9]/g, ""))
+    );
+
+    for (const raw of collectedColleges) {
+      const canonical = normalizeCollegeName(raw) || raw;
+      const lower = canonical.toLowerCase();
+      const rawLower = raw.toLowerCase();
+      const alphaKey = canonical.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const rawAlphaKey = raw.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+      // If removed explicitly or if this raw variation was marked removed, skip
+      if (
+        removedNamesLower.has(lower) ||
+        removedNamesLower.has(rawLower) ||
+        removedNamesLower.has(alphaKey) ||
+        removedNamesLower.has(rawAlphaKey)
+      ) {
+        continue;
+      }
+
+      // If this maps to a default college, skip from custom list
+      if (defaultLower.has(lower) || defaultAlphaNumeric.has(alphaKey)) {
+        continue;
+      }
+
+      if (!seenLower.has(lower) && !seenAlphaNumeric.has(alphaKey)) {
+        seenLower.add(lower);
+        seenAlphaNumeric.add(alphaKey);
+        // Mark all aliases as seen so old spelling variations don't get added
+        const aliases = getCollegeAliases(canonical);
+        for (const a of aliases) {
+          seenLower.add(a.trim().toLowerCase());
+          seenAlphaNumeric.add(a.toLowerCase().replace(/[^a-z0-9]/g, ""));
+        }
+        activeColleges.push(canonical);
+      }
+    }
+
+    activeColleges.sort((a, b) => a.localeCompare(b));
+
+    const finalMasterList = [...activeColleges, ...Array.from(removedMarkers)];
+
+    // Cache locally immediately
+    setLocalCachedColleges(finalMasterList);
+
+    // Background-sync the consolidated list to cloud storage if needed
+    if (finalMasterList.length > localCached.length) {
+      void saveCustomColleges(finalMasterList).catch((err) => {
+        console.warn("Background manifest sync notice:", err);
+      });
+    }
+
+    // Safe background update for known duplicate pairs to ensure DB registrations point to canonical names
+    try {
+      const dbPairs: [string, string][] = [
+        ["KSAWU VIJAYAPURA", "KSAWU - Karnataka State Akkamahadevi Women University, Jnana Shakti Campus, Vijayapura"],
+        ["B.V.V Sangha's Danammadevi Arts, Commerce and Science College for Women, Mudhol.", "KSAWU - B.V.V. Sangha's Danammadevi Arts, Commerce and Science College for Women, Mudhol"],
+        ["KASWU-Sri. Siddrameshwar Education Society's chandrageri College of Education for Women Shivabasava nagar, Belguam-591 102,", "KSAWU - Sri Siddrameshwar Education Society's Chandragiri College of Education for Women, Shivabasava Nagar, Belgaum"],
+        ["Akkamahadevi Arts & Commerce College for Women, Basavakalyan", "KSAWU - Akkamahadevi Arts & Commerce College for Women, Basavakalyan"],
+        ["Akkamahadevi Mahila Mahavidyalay, Bidar-", "KSAWU - Akkamahadevi Mahila Mahavidyalay, Bidar"],
+        ["Sri. Shivalingeshwar Degree College for Women, Haveri-", "KSAWU - Sri Shivalingeshwar Degree College for Women, Haveri"],
+        ["B.A.J.S.S. Arts & Commerce College for Women Ranebennur", "KSAWU - B.A.J.S.S. Arts & Commerce College for Women, Ranebennur"],
+        ["Anjuman Degree College for Women, Shamshuddin Circle Near Hotel cola paradise Bhatkal", "KSAWU - Anjuman Degree College for Women, Shamsuddin Circle, Bhatkal"],
+        ["Bethel Christian Fellowship Association ® Bethel Women's Degree College, Virupapura, Anegundi Road, Gangavathi", "KSAWU - Bethel Christian Fellowship Association® Bethel Women's Degree College, Virupapura, Anegundi Road, Gangavati"],
+        ["B.L.D.E's Society's Smt. Bangaramma Sajjan Arts, Commerce and Science College for Women, S.S College Campus BLDE Hospital Road, Vijayapura", "KSAWU - B.L.D.E's Society's Smt. Bangaramma Sajjan Arts, Commerce and Science College for Women, S.S College Campus, BLDE Hospital Road, Vijayapura"],
+        ["B.D.E Society's Arts Science and Commerce College foe Women, Vijayapur", "KSAWU - B.D.E Society's Arts and Commerce College for Women, Vijayapura"],
+        ["Balaji Degree College ,Hanumanth Nagar", "Balaji Degree College -Hanumanth Nagar"],
+        ["AMC Engineering College Bannerghatta Road, Bengaluru 560083 Autonomous", "AMC Engineering College Bannerghatta Road, Bengaluru 560083 Autonomous Institution"],
+        ["BES College , Jayanagarr", "BES College , Jayanagar"],
+        ["A V K COLLEGE FOR WOMEN", "AVK COLLEGE HASSAN"],
+        ["Shivakumar", "Shivkumar"],
+      ];
+      for (const [oldName, newName] of dbPairs) {
+        void supabase.from("registrations").update({ institution_name: newName }).eq("institution_name", oldName);
+      }
+    } catch {
+      // Non-critical background sync notice
+    }
+
+    return finalMasterList;
   } catch (err) {
     console.error("Failed to load custom colleges manifest:", err);
     return getLocalCachedColleges();
@@ -105,7 +239,13 @@ export async function saveCustomColleges(colleges: string[]): Promise<void> {
         .map((c) => c.trim())
         .filter((c) => c.length > 0)
     )
-  ).sort((a, b) => a.localeCompare(b));
+  ).sort((a, b) => {
+    const aRem = a.startsWith("__removed__:");
+    const bRem = b.startsWith("__removed__:");
+    if (aRem && !bRem) return 1;
+    if (!aRem && bRem) return -1;
+    return a.localeCompare(b);
+  });
 
   setLocalCachedColleges(cleanList);
 
@@ -124,7 +264,6 @@ export async function saveCustomColleges(colleges: string[]): Promise<void> {
 
   if (error) {
     console.error("Cloud manifest upload error:", error);
-    // If cloud upload fails, local storage cache is already updated
     throw new Error(error.message || "Failed to save colleges to cloud storage.");
   }
 }
@@ -135,69 +274,91 @@ export function useColleges() {
   const query = useQuery({
     queryKey: ["custom_colleges"],
     queryFn: fetchCustomColleges,
-    initialData: getLocalCachedColleges,
-    staleTime: 0,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
+    placeholderData: getLocalCachedColleges,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const rawCustomColleges = query.data ?? [];
-  const removedDefaults = new Set(
-    rawCustomColleges
-      .filter((c) => c.startsWith("__removed__:"))
-      .map((c) => c.replace("__removed__:", "").trim().toLowerCase())
-  );
 
-  const activeCustomNames = rawCustomColleges
-    .filter((c) => !c.startsWith("__removed__:") && c.trim().length > 0)
-    .map((c) => c.trim());
+  const { visibleDefaults, customColleges, allColleges } = useMemo(() => {
+    const removedDefaults = new Set(
+      rawCustomColleges
+        .filter((c) => c.startsWith("__removed__:"))
+        .map((c) => c.replace("__removed__:", "").trim().toLowerCase())
+    );
 
-  const visibleDefaults = Array.from(
-    new Set(
-      DEFAULT_COLLEGES
-        .map((c) => c.trim())
-        .filter((c) => {
-          const lower = c.toLowerCase();
-          if (removedDefaults.has(lower)) return false;
-          // If admin has added a custom variant/alias of this default college, suppress default
-          const aliases = getCollegeAliases(c).map((a) => a.toLowerCase());
-          const hasCustomAlias = activeCustomNames.some(
-            (raw) => aliases.includes(raw.toLowerCase()) && raw.toLowerCase() !== lower
-          );
-          if (hasCustomAlias) return false;
-          return true;
-        })
-    )
-  );
+    const activeCustomNames = rawCustomColleges
+      .filter((c) => !c.startsWith("__removed__:") && c.trim().length > 0)
+      .map((c) => normalizeCollegeName(c.trim()) || c.trim());
 
-  const customColleges = Array.from(
-    new Set(
-      activeCustomNames
-        .filter((c) => !visibleDefaults.some((d) => d.toLowerCase() === c.toLowerCase()))
-    )
-  );
+    const defaults = Array.from(
+      new Set(
+        DEFAULT_COLLEGES
+          .map((c) => c.trim())
+          .filter((c) => {
+            const lower = c.toLowerCase();
+            if (removedDefaults.has(lower)) return false;
+            const aliases = getCollegeAliases(c).map((a) => a.toLowerCase());
+            const hasCustomAlias = activeCustomNames.some(
+              (raw) => aliases.includes(raw.toLowerCase()) && raw.toLowerCase() !== lower
+            );
+            if (hasCustomAlias) return false;
+            return true;
+          })
+      )
+    );
 
-  // Combine active base colleges + custom colleges without duplicates.
-  // Uses a case-insensitive seen-set and alias grouping so no two entries that differ only in casing,
-  // spelling variants, or trailing whitespace appear in the final dropdown list.
-  const allColleges = (() => {
-    const seen = new Set<string>();
-    const result: string[] = [];
-    // Custom colleges take priority when present, then visible defaults
-    for (const c of [...customColleges, ...visibleDefaults]) {
-      const key = c.trim().toLowerCase();
-      if (key && !seen.has(key)) {
-        seen.add(key);
-        // Also mark its aliases as seen so legacy variations don't double-list
-        const aliases = getCollegeAliases(c);
+    const custom: string[] = [];
+    const customSeen = new Set<string>();
+    const customAlphaSeen = new Set<string>();
+    const defaultAlpha = new Set(defaults.map((d) => d.toLowerCase().replace(/[^a-z0-9]/g, "")));
+
+    for (const raw of activeCustomNames) {
+      const canonical = normalizeCollegeName(raw) || raw;
+      const lower = canonical.toLowerCase();
+      const alpha = canonical.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+      if (defaults.some((d) => d.toLowerCase() === lower) || defaultAlpha.has(alpha)) continue;
+
+      if (!customSeen.has(lower) && !customAlphaSeen.has(alpha)) {
+        customSeen.add(lower);
+        customAlphaSeen.add(alpha);
+        const aliases = getCollegeAliases(canonical);
         for (const a of aliases) {
-          seen.add(a.trim().toLowerCase());
+          customSeen.add(a.trim().toLowerCase());
+          customAlphaSeen.add(a.toLowerCase().replace(/[^a-z0-9]/g, ""));
         }
-        result.push(c);
+        custom.push(canonical);
       }
     }
-    return result.sort((a, b) => a.localeCompare(b));
-  })();
+
+    const seen = new Set<string>();
+    const seenAlpha = new Set<string>();
+    const all: string[] = [];
+    for (const c of [...custom, ...defaults]) {
+      const canonical = normalizeCollegeName(c) || c;
+      const key = canonical.trim().toLowerCase();
+      const alpha = canonical.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (key && !seen.has(key) && !seenAlpha.has(alpha)) {
+        seen.add(key);
+        seenAlpha.add(alpha);
+        const aliases = getCollegeAliases(canonical);
+        for (const a of aliases) {
+          seen.add(a.trim().toLowerCase());
+          seenAlpha.add(a.toLowerCase().replace(/[^a-z0-9]/g, ""));
+        }
+        all.push(canonical);
+      }
+    }
+    all.sort((a, b) => a.localeCompare(b));
+
+    return {
+      visibleDefaults: defaults,
+      customColleges: custom,
+      allColleges: all,
+    };
+  }, [rawCustomColleges]);
 
   const addCollegeMutation = useMutation({
     mutationFn: async (newCollegeName: string) => {
@@ -332,26 +493,24 @@ export function useColleges() {
           ...current.filter(
             (c) =>
               c.trim().toLowerCase() !== trimmedOld.toLowerCase() &&
-              c.trim().toLowerCase() !== matchedDefault.trim().toLowerCase()
+              c.trim().toLowerCase() !== matchedDefault.trim().toLowerCase() &&
+              !c.toLowerCase().startsWith(`__removed__:${matchedDefault.trim().toLowerCase()}`)
           ),
           `__removed__:${matchedDefault.trim()}`,
           trimmedNew,
         ];
       } else {
-        // Update in custom list
-        const existsInCurrent = current.some(
-          (c) => c.trim().toLowerCase() === trimmedOld.toLowerCase()
+        // Update in custom list and add removal marker for old name so past storage snapshots cannot resurrect it
+        const filtered = current.filter(
+          (c) =>
+            c.trim().toLowerCase() !== trimmedOld.toLowerCase() &&
+            !c.toLowerCase().startsWith(`__removed__:${trimmedOld.toLowerCase()}`)
         );
-        if (existsInCurrent) {
-          updated = current.map((c) =>
-            c.trim().toLowerCase() === trimmedOld.toLowerCase() ? trimmedNew : c
-          );
-        } else {
-          updated = [
-            ...current.filter((c) => c.trim().toLowerCase() !== trimmedOld.toLowerCase()),
-            trimmedNew,
-          ];
-        }
+        updated = [
+          ...filtered,
+          `__removed__:${trimmedOld.trim()}`,
+          trimmedNew,
+        ];
       }
 
       await saveCustomColleges(updated);

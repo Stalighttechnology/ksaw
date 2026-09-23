@@ -22,7 +22,8 @@ const DEFAULT_CONFIG: MaintenanceConfig = {
 
 function getLocalCachedMaintenance(): MaintenanceConfig {
   try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (typeof window === "undefined") return DEFAULT_CONFIG;
+    const raw = window.localStorage?.getItem(LOCAL_STORAGE_KEY);
     if (!raw) return DEFAULT_CONFIG;
     const parsed = JSON.parse(raw);
     return typeof parsed?.enabled === "boolean" ? parsed : DEFAULT_CONFIG;
@@ -33,7 +34,8 @@ function getLocalCachedMaintenance(): MaintenanceConfig {
 
 function setLocalCachedMaintenance(config: MaintenanceConfig): void {
   try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(config));
+    if (typeof window === "undefined") return;
+    window.localStorage?.setItem(LOCAL_STORAGE_KEY, JSON.stringify(config));
   } catch {
     // Ignore localStorage errors
   }
@@ -80,6 +82,7 @@ export async function fetchMaintenanceConfig(): Promise<MaintenanceConfig> {
 
       if (manifestFiles.length > 0) {
         const latest = manifestFiles[0];
+        if (!latest) return getLocalCachedMaintenance();
         const { data: fileBlob, error: dlError } = await supabase.storage
           .from(STORAGE_BUCKET)
           .download(`${folder}/${latest.name}`);
@@ -142,10 +145,10 @@ export function useMaintenance() {
     queryKey: ["maintenance_config"],
     queryFn: fetchMaintenanceConfig,
     initialData: getLocalCachedMaintenance,
-    staleTime: 0, // Always consider stale so refetch happens immediately
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
-    refetchInterval: 10_000,
+    staleTime: 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchInterval: 60_000,
   });
 
   // Multi-tab instant sync listener

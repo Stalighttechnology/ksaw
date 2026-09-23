@@ -292,14 +292,33 @@ export function MultiSelect({
             ) : null}
             <ul>
               {shown.length > 0 ? (
-                shown.map((o, idx) => (
-                  <li key={`${o}-${idx}`}>
-                    <label>
-                      <input type={single ? "radio" : "checkbox"} checked={value.includes(o)} onChange={() => toggle(o)} />
-                      <span>{o}</span>
-                    </label>
-                  </li>
-                ))
+                <>
+                  {(() => {
+                    // Ensure any actively selected value is always rendered first if not already in the top slice
+                    const MAX_VISIBLE = 80;
+                    const topSlice = shown.slice(0, MAX_VISIBLE);
+                    const missingSelected = value.filter((v) => !topSlice.includes(v) && shown.includes(v));
+                    const renderList = [...missingSelected, ...topSlice];
+
+                    return (
+                      <>
+                        {renderList.map((o, idx) => (
+                          <li key={`${o}-${idx}`}>
+                            <label>
+                              <input type={single ? "radio" : "checkbox"} checked={value.includes(o)} onChange={() => toggle(o)} />
+                              <span>{o}</span>
+                            </label>
+                          </li>
+                        ))}
+                        {shown.length > MAX_VISIBLE ? (
+                          <li className="ms-empty text-[11px] text-muted-foreground p-2 border-t border-border/50 text-center bg-muted/20">
+                            Showing {MAX_VISIBLE} of {shown.length} options. Type in the search box above to narrow results.
+                          </li>
+                        ) : null}
+                      </>
+                    );
+                  })()}
+                </>
               ) : (
                 <li className="ms-empty">No results</li>
               )}
