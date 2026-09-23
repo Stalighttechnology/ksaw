@@ -125,7 +125,7 @@ function AdminPage() {
   const [safStatus, setSafStatus] = useState("");
   const [gender, setGender] = useState("");
   const [dateFilter, setDateFilter] = useState<"today" | "week" | "">("");
-  const [sortColumn, setSortColumn] = useState<string>("reference_number");
+  const [sortColumn, setSortColumn] = useState<string>("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
@@ -214,16 +214,43 @@ function AdminPage() {
         );
       }
 
-      if (sortColumn) {
+      if (sortColumn === "reference_number") {
+        // Because reference_number is string ('KSAW 999' vs 'KSAW 3000'), SQL alphabetical sort puts 999 above 3000.
+        // Sorting by created_at provides true chronological / numeric reference order.
+        q = q.order("created_at", { ascending: sortOrder === "asc", nullsFirst: false });
+      } else if (sortColumn) {
         q = q.order(sortColumn, { ascending: sortOrder === "asc", nullsFirst: false });
       } else {
         q = q.order("created_at", { ascending: false });
       }
 
-      const from = page * pageSize;
-      const to = from + pageSize - 1;
-      const { data, error, count } = await q.range(from, to);
-      if (error) throw error;
+      let data: Row[] = [];
+      let count: number | null = 0;
+
+      if (pageSize === -1) {
+        const CHUNK_SIZE = 1000;
+        let from = 0;
+        let hasMore = true;
+        while (hasMore) {
+          const res = await q.range(from, from + CHUNK_SIZE - 1);
+          if (res.error) throw res.error;
+          if (count === null || count === 0) count = res.count;
+          if (res.data && res.data.length > 0) {
+            data.push(...(res.data as Row[]));
+            from += CHUNK_SIZE;
+            if (res.data.length < CHUNK_SIZE) hasMore = false;
+          } else {
+            hasMore = false;
+          }
+        }
+      } else {
+        const from = page * pageSize;
+        const to = from + pageSize - 1;
+        const res = await q.range(from, to);
+        if (res.error) throw res.error;
+        data = (res.data ?? []) as Row[];
+        count = res.count;
+      }
 
       const normalizedRows = ((data ?? []) as Row[]).map((r) => ({
         ...r,
