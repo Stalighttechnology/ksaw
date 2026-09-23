@@ -1152,8 +1152,15 @@ function AdminPage() {
           {/* Action Toolbar */}
           <div className="mt-4 flex flex-col gap-3 border-t border-border/70 pt-3.5 sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm">
             <div className="flex flex-wrap items-center gap-2.5">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
-                {listQuery.isLoading ? "Loading…" : `${total} Record${total === 1 ? "" : "s"} Found`}
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
+                {listQuery.isFetching && (
+                  <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                )}
+                {listQuery.isLoading
+                  ? "Loading records…"
+                  : listQuery.isFetching
+                    ? `Updating (${total} Records)...`
+                    : `${total} Record${total === 1 ? "" : "s"} Found`}
               </span>
 
               {activeFilterCount > 0 && (
@@ -1322,13 +1329,16 @@ function AdminPage() {
               <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border text-xs">
                 <button
                   type="button"
-                  disabled={page === 0 || pageSize === -1}
+                  disabled={page === 0 || pageSize === -1 || listQuery.isFetching}
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
                   className="inline-flex items-center justify-center h-7 px-2.5 text-xs font-semibold rounded-lg bg-card border border-border/60 text-foreground hover:bg-muted disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-2xs cursor-pointer"
                 >
                   ← Prev
                 </button>
-                <span className="px-2 text-xs font-medium text-muted-foreground whitespace-nowrap">
+                <span className="inline-flex items-center gap-1.5 px-2 text-xs font-medium text-muted-foreground whitespace-nowrap">
+                  {listQuery.isFetching && (
+                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  )}
                   {pageSize === -1 ? (
                     <>
                       All <strong className="text-foreground font-bold">{total}</strong> Records
@@ -1341,7 +1351,7 @@ function AdminPage() {
                 </span>
                 <button
                   type="button"
-                  disabled={page + 1 >= pageCount || pageSize === -1}
+                  disabled={page + 1 >= pageCount || pageSize === -1 || listQuery.isFetching}
                   onClick={() => setPage((p) => p + 1)}
                   className="inline-flex items-center justify-center h-7 px-2.5 text-xs font-semibold rounded-lg bg-card border border-border/60 text-foreground hover:bg-muted disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-2xs cursor-pointer"
                 >
@@ -1360,7 +1370,22 @@ function AdminPage() {
 
         {/* ── 4. Main Records Table Card ────────────────────────────────────── */}
         <section className="rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-xs overflow-hidden">
-          <div className="overflow-x-auto rounded-xl border border-border/70 shadow-2xs bg-card">
+          <div className="relative overflow-x-auto rounded-xl border border-border/70 shadow-2xs bg-card">
+            {/* Top Loading Progress Bar */}
+            {listQuery.isFetching && (
+              <div className="absolute top-0 left-0 right-0 z-30 h-1 bg-primary/20 overflow-hidden">
+                <div className="h-full bg-primary animate-pulse w-full" />
+              </div>
+            )}
+
+            {/* Active Fetching / Loading Floating Badge Overlay */}
+            {listQuery.isFetching && !listQuery.isLoading && (
+              <div className="pointer-events-none absolute top-3 right-4 z-40 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/95 border border-primary/30 shadow-md backdrop-blur-sm text-xs font-semibold text-primary animate-in fade-in duration-200">
+                <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                <span>Loading page data...</span>
+              </div>
+            )}
+
             <table className="w-full min-w-[1700px] border-collapse text-xs sm:text-sm">
               <thead className="bg-muted/70 text-muted-foreground">
                 <tr>
@@ -1413,161 +1438,203 @@ function AdminPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {(listQuery.data?.rows ?? []).map((r) => {
-                  const isChecked = selectedIds.includes(r.id);
-                  const curStatus = r.status || "Pending";
-                  return (
-                    <tr key={r.id} className={`transition-colors ${isChecked ? "bg-primary/5" : "odd:bg-background even:bg-muted/20 hover:bg-muted/40"}`}>
-                      <td className="sticky left-0 z-20 whitespace-nowrap bg-card px-3 py-2.5 text-center border-r border-border">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => toggleSelectRow(r.id)}
-                          className="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer align-middle"
-                        />
-                      </td>
-                      <td className="sticky left-12 z-10 whitespace-nowrap bg-card px-3 py-2.5 border-r border-border shadow-[2px_0_4px_rgba(0,0,0,0.04)]">
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => setViewing(r)}
-                            className="inline-flex items-center justify-center rounded bg-primary/10 px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors cursor-pointer"
-                          >
-                            View
-                          </button>
-                          <button
-                            onClick={() => setEditing(r)}
-                            className="inline-flex items-center justify-center rounded bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-500/20 transition-colors cursor-pointer"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => remove(r)}
-                            className="inline-flex items-center justify-center rounded bg-red-500/10 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-500/20 transition-colors cursor-pointer"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                      {COLUMNS.map((c) => {
-                        let cellVal = r[c.key];
-                        // Show status in Admin Notes when notes are empty
-                        if (c.key === "admin_notes" && (cellVal === null || cellVal === undefined || cellVal === "")) {
-                          cellVal = r["status"] || "Pending";
-                        }
-                        const isUrl = typeof cellVal === "string" && cellVal.startsWith("http");
-                        return (
-                          <td key={c.key} className="whitespace-nowrap px-3 py-2.5 text-foreground max-w-[280px] truncate">
-                            {isUrl ? (
-                              <a
-                                href={cellVal}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-primary underline hover:text-primary/80 font-medium inline-flex items-center gap-1"
-                              >
-                                📎 View File
-                              </a>
-                            ) : (
-                              formatCell(cellVal, c.type)
-                            )}
-                          </td>
-                        );
-                      })}
-                      <td className="whitespace-nowrap px-3 py-2.5 bg-muted/10">
-                        <div className="flex items-center gap-2">
-                          {/* Current Status Badge */}
-                          <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold shadow-2xs ${curStatus === "Approved"
-                                ? "bg-emerald-600 text-white"
-                                : curStatus === "Sent to Department"
-                                  ? "bg-sky-600 text-white"
-                                  : curStatus === "Approved by Dept"
-                                    ? "bg-indigo-600 text-white"
-                                    : curStatus === "Rejected"
-                                      ? "bg-red-600 text-white"
-                                      : curStatus === "Pending Document"
-                                        ? "bg-amber-600 text-white"
-                                        : "bg-primary/15 text-primary border border-primary/20"
-                              }`}
-                          >
-                            {curStatus === "Approved"
-                              ? "✓ Approved"
-                              : curStatus === "Sent to Department"
-                                ? "📤 Sent to Dept"
-                                : curStatus === "Approved by Dept"
-                                  ? "🏛️ Approved by Dept"
-                                  : curStatus === "Rejected"
-                                    ? "✕ Rejected"
-                                    : curStatus === "Pending Document"
-                                      ? "📄 Pending Doc"
-                                      : "⏳ Pending"}
-                          </span>
-
-                          {/* 1-Click Fast Workflow Step Actions */}
-                          {curStatus === "Pending" && (
-                            <button
-                              type="button"
-                              onClick={() => requestStatusChange(r, "Approved")}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all cursor-pointer"
-                              title="Step 1: Admin Approval"
-                            >
-                              ✓ Approve
-                            </button>
-                          )}
-                          {curStatus === "Approved" && (
-                            <button
-                              type="button"
-                              onClick={() => requestStatusChange(r, "Sent to Department")}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white shadow-xs transition-all cursor-pointer animate-pulse"
-                              title="Step 2: Forward to Department"
-                            >
-                              📤 Sent to Dept →
-                            </button>
-                          )}
-                          {curStatus === "Sent to Department" && (
-                            <button
-                              type="button"
-                              onClick={() => requestStatusChange(r, "Approved by Dept")}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all cursor-pointer animate-pulse"
-                              title="Step 3: Department Final Approval"
-                            >
-                              🏛️ Approved by Dept →
-                            </button>
-                          )}
-                          {(curStatus === "Rejected" || curStatus === "Pending Document") && (
-                            <button
-                              type="button"
-                              onClick={() => requestStatusChange(r, "Approved")}
-                              className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 underline transition-colors cursor-pointer"
-                              title="Re-evaluate & Approve"
-                            >
-                              Re-evaluate
-                            </button>
-                          )}
-
-                          {/* Quick Change Selector */}
-                          <select
-                            value={curStatus}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val && val !== curStatus) {
-                                requestStatusChange(r, val);
-                              }
-                            }}
-                            className="h-7 px-2 text-xs font-semibold rounded-lg border border-border/80 bg-background hover:bg-muted text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs"
-                            title="Change status for this applicant"
-                          >
-                            <option value="" disabled>Change Status...</option>
-                            {STATUS_OPTIONS.map((st) => (
-                              <option key={st} value={st}>
-                                {st === curStatus ? `✓ ${st} (Current)` : `Change to ${st}`}
-                              </option>
-                            ))}
-                          </select>
+                {listQuery.isLoading ? (
+                  <>
+                    <tr>
+                      <td colSpan={COLUMNS.length + 3} className="p-0">
+                        <div className="py-10 flex flex-col items-center justify-center gap-3 bg-muted/5 text-center">
+                          <div className="relative flex items-center justify-center">
+                            <span className="inline-block h-8 w-8 animate-spin rounded-full border-3 border-primary/20 border-t-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-foreground">Loading Registrations Data...</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">Fetching table records...</p>
+                          </div>
                         </div>
                       </td>
                     </tr>
-                  );
-                })}
+                    {Array.from({ length: 6 }).map((_, idx) => (
+                      <tr key={`skeleton-${idx}`} className="animate-pulse odd:bg-background even:bg-muted/20 opacity-60">
+                        <td className="sticky left-0 z-20 bg-card px-3 py-3 text-center border-r border-border">
+                          <div className="h-4 w-4 mx-auto rounded bg-muted/70" />
+                        </td>
+                        <td className="sticky left-12 z-10 bg-card px-3 py-3 border-r border-border">
+                          <div className="flex items-center gap-1">
+                            <div className="h-6 w-12 rounded bg-muted/70" />
+                            <div className="h-6 w-10 rounded bg-muted/70" />
+                          </div>
+                        </td>
+                        {COLUMNS.map((col, cIdx) => (
+                          <td key={col.key} className="px-3 py-3">
+                            <div
+                              className="h-4 rounded bg-muted/60"
+                              style={{ width: `${Math.max(45, ((idx * 17 + cIdx * 23) % 55) + 40)}%` }}
+                            />
+                          </td>
+                        ))}
+                        <td className="px-3 py-3 bg-muted/10">
+                          <div className="h-6 w-24 rounded bg-muted/70" />
+                        </td>
+                      </tr>
+                    ))}
+                  </>
+                ) : (
+                  (listQuery.data?.rows ?? []).map((r) => {
+                    const isChecked = selectedIds.includes(r.id);
+                    const curStatus = r.status || "Pending";
+                    return (
+                      <tr key={r.id} className={`transition-colors ${isChecked ? "bg-primary/5" : "odd:bg-background even:bg-muted/20 hover:bg-muted/40"}`}>
+                        <td className="sticky left-0 z-20 whitespace-nowrap bg-card px-3 py-2.5 text-center border-r border-border">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleSelectRow(r.id)}
+                            className="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer align-middle"
+                          />
+                        </td>
+                        <td className="sticky left-12 z-10 whitespace-nowrap bg-card px-3 py-2.5 border-r border-border shadow-[2px_0_4px_rgba(0,0,0,0.04)]">
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => setViewing(r)}
+                              className="inline-flex items-center justify-center rounded bg-primary/10 px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors cursor-pointer"
+                            >
+                              View
+                            </button>
+                            <button
+                              onClick={() => setEditing(r)}
+                              className="inline-flex items-center justify-center rounded bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => remove(r)}
+                              className="inline-flex items-center justify-center rounded bg-red-500/10 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-500/20 transition-colors cursor-pointer"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                        {COLUMNS.map((c) => {
+                          let cellVal = r[c.key];
+                          // Show status in Admin Notes when notes are empty
+                          if (c.key === "admin_notes" && (cellVal === null || cellVal === undefined || cellVal === "")) {
+                            cellVal = r["status"] || "Pending";
+                          }
+                          const isUrl = typeof cellVal === "string" && cellVal.startsWith("http");
+                          return (
+                            <td key={c.key} className="whitespace-nowrap px-3 py-2.5 text-foreground max-w-[280px] truncate">
+                              {isUrl ? (
+                                <a
+                                  href={cellVal}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-primary underline hover:text-primary/80 font-medium inline-flex items-center gap-1"
+                                >
+                                  📎 View File
+                                </a>
+                              ) : (
+                                formatCell(cellVal, c.type)
+                              )}
+                            </td>
+                          );
+                        })}
+                        <td className="whitespace-nowrap px-3 py-2.5 bg-muted/10">
+                          <div className="flex items-center gap-2">
+                            {/* Current Status Badge */}
+                            <span
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold shadow-2xs ${curStatus === "Approved"
+                                  ? "bg-emerald-600 text-white"
+                                  : curStatus === "Sent to Department"
+                                    ? "bg-sky-600 text-white"
+                                    : curStatus === "Approved by Dept"
+                                      ? "bg-indigo-600 text-white"
+                                      : curStatus === "Rejected"
+                                        ? "bg-red-600 text-white"
+                                        : curStatus === "Pending Document"
+                                          ? "bg-amber-600 text-white"
+                                          : "bg-primary/15 text-primary border border-primary/20"
+                                }`}
+                            >
+                              {curStatus === "Approved"
+                                ? "✓ Approved"
+                                : curStatus === "Sent to Department"
+                                  ? "📤 Sent to Dept"
+                                  : curStatus === "Approved by Dept"
+                                    ? "🏛️ Approved by Dept"
+                                    : curStatus === "Rejected"
+                                      ? "✕ Rejected"
+                                      : curStatus === "Pending Document"
+                                        ? "📄 Pending Doc"
+                                        : "⏳ Pending"}
+                            </span>
+
+                            {/* 1-Click Fast Workflow Step Actions */}
+                            {curStatus === "Pending" && (
+                              <button
+                                type="button"
+                                onClick={() => requestStatusChange(r, "Approved")}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all cursor-pointer"
+                                title="Step 1: Admin Approval"
+                              >
+                                ✓ Approve
+                              </button>
+                            )}
+                            {curStatus === "Approved" && (
+                              <button
+                                type="button"
+                                onClick={() => requestStatusChange(r, "Sent to Department")}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white shadow-xs transition-all cursor-pointer animate-pulse"
+                                title="Step 2: Forward to Department"
+                              >
+                                📤 Sent to Dept →
+                              </button>
+                            )}
+                            {curStatus === "Sent to Department" && (
+                              <button
+                                type="button"
+                                onClick={() => requestStatusChange(r, "Approved by Dept")}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all cursor-pointer animate-pulse"
+                                title="Step 3: Department Final Approval"
+                              >
+                                🏛️ Approved by Dept →
+                              </button>
+                            )}
+                            {(curStatus === "Rejected" || curStatus === "Pending Document") && (
+                              <button
+                                type="button"
+                                onClick={() => requestStatusChange(r, "Approved")}
+                                className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 underline transition-colors cursor-pointer"
+                                title="Re-evaluate & Approve"
+                              >
+                                Re-evaluate
+                              </button>
+                            )}
+
+                            {/* Quick Change Selector */}
+                            <select
+                              value={curStatus}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val && val !== curStatus) {
+                                  requestStatusChange(r, val);
+                                }
+                              }}
+                              className="h-7 px-2 text-xs font-semibold rounded-lg border border-border/80 bg-background hover:bg-muted text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs"
+                              title="Change status for this applicant"
+                            >
+                              <option value="" disabled>Change Status...</option>
+                              {STATUS_OPTIONS.map((st) => (
+                                <option key={st} value={st}>
+                                  {st === curStatus ? `✓ ${st} (Current)` : `Change to ${st}`}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
                 {!listQuery.isLoading && (listQuery.data?.rows.length ?? 0) === 0 ? (
                   <tr>
                     <td className="px-3 py-8 text-center text-muted-foreground" colSpan={COLUMNS.length + 3}>
@@ -1606,7 +1673,7 @@ function AdminPage() {
             <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border text-xs">
               <button
                 type="button"
-                disabled={page === 0 || pageSize === -1}
+                disabled={page === 0 || pageSize === -1 || listQuery.isFetching}
                 onClick={() => {
                   setPage((p) => Math.max(0, p - 1));
                   scrollToTable();
@@ -1615,7 +1682,10 @@ function AdminPage() {
               >
                 ← Prev
               </button>
-              <span className="px-2 text-xs font-medium text-muted-foreground whitespace-nowrap">
+              <span className="inline-flex items-center gap-1.5 px-2 text-xs font-medium text-muted-foreground whitespace-nowrap">
+                {listQuery.isFetching && (
+                  <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                )}
                 {pageSize === -1 ? (
                   <>
                     All <strong className="text-foreground font-bold">{total}</strong> Records
@@ -1628,7 +1698,7 @@ function AdminPage() {
               </span>
               <button
                 type="button"
-                disabled={page + 1 >= pageCount || pageSize === -1}
+                disabled={page + 1 >= pageCount || pageSize === -1 || listQuery.isFetching}
                 onClick={() => {
                   setPage((p) => p + 1);
                   scrollToTable();
