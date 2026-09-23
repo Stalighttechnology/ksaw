@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const STORAGE_BUCKET = "registrations";
-const LIVE_MANIFEST_PATH = "manifests/maintenance_live.json";
+const MAINTENANCE_FOLDER = "manifests/maintenance";
+const FALLBACK_MANIFEST_FOLDER = "manifests";
 const LOCAL_STORAGE_KEY = "ksaw_maintenance_state";
 const SYNC_CHANNEL_NAME = "ksaw_maintenance_sync_channel";
 
@@ -51,13 +52,22 @@ function broadcastMaintenanceUpdate(config: MaintenanceConfig): void {
   }
 }
 
-// Fetch the current maintenance manifest from Supabase Storage
+// Fetch the current maintenance manifest from Supabase Storage (checks manifests/maintenance with fallback)
 export async function fetchMaintenanceConfig(): Promise<MaintenanceConfig> {
   try {
-    // 1. List manifests folder and sort by timestamp descending to pick latest state
-    const { data: files, error: listErr } = await supabase.storage
+    let folder = MAINTENANCE_FOLDER;
+    let { data: files, error: listErr } = await supabase.storage
       .from(STORAGE_BUCKET)
-      .list("manifests", { limit: 100 });
+      .list(folder, { limit: 100 });
+
+    if (listErr || !files || files.length === 0) {
+      folder = FALLBACK_MANIFEST_FOLDER;
+      const res = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .list(folder, { limit: 100 });
+      files = res.data;
+      listErr = res.error;
+    }
 
     if (!listErr && files && files.length > 0) {
       const manifestFiles = files
@@ -72,7 +82,7 @@ export async function fetchMaintenanceConfig(): Promise<MaintenanceConfig> {
         const latest = manifestFiles[0];
         const { data: fileBlob, error: dlError } = await supabase.storage
           .from(STORAGE_BUCKET)
-          .download(`manifests/${latest.name}`);
+          .download(`${folder}/${latest.name}`);
 
         if (!dlError && fileBlob) {
           const text = await fileBlob.text();
@@ -111,7 +121,7 @@ export async function saveMaintenanceConfig(config: MaintenanceConfig): Promise<
 
   // Pure INSERT with timestamp: fully compliant with Supabase Storage RLS (no upsert/overwrite)
   const timestamp = Date.now();
-  const manifestPath = `manifests/maintenance_${timestamp}.json`;
+  const manifestPath = `${MAINTENANCE_FOLDER}/maintenance_${timestamp}.json`;
 
   const { error } = await supabase.storage
     .from(STORAGE_BUCKET)

@@ -29,7 +29,7 @@ export const COLLEGES = [
   "JPM College Channapatna ",
   "VSMS SOMASHEKHAR R KOTHIWALE INSTITUTE OF TECHNOLOGY, NIPANI",
   "Angadi Institute of Technology Belagavi",
-  "Shivakumar",
+  "Shivkumar",
   "Pandavpura Govt College",
   "Vijaya First Grade Co-Education College B.Ed",
   "K R Pete Govt College Co-Education",
@@ -177,11 +177,15 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
   "KSAWU VIJAYAPURA": [
     "KSAWU VIJAYAPURA",
   ],
-  "Shivakumar": [
+  "Shivkumar": [
+    "Shivkumar",
     "Shivakumar",
     "SHIVAKUMAR",
+    "SHIVKUMAR",
     "SHIVAKUMAR E",
     "SHIVAKUMAR. A",
+    "shivakumar",
+    "shivkumar",
   ],
   "Government College for Women (Autonomous), Mandya": [
     "Government College for Women (Autonomous), Mandya",
@@ -397,6 +401,10 @@ export function normalizeCollegeName(rawName?: string | null): string {
   }
 
   const upper = trimmed.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  // IMPORTANT: all known aliases are already handled by COLLEGE_ALIASES above (exact match).
+  // Use === here (not includes) so a new admin-chosen name like "Shivkumar Arts College"
+  // is not accidentally re-mapped back to "Shivkumar" when saving edits.
+  if (upper === "SHIVAKUMAR" || upper === "SHIVKUMAR") return "Shivkumar";
   if (upper.includes("VIZUTECH")) return "Vizutech Solutions Pvt Ltd.";
   if (upper.includes("BASAVESHWAR") || upper.includes("BASAVESHWARA")) return "Basaveshwar science college, Bagalkote";
   if (upper.includes("SIDDHAROODH") || upper.includes("SIDDHAROODHA") || upper.includes("GUMPA")) return "SADGURU SIDDHAROODH WOMENS DEGREE COLLEGE, GUMPA BIDAR";
@@ -419,7 +427,6 @@ export function normalizeCollegeName(rawName?: string | null): string {
   if (upper.includes("KTSV")) return "KTSV degree college for women vijayanagar-Bangalore";
   if (upper.includes("OXFORD") && (upper.includes("PU") || upper.includes("DEGREE") || upper.includes("BANGALORE") || upper.includes("BENGALURU"))) return "Oxford PU and Degree College-Bangalore";
   if (upper.includes("KEMPEGOWDA") && (upper.includes("MANAGEMENT") || upper.includes("RESEARCH") || upper.includes("STUDIES"))) return "Kempegowda Institute of Management Studies & Research-Bangalore";
-  if (upper.includes("SHIVAKUMAR")) return "Shivakumar";
   if (upper.includes("KSAW")) return "KSAWU VIJAYAPURA";
   if (upper.includes("PES") && upper.includes("MANDYA")) return "P.E.S. College of Science, Arts & Commerce, Mandya";
   if (upper.includes("BGS")) return "BGS College Channarayapatna";

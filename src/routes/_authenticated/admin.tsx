@@ -111,7 +111,7 @@ function AdminPage() {
   const qc = useQueryClient();
 
   const { isMaintenance, toggleMaintenance, isUpdating: isTogglingMaintenance } = useMaintenance();
-  const { colleges, customColleges, addCollege, removeCollege, isAdding, isRemoving } = useColleges();
+  const { colleges, customColleges, addCollege, editCollege, removeCollege, isAdding, isEditing, isRemoving } = useColleges();
   const [collegeModalOpen, setCollegeModalOpen] = useState(false);
   const [maintenanceConfirmOpen, setMaintenanceConfirmOpen] = useState(false);
 
@@ -442,7 +442,9 @@ function AdminPage() {
     for (const r of rows) {
       if (r.normalizedNigama && matchesFilter(r, "nigama")) nigamaSet.add(r.normalizedNigama);
       if (r.normalizedStatus && matchesFilter(r, "status")) statusSet.add(r.normalizedStatus);
-      if (r.normalizedPartner && matchesFilter(r, "partner")) partnerSet.add(r.normalizedPartner);
+      if (r.normalizedPartner && matchesFilter(r, "partner")) {
+        partnerSet.add(normalizeCollegeName(r.normalizedPartner) || r.normalizedPartner);
+      }
       if (r.normalizedCourse && matchesFilter(r, "course")) courseSet.add(r.normalizedCourse);
       if (r.normalizedCategory && matchesFilter(r, "category")) categorySet.add(r.normalizedCategory);
       if (r.normalizedCenter && matchesFilter(r, "center")) centerSet.add(r.normalizedCenter);
@@ -451,7 +453,7 @@ function AdminPage() {
     // Preserve actively selected values in options so selection remains visible
     if (nigama) nigamaSet.add(nigama);
     if (status) statusSet.add(status);
-    if (partner) partnerSet.add(partner);
+    if (partner) partnerSet.add(normalizeCollegeName(partner) || partner);
     if (course) courseSet.add(course);
     if (category) categorySet.add(category);
     if (centerLocation) centerSet.add(centerLocation);
@@ -2041,8 +2043,10 @@ function AdminPage() {
         colleges={colleges}
         customColleges={customColleges}
         onAdd={addCollege}
+        onEdit={editCollege}
         onRemove={removeCollege}
         isAdding={isAdding}
+        isEditing={isEditing}
         isRemoving={isRemoving}
       />
 
@@ -2176,8 +2180,10 @@ function ManageCollegesModal({
   colleges,
   customColleges,
   onAdd,
+  onEdit,
   onRemove,
   isAdding,
+  isEditing,
   isRemoving,
 }: {
   open: boolean;
@@ -2185,12 +2191,18 @@ function ManageCollegesModal({
   colleges: string[];
   customColleges: string[];
   onAdd: (name: string) => Promise<unknown>;
+  onEdit: (oldName: string, newName: string) => Promise<unknown>;
   onRemove: (name: string) => Promise<unknown>;
   isAdding: boolean;
+  isEditing: boolean;
   isRemoving: boolean;
 }) {
   const [newCollegeName, setNewCollegeName] = useState("");
   const [filterQuery, setFilterQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<"admin" | "all">("admin");
+  const [editingCollege, setEditingCollege] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  const [collegeToDelete, setCollegeToDelete] = useState<string | null>(null);
 
   if (!open) return null;
 
@@ -2209,113 +2221,283 @@ function ManageCollegesModal({
     }
   };
 
-  const filteredCustom = customColleges.filter((c) =>
+  const handleStartEdit = (name: string) => {
+    setEditingCollege(name);
+    setEditDraft(name);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCollege(null);
+    setEditDraft("");
+  };
+
+  const handleSaveEdit = async (oldName: string) => {
+    const trimmed = editDraft.trim();
+    if (!trimmed) {
+      toast.error("College name cannot be empty");
+      return;
+    }
+    if (trimmed === oldName) {
+      setEditingCollege(null);
+      return;
+    }
+    try {
+      await onEdit(oldName, trimmed);
+      setEditingCollege(null);
+      setEditDraft("");
+    } catch {
+      // Toast shown in mutation
+    }
+  };
+
+  const listToDisplay = activeTab === "admin" ? customColleges : colleges;
+  const filteredList = listToDisplay.filter((c) =>
     c.toLowerCase().includes(filterQuery.toLowerCase())
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4">
-      <div className="w-full max-w-2xl rounded-2xl bg-card p-6 shadow-2xl border border-border">
-        <div className="flex items-center justify-between border-b border-border pb-3.5">
-          <div className="flex items-center gap-2.5">
-            <span className="text-2xl">🏢</span>
-            <div>
-              <h3 className="text-base font-bold text-foreground">
-                Manage Colleges / Universities
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                Add new institutions to the public applicant registration form &amp; admin filters.
-              </p>
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-xs">
+        <div className="w-full max-w-2xl rounded-2xl bg-card p-6 shadow-2xl border border-border">
+          <div className="flex items-center justify-between border-b border-border pb-3.5">
+            <div className="flex items-center gap-2.5">
+              <span className="text-2xl">🏢</span>
+              <div>
+                <h3 className="text-base font-bold text-foreground">
+                  Manage Colleges / Universities
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Add, edit, or remove institution names for the applicant registration form &amp; admin filters.
+                </p>
+              </div>
             </div>
+            <button
+              type="button"
+              className="text-sm font-semibold text-muted-foreground hover:text-foreground cursor-pointer p-1 rounded-lg hover:bg-muted"
+              onClick={onClose}
+            >
+              ✕
+            </button>
           </div>
-          <button
-            type="button"
-            className="text-sm font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
-            onClick={onClose}
-          >
-            ✕
-          </button>
-        </div>
 
-        {/* Add College Form */}
-        <form onSubmit={handleAdd} className="mt-4 flex flex-col sm:flex-row gap-2">
-          <input
-            type="text"
-            placeholder="Type College / Institute / University Name..."
-            value={newCollegeName}
-            onChange={(e) => setNewCollegeName(e.target.value)}
-            className="flex-1 form-ctrl text-xs sm:text-sm h-10 rounded-xl"
-            autoFocus
-          />
-          <button
-            type="submit"
-            disabled={isAdding || !newCollegeName.trim()}
-            className="px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white transition-colors cursor-pointer shadow-xs disabled:opacity-50 inline-flex items-center justify-center gap-1.5 shrink-0"
-          >
-            <span>{isAdding ? "⏳" : "+"}</span>
-            <span>{isAdding ? "Adding…" : "Add College"}</span>
-          </button>
-        </form>
+          {/* Add College Form */}
+          <form onSubmit={handleAdd} className="mt-4 flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              placeholder="Type College / Institute / University Name..."
+              value={newCollegeName}
+              onChange={(e) => setNewCollegeName(e.target.value)}
+              className="flex-1 form-ctrl text-xs sm:text-sm h-10 rounded-xl"
+              autoFocus
+            />
+            <button
+              type="submit"
+              disabled={isAdding || !newCollegeName.trim()}
+              className="px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white transition-colors cursor-pointer shadow-xs disabled:opacity-50 inline-flex items-center justify-center gap-1.5 shrink-0"
+            >
+              <span>{isAdding ? "⏳" : "+"}</span>
+              <span>{isAdding ? "Adding…" : "Add College"}</span>
+            </button>
+          </form>
 
-        {/* List of Custom Added Colleges */}
-        <div className="mt-5 space-y-2">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
-              Admin-Added Colleges ({customColleges.length})
-            </h4>
-            {customColleges.length > 3 && (
+          {/* View Tabs & Search */}
+          <div className="mt-5 space-y-2.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-2">
+              <div className="flex items-center gap-1.5 bg-muted/50 p-1 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("admin")}
+                  className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                    activeTab === "admin"
+                      ? "bg-card text-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Admin-Added ({customColleges.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("all")}
+                  className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                    activeTab === "all"
+                      ? "bg-card text-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  All Listed Institutions ({colleges.length})
+                </button>
+              </div>
+
               <input
                 type="text"
-                placeholder="Search custom list..."
+                placeholder={`Search ${activeTab === "admin" ? "admin-added" : "all"} colleges...`}
                 value={filterQuery}
                 onChange={(e) => setFilterQuery(e.target.value)}
-                className="text-xs h-7 px-2.5 rounded-lg border border-border bg-background"
+                className="text-xs h-8 px-3 rounded-lg border border-border bg-background sm:w-56"
               />
+            </div>
+
+            {/* List Content */}
+            {filteredList.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border/80 bg-muted/20 p-6 text-center text-xs text-muted-foreground">
+                {filterQuery
+                  ? "No colleges match your search criteria."
+                  : activeTab === "admin"
+                  ? "No custom colleges added yet. Use the input above to add a new institution."
+                  : "No institutions found."}
+              </div>
+            ) : (
+              <div className="max-h-64 overflow-y-auto rounded-xl border border-border bg-muted/20 p-2 text-xs divide-y divide-border/60">
+                {filteredList.map((c) => {
+                  const isItemEditing = editingCollege === c;
+
+                  return (
+                    <div
+                      key={c}
+                      className={`py-2 px-2.5 flex items-center justify-between gap-3 transition-colors ${
+                        isItemEditing ? "bg-purple-500/10 rounded-lg" : "hover:bg-muted/40"
+                      }`}
+                    >
+                      {isItemEditing ? (
+                        <div className="flex-1 flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={editDraft}
+                            onChange={(e) => setEditDraft(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                void handleSaveEdit(c);
+                              } else if (e.key === "Escape") {
+                                handleCancelEdit();
+                              }
+                            }}
+                            className="flex-1 form-ctrl text-xs h-8 rounded-lg"
+                            autoFocus
+                            placeholder="Edit college name..."
+                          />
+                          <button
+                            type="button"
+                            disabled={isEditing || !editDraft.trim()}
+                            onClick={() => void handleSaveEdit(c)}
+                            className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer disabled:opacity-50 shrink-0"
+                            title="Save changes"
+                          >
+                            {isEditing ? "⏳" : "✓ Save"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isEditing}
+                            onClick={handleCancelEdit}
+                            className="px-2 py-1 text-xs font-semibold rounded-lg bg-muted hover:bg-muted/80 text-foreground cursor-pointer shrink-0"
+                            title="Cancel"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2 min-w-0 pr-2">
+                            <span className="text-emerald-600 font-bold shrink-0">✓</span>
+                            <span className="font-semibold text-foreground break-words">{c}</span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              disabled={isEditing || isRemoving}
+                              onClick={() => handleStartEdit(c)}
+                              className="text-xs text-purple-600 dark:text-purple-400 hover:underline font-semibold cursor-pointer disabled:opacity-50 inline-flex items-center gap-1"
+                              title={`Edit "${c}"`}
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isRemoving || isEditing}
+                              onClick={() => setCollegeToDelete(c)}
+                              className="text-xs text-destructive hover:underline font-semibold cursor-pointer disabled:opacity-50 inline-flex items-center gap-1"
+                              title={`Remove "${c}"`}
+                            >
+                              🗑️ Remove
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
 
-          {customColleges.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border/80 bg-muted/20 p-6 text-center text-xs text-muted-foreground">
-              No custom colleges added yet. Use the input above to add a new institution name. All built-in colleges ({colleges.length}) are active by default.
-            </div>
-          ) : (
-            <div className="max-h-60 overflow-y-auto rounded-xl border border-border bg-muted/20 p-2 text-xs divide-y divide-border/60">
-              {filteredCustom.map((c) => (
-                <div key={c} className="py-2 px-2 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-emerald-600 font-bold">✓</span>
-                    <span className="font-semibold text-foreground">{c}</span>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={isRemoving}
-                    onClick={() => {
-                      if (confirm(`Remove "${c}" from custom colleges list?`)) {
-                        void onRemove(c);
-                      }
-                    }}
-                    className="text-xs text-destructive hover:underline font-semibold cursor-pointer shrink-0 disabled:opacity-50"
-                  >
-                    🗑️ Remove
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="mt-5 flex items-center justify-between border-t border-border pt-3.5 text-xs text-muted-foreground">
-          <span>Total active institutions: <strong className="text-foreground">{colleges.length}</strong></span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="btn-kk btn-primary-kk text-xs px-4 py-2"
-          >
-            Done
-          </button>
+          <div className="mt-5 flex items-center justify-between border-t border-border pt-3.5 text-xs text-muted-foreground">
+            <span>
+              Total active institutions: <strong className="text-foreground">{colleges.length}</strong>
+            </span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn-kk btn-primary-kk text-xs px-4 py-2"
+            >
+              Done
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Confirmation Popup Modal for Removing College */}
+      {collegeToDelete && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl border border-destructive/30 space-y-4">
+            <div className="flex items-center gap-3 text-destructive">
+              <div className="w-10 h-10 rounded-full bg-destructive/15 flex items-center justify-center text-xl shrink-0">
+                ⚠️
+              </div>
+              <div>
+                <h4 className="text-base font-bold text-foreground">Remove Institution?</h4>
+                <p className="text-xs text-muted-foreground">This removes the college from active dropdown options.</p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-muted/40 p-3 text-xs">
+              <span className="text-muted-foreground block text-[11px] uppercase tracking-wider font-semibold">Selected College:</span>
+              <p className="font-bold text-foreground text-sm mt-1 break-words">{collegeToDelete}</p>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Are you sure you want to remove this institution? It will no longer appear in the applicant registration form and admin filters. (Your existing database registration records will remain safe and unaffected).
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border">
+              <button
+                type="button"
+                disabled={isRemoving}
+                onClick={() => setCollegeToDelete(null)}
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-muted hover:bg-muted/80 text-foreground cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isRemoving}
+                onClick={async () => {
+                  try {
+                    await onRemove(collegeToDelete);
+                    setCollegeToDelete(null);
+                  } catch {
+                    // Toast error shown in mutation
+                  }
+                }}
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+              >
+                <span>{isRemoving ? "⏳" : "🗑️"}</span>
+                <span>{isRemoving ? "Removing…" : "Yes, Remove"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
