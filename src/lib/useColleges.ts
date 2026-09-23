@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { COLLEGES as DEFAULT_COLLEGES, normalizeCollegeName } from "@/components/reg/options";
+import { COLLEGES as DEFAULT_COLLEGES, getCollegeAliases } from "@/components/reg/options";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -18,7 +18,7 @@ function getLocalCachedColleges(): string[] {
       new Set(
         parsed
           .filter((c): c is string => typeof c === "string" && c.trim().length > 0)
-          .map((c) => (c.startsWith("__removed__:") ? c : normalizeCollegeName(c) || c.trim()))
+          .map((c) => c.trim())
       )
     );
   } catch {
@@ -84,7 +84,7 @@ export async function fetchCustomColleges(): Promise<string[]> {
         new Set(
           parsed
             .filter((c): c is string => typeof c === "string" && c.trim().length > 0)
-            .map((c) => (c.startsWith("__removed__:") ? c : normalizeCollegeName(c) || c.trim()))
+            .map((c) => c.trim())
         )
       );
       setLocalCachedColleges(clean);
@@ -104,7 +104,6 @@ export async function saveCustomColleges(colleges: string[]): Promise<void> {
       colleges
         .map((c) => c.trim())
         .filter((c) => c.length > 0)
-        .map((c) => (c.startsWith("__removed__:") ? c : normalizeCollegeName(c) || c))
     )
   ).sort((a, b) => a.localeCompare(b));
 
@@ -149,35 +148,51 @@ export function useColleges() {
       .map((c) => c.replace("__removed__:", "").trim().toLowerCase())
   );
 
+  const activeCustomNames = rawCustomColleges
+    .filter((c) => !c.startsWith("__removed__:") && c.trim().length > 0)
+    .map((c) => c.trim());
+
   const visibleDefaults = Array.from(
     new Set(
       DEFAULT_COLLEGES
-        .map((c) => normalizeCollegeName(c) || c.trim())
-        .filter((c) => !removedDefaults.has(c.trim().toLowerCase()))
+        .map((c) => c.trim())
+        .filter((c) => {
+          const lower = c.toLowerCase();
+          if (removedDefaults.has(lower)) return false;
+          // If admin has added a custom variant/alias of this default college, suppress default
+          const aliases = getCollegeAliases(c).map((a) => a.toLowerCase());
+          const hasCustomAlias = activeCustomNames.some(
+            (raw) => aliases.includes(raw.toLowerCase()) && raw.toLowerCase() !== lower
+          );
+          if (hasCustomAlias) return false;
+          return true;
+        })
     )
   );
 
   const customColleges = Array.from(
     new Set(
-      rawCustomColleges
-        .filter((c) => !c.startsWith("__removed__:"))
-        .map((c) => normalizeCollegeName(c) || c.trim())
+      activeCustomNames
         .filter((c) => !visibleDefaults.some((d) => d.toLowerCase() === c.toLowerCase()))
     )
   );
 
   // Combine active base colleges + custom colleges without duplicates.
-  // Uses a case-insensitive seen-set so no two entries that differ only in casing
-  // or trailing whitespace appear in the final dropdown list.
-  // visibleDefaults are added first (they take priority), then any custom
-  // colleges whose lowercase form has not yet been seen.
+  // Uses a case-insensitive seen-set and alias grouping so no two entries that differ only in casing,
+  // spelling variants, or trailing whitespace appear in the final dropdown list.
   const allColleges = (() => {
     const seen = new Set<string>();
     const result: string[] = [];
-    for (const c of [...visibleDefaults, ...customColleges]) {
+    // Custom colleges take priority when present, then visible defaults
+    for (const c of [...customColleges, ...visibleDefaults]) {
       const key = c.trim().toLowerCase();
       if (key && !seen.has(key)) {
         seen.add(key);
+        // Also mark its aliases as seen so legacy variations don't double-list
+        const aliases = getCollegeAliases(c);
+        for (const a of aliases) {
+          seen.add(a.trim().toLowerCase());
+        }
         result.push(c);
       }
     }
@@ -195,8 +210,8 @@ export function useColleges() {
           .filter((c) => c.startsWith("__removed__:"))
           .map((c) => c.replace("__removed__:", "").trim().toLowerCase())
       );
-      const currentVisibleDefaults = DEFAULT_COLLEGES.filter(
-        (c) => !currentRemoved.has(c.trim().toLowerCase())
+      const currentVisibleDefaults = DEFAULT_COLLEGES.map((c) => c.trim()).filter(
+        (c) => !currentRemoved.has(c.toLowerCase())
       );
       const currentCustom = current.filter((c) => !c.startsWith("__removed__:"));
       const currentAll = Array.from(new Set([...currentVisibleDefaults, ...currentCustom]));
@@ -235,15 +250,20 @@ export function useColleges() {
       const current = await fetchCustomColleges();
       let updated: string[];
 
-      const isDefault = DEFAULT_COLLEGES.some(
+      const matchedDefault = DEFAULT_COLLEGES.find(
         (c) => c.trim().toLowerCase() === trimmed.toLowerCase()
       );
 
-      if (isDefault) {
+      if (matchedDefault) {
         // Add marker to hide default college
         updated = [
-          ...current.filter((c) => c.trim().toLowerCase() !== trimmed.toLowerCase()),
-          `__removed__:${trimmed}`,
+          ...current.filter(
+            (c) =>
+              c.trim().toLowerCase() !== trimmed.toLowerCase() &&
+              c.trim().toLowerCase() !== matchedDefault.trim().toLowerCase() &&
+              c.trim().toLowerCase() !== `__removed__:${matchedDefault.trim().toLowerCase()}`
+          ),
+          `__removed__:${matchedDefault.trim()}`,
         ];
       } else {
         // Remove from custom list
@@ -285,8 +305,8 @@ export function useColleges() {
           .filter((c) => c.startsWith("__removed__:"))
           .map((c) => c.replace("__removed__:", "").trim().toLowerCase())
       );
-      const currentVisibleDefaults = DEFAULT_COLLEGES.filter(
-        (c) => !currentRemoved.has(c.trim().toLowerCase())
+      const currentVisibleDefaults = DEFAULT_COLLEGES.map((c) => c.trim()).filter(
+        (c) => !currentRemoved.has(c.toLowerCase())
       );
       const currentCustom = current.filter((c) => !c.startsWith("__removed__:"));
       const currentAll = Array.from(new Set([...currentVisibleDefaults, ...currentCustom]));
@@ -302,35 +322,54 @@ export function useColleges() {
       }
 
       let updated: string[];
-      const isOldDefault = DEFAULT_COLLEGES.some(
+      const matchedDefault = DEFAULT_COLLEGES.find(
         (c) => c.trim().toLowerCase() === trimmedOld.toLowerCase()
       );
 
-      if (isOldDefault) {
+      if (matchedDefault) {
         // Hide old default college and add new custom name
         updated = [
-          ...current.filter((c) => c.trim().toLowerCase() !== trimmedOld.toLowerCase()),
-          `__removed__:${trimmedOld}`,
+          ...current.filter(
+            (c) =>
+              c.trim().toLowerCase() !== trimmedOld.toLowerCase() &&
+              c.trim().toLowerCase() !== matchedDefault.trim().toLowerCase()
+          ),
+          `__removed__:${matchedDefault.trim()}`,
           trimmedNew,
         ];
       } else {
         // Update in custom list
-        updated = current.map((c) =>
-          c.trim().toLowerCase() === trimmedOld.toLowerCase() ? trimmedNew : c
+        const existsInCurrent = current.some(
+          (c) => c.trim().toLowerCase() === trimmedOld.toLowerCase()
         );
+        if (existsInCurrent) {
+          updated = current.map((c) =>
+            c.trim().toLowerCase() === trimmedOld.toLowerCase() ? trimmedNew : c
+          );
+        } else {
+          updated = [
+            ...current.filter((c) => c.trim().toLowerCase() !== trimmedOld.toLowerCase()),
+            trimmedNew,
+          ];
+        }
       }
 
       await saveCustomColleges(updated);
 
       // Also update existing applicant records in Supabase database so past registrations stay synced
       try {
-        const { error: dbErr } = await supabase
-          .from("registrations")
-          .update({ institution_name: trimmedNew })
-          .or(`institution_name.eq.${trimmedOld},institution_name.ilike.%${trimmedOld}%`);
+        const oldVariants = Array.from(new Set([trimmedOld, ...getCollegeAliases(trimmedOld)]));
+        for (const variant of oldVariants) {
+          if (!variant) continue;
+          await supabase
+            .from("registrations")
+            .update({ institution_name: trimmedNew })
+            .eq("institution_name", variant);
 
-        if (dbErr) {
-          console.warn("Notice: Could not update existing registration records with new college name:", dbErr);
+          await supabase
+            .from("registrations")
+            .update({ institution_name: trimmedNew })
+            .ilike("institution_name", variant);
         }
       } catch (dbErr) {
         console.warn("DB update exception:", dbErr);

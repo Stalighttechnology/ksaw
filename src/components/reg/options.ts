@@ -22,11 +22,11 @@ export const COLLEGES = [
   "SIDHARTHA COLLEGE BIDAR",
   "KSAWU VIJAYAPURA",
   "Dadapheer Huballi",
-  "Hubballi Center ",
+  "Hubballi Center",
   "SJAM College Ramnagar",
   "Dr.G Shankar Govt Women's First Grade College & PG Study Centre, Ajjarkadu",
   "Government First Grade College & Centre for Post Graduate Studies, Thenkanidiyur",
-  "JPM College Channapatna ",
+  "JPM College Channapatna",
   "VSMS SOMASHEKHAR R KOTHIWALE INSTITUTE OF TECHNOLOGY, NIPANI",
   "Angadi Institute of Technology Belagavi",
   "Shivkumar",
@@ -435,20 +435,25 @@ export function normalizeCollegeName(rawName?: string | null): string {
   if (upper.includes("MALLAPPA")) return "MARI MALLAPPA WOMENS COLLEGE MYSORE";
   if (upper.includes("SIDHARTHA") || upper.includes("SIDDHARTHA")) return "SIDHARTHA COLLEGE BIDAR";
   if (upper.includes("DADAPHEER")) return "Dadapheer Huballi";
-  if (upper.includes("HUBBALLI") || upper.includes("HUBBALI")) return "Hubballi Center ";
+  if (upper.includes("HUBBALLI") || upper.includes("HUBBALI")) return "Hubballi Center";
   if (upper.includes("ANGADI") || upper.includes("AITM")) return "Angadi Institute of Technology Belagavi";
 
   return trimmed;
 }
 
-export function getCollegeAliases(canonicalName: string): string[] {
-  const trimmed = canonicalName.trim();
+export function getCollegeAliases(name: string): string[] {
+  if (!name) return [];
+  const trimmed = name.trim();
+  const lower = trimmed.toLowerCase();
   for (const [canonical, aliases] of Object.entries(COLLEGE_ALIASES)) {
-    if (canonical.trim().toLowerCase() === trimmed.toLowerCase()) {
+    if (
+      canonical.trim().toLowerCase() === lower ||
+      aliases.some((a) => a.trim().toLowerCase() === lower)
+    ) {
       return Array.from(new Set([canonical, ...aliases]));
     }
   }
-  return [canonicalName];
+  return [trimmed];
 }
 
 

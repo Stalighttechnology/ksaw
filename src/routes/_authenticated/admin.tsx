@@ -368,8 +368,17 @@ function AdminPage() {
       if (r.gender) byGender[r.gender] = (byGender[r.gender] ?? 0) + 1;
       const center = r.center_location || r.cur_district;
       if (center) byCenter[center] = (byCenter[center] ?? 0) + 1;
-      const partnerName = normalizeCollegeName(r.institution_name) || r.institution_name;
-      if (partnerName) byPartner[partnerName] = (byPartner[partnerName] ?? 0) + 1;
+      const rawPartner = (r.institution_name as string)?.trim() || "";
+      let partnerName = normalizeCollegeName(rawPartner) || rawPartner;
+      if (partnerName) {
+        const matchedActive = colleges.find((c) => {
+          if (c.toLowerCase() === partnerName.toLowerCase() || c.toLowerCase() === rawPartner.toLowerCase()) return true;
+          const aliases = getCollegeAliases(c).map((a) => a.toLowerCase());
+          return aliases.includes(partnerName.toLowerCase()) || aliases.includes(rawPartner.toLowerCase());
+        });
+        if (matchedActive) partnerName = matchedActive;
+        byPartner[partnerName] = (byPartner[partnerName] ?? 0) + 1;
+      }
       const nigamaName = normalizeNigamaName(r.nigama) || r.nigama;
       if (nigamaName) byNigama[nigamaName] = (byNigama[nigamaName] ?? 0) + 1;
       const t = new Date(r.created_at).getTime();
@@ -377,7 +386,7 @@ function AdminPage() {
       if (t >= startOfWeek) week += 1;
     }
     return { total: exactTotal, today, week, byStatus, byCourse, byGender, byCenter, byPartner, byNigama };
-  }, [statsQuery.data]);
+  }, [statsQuery.data, colleges]);
 
   // Dynamic filter options based on existing applications and interdependent active selections
   const dynamicFilterOptions = useMemo(() => {
@@ -443,17 +452,64 @@ function AdminPage() {
       if (r.normalizedNigama && matchesFilter(r, "nigama")) nigamaSet.add(r.normalizedNigama);
       if (r.normalizedStatus && matchesFilter(r, "status")) statusSet.add(r.normalizedStatus);
       if (r.normalizedPartner && matchesFilter(r, "partner")) {
-        partnerSet.add(normalizeCollegeName(r.normalizedPartner) || r.normalizedPartner);
+        const rawP = r.normalizedPartner.trim();
+        const matched = colleges.find((c) => {
+          if (c.toLowerCase() === rawP.toLowerCase()) return true;
+          const aliases = getCollegeAliases(c).map((a) => a.toLowerCase());
+          return aliases.includes(rawP.toLowerCase());
+        });
+        partnerSet.add(matched || normalizeCollegeName(rawP) || rawP);
       }
       if (r.normalizedCourse && matchesFilter(r, "course")) courseSet.add(r.normalizedCourse);
       if (r.normalizedCategory && matchesFilter(r, "category")) categorySet.add(r.normalizedCategory);
       if (r.normalizedCenter && matchesFilter(r, "center")) centerSet.add(r.normalizedCenter);
     }
 
+    // Add all active managed institutions to partner filter options
+    for (const c of colleges) {
+      partnerSet.add(c);
+    }
+
+    // Consolidate partnerSet so aliases of active colleges resolve to the active canonical name
+    const consolidatedPartners = new Set<string>();
+    const seenPartnerKeys = new Set<string>();
+    for (const p of partnerSet) {
+      if (!p) continue;
+      const normalized = normalizeCollegeName(p) || p;
+      const matched = colleges.find((c) => {
+        if (c.toLowerCase() === p.toLowerCase() || c.toLowerCase() === normalized.toLowerCase()) return true;
+        const aliases = getCollegeAliases(c).map((a) => a.toLowerCase());
+        return aliases.includes(p.toLowerCase()) || aliases.includes(normalized.toLowerCase());
+      });
+      const canonical = matched || normalized;
+      const key = canonical.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (!seenPartnerKeys.has(key)) {
+        seenPartnerKeys.add(key);
+        const allAliases = getCollegeAliases(canonical);
+        for (const a of allAliases) {
+          seenPartnerKeys.add(a.toLowerCase().replace(/[^a-z0-9]/g, ""));
+        }
+        consolidatedPartners.add(canonical);
+      }
+    }
+
     // Preserve actively selected values in options so selection remains visible
     if (nigama) nigamaSet.add(nigama);
     if (status) statusSet.add(status);
-    if (partner) partnerSet.add(normalizeCollegeName(partner) || partner);
+    if (partner) {
+      const normalized = normalizeCollegeName(partner) || partner;
+      const matched = colleges.find((c) => {
+        if (c.toLowerCase() === partner.toLowerCase() || c.toLowerCase() === normalized.toLowerCase()) return true;
+        const aliases = getCollegeAliases(c).map((a) => a.toLowerCase());
+        return aliases.includes(partner.toLowerCase()) || aliases.includes(normalized.toLowerCase());
+      });
+      const canonical = matched || normalized;
+      const key = canonical.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (!seenPartnerKeys.has(key)) {
+        seenPartnerKeys.add(key);
+        consolidatedPartners.add(canonical);
+      }
+    }
     if (course) courseSet.add(course);
     if (category) categorySet.add(category);
     if (centerLocation) centerSet.add(centerLocation);
@@ -468,12 +524,12 @@ function AdminPage() {
         if (idxA !== -1 && idxB !== -1) return idxA - idxB;
         return a.localeCompare(b);
       }),
-      partners: sortAlpha(Array.from(partnerSet)),
+      partners: sortAlpha(Array.from(consolidatedPartners)),
       courses: sortAlpha(Array.from(courseSet)),
       categories: sortAlpha(Array.from(categorySet)),
       centers: sortAlpha(Array.from(centerSet)),
     };
-  }, [statsQuery.data, nigama, status, partner, course, category, centerLocation, gender, safStatus, dateFilter]);
+  }, [statsQuery.data, nigama, status, partner, course, category, centerLocation, gender, safStatus, dateFilter, colleges]);
 
   const total = listQuery.data?.count ?? 0;
   const pageCount = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;

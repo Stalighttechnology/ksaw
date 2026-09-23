@@ -1087,7 +1087,7 @@ function RegistrationPage() {
                       searchable
                       single
                       placeholder="Select College / Institute / University"
-                      options={colleges}
+                      options={institutionName && !colleges.includes(institutionName) ? [institutionName, ...colleges] : colleges}
                       value={institutionName ? [institutionName] : []}
                       onChange={(v) => setInstitutionName(v[0] ?? "")}
                       error={errors["institutionName"]}
