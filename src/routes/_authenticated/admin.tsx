@@ -268,241 +268,77 @@ function AdminPage() {
   const statsQuery = useQuery({
     queryKey: ["registration-stats"],
     queryFn: async () => {
-      // 1. Get exact total count first directly from PostgreSQL
-      const { count: exactTotal, error: countErr } = await supabase
+      // 1. Fetch fast server-side aggregation stats via read-only PostgreSQL RPC
+      const { data, error } = await supabase.rpc("get_admin_dashboard_stats");
+      if (!error && data) {
+        return data as {
+          total: number;
+          today: number;
+          week: number;
+          byStatus: Record<string, number>;
+          byGender: Record<string, number>;
+          byCourse: Record<string, number>;
+          byCenter: Record<string, number>;
+          byPartner: Record<string, number>;
+          byNigama: Record<string, number>;
+        };
+      }
+
+      // 2. Resilient fallback: Get exact total count directly from PostgreSQL if RPC is not yet loaded
+      const { count: exactTotal } = await supabase
         .from("registrations")
         .select("*", { count: "exact", head: true });
-      if (countErr) throw countErr;
 
-      const totalCount = exactTotal ?? 0;
-      if (totalCount === 0) {
-        return { rows: [], totalCount: 0 };
-      }
-
-      // 2. Fetch records in parallel chunks of 1,000 for analytics breakdowns
-      const CHUNK_SIZE = 1000;
-      const numChunks = Math.ceil(totalCount / CHUNK_SIZE);
-      const chunkPromises = [];
-
-      for (let i = 0; i < numChunks; i++) {
-        const from = i * CHUNK_SIZE;
-        const to = from + CHUNK_SIZE - 1;
-        chunkPromises.push(
-          supabase
-            .from("registrations")
-            .select("status, skill_sought, gender, category, created_at, cur_district, center_location, institution_name, nigama, saf_number")
-            .range(from, to)
-        );
-      }
-
-      const results = await Promise.all(chunkPromises);
-      const allRows: Array<{
-        status: string | null;
-        skill_sought: string | null;
-        gender: string | null;
-        category: string | null;
-        created_at: string;
-        cur_district: string | null;
-        center_location: string | null;
-        institution_name: string | null;
-        nigama: string | null;
-        saf_number: string | null;
-      }> = [];
-
-      for (const res of results) {
-        if (res.error) throw res.error;
-        if (res.data) allRows.push(...res.data);
-      }
-
-      return { rows: allRows, totalCount: Math.max(allRows.length, totalCount) };
+      return {
+        total: exactTotal ?? 0,
+        today: 0,
+        week: 0,
+        byStatus: {},
+        byGender: {},
+        byCourse: {},
+        byCenter: {},
+        byPartner: {},
+        byNigama: {},
+      };
     },
-    staleTime: 5 * 60_000,
+    staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
 
   const stats = useMemo(() => {
-    const rows = statsQuery.data?.rows ?? [];
-    const exactTotal = statsQuery.data?.totalCount ?? rows.length;
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).getTime();
-
-    const byStatus: Record<string, number> = {};
-    const byCourse: Record<string, number> = {};
-    const byGender: Record<string, number> = {};
-    const byCenter: Record<string, number> = {};
-    const byPartner: Record<string, number> = {};
-    const byNigama: Record<string, number> = {};
-    let today = 0;
-    let week = 0;
-    for (const r of rows) {
-      byStatus[r.status ?? "Pending"] = (byStatus[r.status ?? "Pending"] ?? 0) + 1;
-      if (r.skill_sought) byCourse[r.skill_sought] = (byCourse[r.skill_sought] ?? 0) + 1;
-      if (r.gender) byGender[r.gender] = (byGender[r.gender] ?? 0) + 1;
-      const center = r.center_location || r.cur_district;
-      if (center) byCenter[center] = (byCenter[center] ?? 0) + 1;
-      const rawPartner = (r.institution_name as string)?.trim() || "";
-      let partnerName = normalizeCollegeName(rawPartner) || rawPartner;
-      if (partnerName) {
-        const matchedActive = colleges.find((c) => {
-          if (c.toLowerCase() === partnerName.toLowerCase() || c.toLowerCase() === rawPartner.toLowerCase()) return true;
-          const aliases = getCollegeAliases(c).map((a) => a.toLowerCase());
-          return aliases.includes(partnerName.toLowerCase()) || aliases.includes(rawPartner.toLowerCase());
-        });
-        if (matchedActive) partnerName = matchedActive;
-        byPartner[partnerName] = (byPartner[partnerName] ?? 0) + 1;
-      }
-      const nigamaName = normalizeNigamaName(r.nigama) || r.nigama;
-      if (nigamaName) byNigama[nigamaName] = (byNigama[nigamaName] ?? 0) + 1;
-      const t = new Date(r.created_at).getTime();
-      if (t >= startOfToday) today += 1;
-      if (t >= startOfWeek) week += 1;
-    }
-    return { total: exactTotal, today, week, byStatus, byCourse, byGender, byCenter, byPartner, byNigama };
-  }, [statsQuery.data, colleges]);
-
-  // Dynamic filter options based on existing applications and interdependent active selections
-  const dynamicFilterOptions = useMemo(() => {
-    const rawRows = statsQuery.data?.rows ?? [];
-    const rows = rawRows.map((r) => ({
-      ...r,
-      normalizedPartner: normalizeCollegeName(r.institution_name) || r.institution_name || "",
-      normalizedNigama: normalizeNigamaName(r.nigama) || r.nigama || "",
-      normalizedStatus: r.status || "Pending",
-      normalizedCourse: r.skill_sought || "",
-      normalizedCategory: r.category || "",
-      normalizedCenter: r.center_location || r.cur_district || "",
-    }));
-
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).getTime();
-
-    const matchesFilter = (
-      r: (typeof rows)[number],
-      excludeKey?: "nigama" | "status" | "partner" | "course" | "category" | "center"
-    ) => {
-      if (nigama && excludeKey !== "nigama") {
-        const nigamaAliases = getNigamaAliases(nigama);
-        if (!nigamaAliases.includes(r.nigama || "") && r.normalizedNigama !== nigama) return false;
-      }
-      if (status && excludeKey !== "status" && r.normalizedStatus !== status) return false;
-      if (partner && excludeKey !== "partner") {
-        const collegeAliases = getCollegeAliases(partner);
-        if (!collegeAliases.includes(r.institution_name || "") && r.normalizedPartner !== partner) return false;
-      }
-      if (course && excludeKey !== "course" && r.normalizedCourse !== course) return false;
-      if (category && excludeKey !== "category" && r.normalizedCategory !== category) return false;
-      if (centerLocation && excludeKey !== "center") {
-        if (!r.normalizedCenter.toLowerCase().includes(centerLocation.toLowerCase())) return false;
-      }
-      if (gender && r.gender !== gender) return false;
-      if (safStatus === "Empty / Missing") {
-        const saf = (r.saf_number || "").trim().toUpperCase();
-        if (saf && saf !== "N/A" && saf !== "NA" && saf.includes("SAF")) return false;
-      } else if (safStatus === "Filled / Present") {
-        const saf = (r.saf_number || "").trim().toUpperCase();
-        if (!saf || !saf.includes("SAF") || saf === "N/A" || saf === "NA") return false;
-      }
-      if (dateFilter === "today") {
-        const t = new Date(r.created_at).getTime();
-        if (isNaN(t) || t < startOfToday) return false;
-      } else if (dateFilter === "week") {
-        const t = new Date(r.created_at).getTime();
-        if (isNaN(t) || t < startOfWeek) return false;
-      }
-      return true;
+    const data = statsQuery.data;
+    return {
+      total: data?.total ?? 0,
+      today: data?.today ?? 0,
+      week: data?.week ?? 0,
+      byStatus: data?.byStatus ?? {},
+      byCourse: data?.byCourse ?? {},
+      byGender: data?.byGender ?? {},
+      byCenter: data?.byCenter ?? {},
+      byPartner: data?.byPartner ?? {},
+      byNigama: data?.byNigama ?? {},
     };
+  }, [statsQuery.data]);
 
-    const nigamaSet = new Set<string>();
-    const statusSet = new Set<string>();
-    const partnerSet = new Set<string>();
-    const courseSet = new Set<string>();
-    const categorySet = new Set<string>();
-    const centerSet = new Set<string>();
-
-    for (const r of rows) {
-      if (r.normalizedNigama && matchesFilter(r, "nigama")) nigamaSet.add(r.normalizedNigama);
-      if (r.normalizedStatus && matchesFilter(r, "status")) statusSet.add(r.normalizedStatus);
-      if (r.normalizedPartner && matchesFilter(r, "partner")) {
-        const rawP = r.normalizedPartner.trim();
-        const matched = colleges.find((c) => {
-          if (c.toLowerCase() === rawP.toLowerCase()) return true;
-          const aliases = getCollegeAliases(c).map((a) => a.toLowerCase());
-          return aliases.includes(rawP.toLowerCase());
-        });
-        partnerSet.add(matched || normalizeCollegeName(rawP) || rawP);
-      }
-      if (r.normalizedCourse && matchesFilter(r, "course")) courseSet.add(r.normalizedCourse);
-      if (r.normalizedCategory && matchesFilter(r, "category")) categorySet.add(r.normalizedCategory);
-      if (r.normalizedCenter && matchesFilter(r, "center")) centerSet.add(r.normalizedCenter);
-    }
-
-    // Add all active managed institutions to partner filter options
-    for (const c of colleges) {
-      partnerSet.add(c);
-    }
-
-    // Consolidate partnerSet so aliases of active colleges resolve to the active canonical name
-    const consolidatedPartners = new Set<string>();
-    const seenPartnerKeys = new Set<string>();
-    for (const p of partnerSet) {
-      if (!p) continue;
-      const normalized = normalizeCollegeName(p) || p;
-      const matched = colleges.find((c) => {
-        if (c.toLowerCase() === p.toLowerCase() || c.toLowerCase() === normalized.toLowerCase()) return true;
-        const aliases = getCollegeAliases(c).map((a) => a.toLowerCase());
-        return aliases.includes(p.toLowerCase()) || aliases.includes(normalized.toLowerCase());
-      });
-      const canonical = matched || normalized;
-      const key = canonical.toLowerCase().replace(/[^a-z0-9]/g, "");
-      if (!seenPartnerKeys.has(key)) {
-        seenPartnerKeys.add(key);
-        const allAliases = getCollegeAliases(canonical);
-        for (const a of allAliases) {
-          seenPartnerKeys.add(a.toLowerCase().replace(/[^a-z0-9]/g, ""));
-        }
-        consolidatedPartners.add(canonical);
-      }
-    }
-
-    // Preserve actively selected values in options so selection remains visible
-    if (nigama) nigamaSet.add(nigama);
-    if (status) statusSet.add(status);
-    if (partner) {
-      const normalized = normalizeCollegeName(partner) || partner;
-      const matched = colleges.find((c) => {
-        if (c.toLowerCase() === partner.toLowerCase() || c.toLowerCase() === normalized.toLowerCase()) return true;
-        const aliases = getCollegeAliases(c).map((a) => a.toLowerCase());
-        return aliases.includes(partner.toLowerCase()) || aliases.includes(normalized.toLowerCase());
-      });
-      const canonical = matched || normalized;
-      const key = canonical.toLowerCase().replace(/[^a-z0-9]/g, "");
-      if (!seenPartnerKeys.has(key)) {
-        seenPartnerKeys.add(key);
-        consolidatedPartners.add(canonical);
-      }
-    }
-    if (course) courseSet.add(course);
-    if (category) categorySet.add(category);
-    if (centerLocation) centerSet.add(centerLocation);
-
+  // Master filter options based on reference lists and managed active institutions
+  const dynamicFilterOptions = useMemo(() => {
     const sortAlpha = (arr: string[]) => arr.sort((a, b) => a.localeCompare(b));
 
+    const nigamaList = Array.from(new Set([...NIGAMAS, ...(nigama ? [nigama] : [])]));
+    const partnerList = Array.from(new Set([...colleges, ...(partner ? [partner] : [])]));
+    const courseList = Array.from(new Set([...SKILLS, ...(course ? [course] : [])]));
+    const categoryList = Array.from(new Set([...CATEGORIES, ...(category ? [category] : [])]));
+    const centerList = Array.from(new Set([...(DISTRICTS.KARNATAKA || []), ...(centerLocation ? [centerLocation] : [])]));
+
     return {
-      nigamas: sortAlpha(Array.from(nigamaSet)),
-      statuses: Array.from(statusSet).sort((a, b) => {
-        const idxA = STATUS_OPTIONS.indexOf(a as any);
-        const idxB = STATUS_OPTIONS.indexOf(b as any);
-        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-        return a.localeCompare(b);
-      }),
-      partners: sortAlpha(Array.from(consolidatedPartners)),
-      courses: sortAlpha(Array.from(courseSet)),
-      categories: sortAlpha(Array.from(categorySet)),
-      centers: sortAlpha(Array.from(centerSet)),
+      nigamas: sortAlpha(nigamaList),
+      statuses: Array.from(STATUS_OPTIONS),
+      partners: sortAlpha(partnerList),
+      courses: sortAlpha(courseList),
+      categories: sortAlpha(categoryList),
+      centers: sortAlpha(centerList),
     };
-  }, [statsQuery.data, nigama, status, partner, course, category, centerLocation, gender, safStatus, dateFilter, colleges]);
+  }, [colleges, nigama, partner, course, category, centerLocation]);
 
   const total = listQuery.data?.count ?? 0;
   const pageCount = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
