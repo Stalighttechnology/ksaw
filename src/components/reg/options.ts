@@ -37,8 +37,10 @@ export const COLLEGES = [
   "Channarayapatna Govt College",
   "BGS College Channarayapatna",
   "KLE BCA College Athani",
-  "Government Womens college - Ramnagara",
+  "Government Womens college - Ramanagara",
   "Government Girls PU college Channapatna - Ramnagara",
+  "Government Polytechnic for Women Ramanagar",
+  "Government Science College (Autonomous) - Hassan",
   "Shanikethan College - Ramnagara",
   "Government first grade College Ramnagar",
   "New expert college , Ramanagar",
@@ -682,6 +684,47 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "VIZUTECH",
     "Vizutech",
   ],
+  "Government Polytechnic for Women Ramanagar": [
+    "Government Polytechnic for Women Ramanagar",
+    "Government Polytechnic for Women Ramanagara",
+    "Government Polytechnic for Women, Ramanagar",
+    "Government Polytechnic for Women, Ramanagara",
+    "Govt Polytechnic for Women Ramanagar",
+    "Govt Polytechnic for Women Ramanagara",
+    "Government Polytechnic Women Ramanagar",
+    "Government Polytechnic Women Ramanagara",
+    "GPTW Ramanagar",
+    "GPTW Ramanagara",
+  ],
+  "Government Science College (Autonomous) - Hassan": [
+    "Government Science College (Autonomous) - Hassan",
+    "Government Science College (Autonomous), Hassan",
+    "Government Science College Hassan",
+    "Government Science College (Autonomous) Hassan",
+    "Govt Science College Hassan",
+    "Government Science College, Hassan",
+  ],
+  "Government Womens college - Ramanagara": [
+    "Government Womens college - Ramanagara",
+    "Government Womens college - Ramnagara",
+    "Government Women's College - Ramanagara",
+    "Government Women's College - Ramnagara",
+    "Government Women's College Ramanagara",
+    "Government Women's College Ramnagara",
+    "Government Womens College Ramanagara",
+    "Government Womens College Ramnagara",
+    "Govt Womens College Ramanagara",
+    "Govt Womens College Ramnagara",
+  ],
+  "Government Girls PU college Channapatna - Ramnagara": [
+    "Government Girls PU college Channapatna - Ramnagara",
+    "Government Girls PU college Channapatna - Ramanagara",
+    "Government Girls PU College Channapatna - Ramnagara",
+    "Government Girls PU College Channapatna - Ramanagara",
+    "Government Girls PU College Channapatna",
+    "Government Girls PU college Channapatna",
+    "Govt Girls PU College Channapatna",
+  ],
 };
 
 export function normalizeCollegeName(rawName?: string | null): string {
@@ -707,6 +750,10 @@ export function normalizeCollegeName(rawName?: string | null): string {
   const upper = trimmed.toUpperCase().replace(/[^A-Z0-9]/g, "");
   if (upper === "SHIVAKUMAR" || upper === "SHIVKUMAR") return "Shivkumar";
   if (upper.includes("VIZUTECH")) return "Vizutech Solutions Pvt Ltd.";
+  if (upper.includes("POLYTECHNIC") && (upper.includes("RAMNAGAR") || upper.includes("RAMANAGAR"))) return "Government Polytechnic for Women Ramanagar";
+  if ((upper.includes("SCIENCE") || upper.includes("SCI")) && upper.includes("HASSAN")) return "Government Science College (Autonomous) - Hassan";
+  if ((upper.includes("WOMEN") || upper.includes("WOMENS")) && (upper.includes("RAMNAGAR") || upper.includes("RAMANAGAR")) && !upper.includes("POLYTECHNIC") && !upper.includes("PU")) return "Government Womens college - Ramanagara";
+  if ((upper.includes("GIRLS") || upper.includes("PU")) && upper.includes("CHANNAPATNA")) return "Government Girls PU college Channapatna - Ramnagara";
   if (upper.includes("BASAVESHWAR") || upper.includes("BASAVESHWARA")) return "Basaveshwar science college, Bagalkote";
   if (upper.includes("SIDDHAROODH") || upper.includes("SIDDHAROODHA") || upper.includes("GUMPA")) return "SADGURU SIDDHAROODH WOMENS DEGREE COLLEGE, GUMPA BIDAR";
   if (upper.includes("NAUBAD") || (upper.includes("WOMEN") && upper.includes("BIDAR") && (upper.includes("GFGC") || upper.includes("FIRSTGRADE") || upper.includes("GOVT")))) return "GOVT. FIRST GRADE COLLEGE FOR WOMEN, NAUBAD BIDAR";
