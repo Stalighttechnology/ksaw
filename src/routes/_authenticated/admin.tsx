@@ -290,8 +290,63 @@ function AdminPage() {
     refetchOnWindowFocus: false,
   });
 
+  // Lightweight query for calculating dynamic interdependent facets
+  const facetRecordsQuery = useQuery<Row[]>({
+    queryKey: ["all_registrations_facets"],
+    queryFn: async () => {
+      let allRecords: Row[] = [];
+      let from = 0;
+      const step = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from("registrations")
+          .select("id, status, skill_sought, category, center_location, cur_district, saf_number, nigama, institution_name, gender")
+          .range(from, from + step - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allRecords.push(...(data as Row[]));
+        if (data.length < step) break;
+        from += step;
+      }
+      return allRecords.map((r) => ({
+        ...r,
+        institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
+        nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
+      })) as Row[];
+    },
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  const facetRecords = facetRecordsQuery.data ?? [];
+
   const stats = useMemo(() => {
     const data = statsQuery.data;
+    const rawByPartner = data?.byPartner ?? {};
+    const normalizedByPartner: Record<string, number> = {};
+
+    if (facetRecords.length > 0) {
+      for (const r of facetRecords) {
+        if (!r.institution_name) continue;
+        const norm = normalizeCollegeName(r.institution_name as string) || (r.institution_name as string);
+        normalizedByPartner[norm] = (normalizedByPartner[norm] || 0) + 1;
+      }
+    } else {
+      for (const [key, count] of Object.entries(rawByPartner)) {
+        const norm = normalizeCollegeName(key) || key;
+        if (count > 0) {
+          normalizedByPartner[norm] = (normalizedByPartner[norm] || 0) + count;
+        }
+      }
+    }
+
+    const activePartnersWithData: Record<string, number> = {};
+    for (const [key, count] of Object.entries(normalizedByPartner)) {
+      if (count > 0) {
+        activePartnersWithData[key] = count;
+      }
+    }
+
     return {
       total: data?.total ?? 0,
       today: data?.today ?? 0,
@@ -300,31 +355,10 @@ function AdminPage() {
       byCourse: data?.byCourse ?? {},
       byGender: data?.byGender ?? {},
       byCenter: data?.byCenter ?? {},
-      byPartner: data?.byPartner ?? {},
+      byPartner: activePartnersWithData,
       byNigama: data?.byNigama ?? {},
     };
-  }, [statsQuery.data]);
-
-  // Lightweight query for calculating dynamic interdependent facets
-  const facetRecordsQuery = useQuery({
-    queryKey: ["all_registrations_facets"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("registrations")
-        .select("id, status, skill_sought, category, center_location, cur_district, saf_number, nigama, institution_name, gender")
-        .limit(10000);
-      if (error) throw error;
-      return ((data ?? []) as Row[]).map((r) => ({
-        ...r,
-        institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
-        nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
-      }));
-    },
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
-  });
-
-  const facetRecords = facetRecordsQuery.data ?? [];
+  }, [statsQuery.data, facetRecords]);
 
   // Interdependent faceted filter options calculation
   const dynamicFilterOptions = useMemo(() => {
@@ -379,7 +413,10 @@ function AdminPage() {
     for (const r of facetRecords) {
       if (matchesFiltersExcept(r, "nigama") && r.nigama) nigamaSet.add(r.nigama as string);
       if (matchesFiltersExcept(r, "status") && r.status) statusSet.add(r.status as string);
-      if (matchesFiltersExcept(r, "partner") && r.institution_name) partnerSet.add(r.institution_name as string);
+      if (matchesFiltersExcept(r, "partner") && r.institution_name) {
+        const norm = normalizeCollegeName(r.institution_name as string) || (r.institution_name as string);
+        partnerSet.add(norm);
+      }
       if (matchesFiltersExcept(r, "course") && r.skill_sought) courseSet.add(r.skill_sought as string);
       if (matchesFiltersExcept(r, "category") && r.category) categorySet.add(r.category as string);
       if (matchesFiltersExcept(r, "centerLocation")) {
@@ -1124,6 +1161,7 @@ function AdminPage() {
             limit={5}
             barColor="bg-primary/80"
             activeValue={partner}
+            sortByAlpha
             onItemClick={(selectedPartner) => {
               resetPage(setPartner)(partner === selectedPartner ? "" : selectedPartner);
               scrollToTable();
@@ -2681,6 +2719,7 @@ function Breakdown({
   barColor = "bg-primary",
   activeValue,
   onItemClick,
+  sortByAlpha = false,
 }: {
   title: string;
   data: Record<string, number>;
@@ -2688,11 +2727,18 @@ function Breakdown({
   barColor?: string;
   activeValue?: string;
   onItemClick?: (key: string) => void;
+  sortByAlpha?: boolean;
 }) {
   const [showAll, setShowAll] = useState(false);
   const allEntries = useMemo(
-    () => Object.entries(data).sort((a, b) => b[1] - a[1]),
-    [data],
+    () =>
+      Object.entries(data).sort((a, b) => {
+        if (sortByAlpha) {
+          return a[0].localeCompare(b[0], undefined, { numeric: true, sensitivity: "base" });
+        }
+        return b[1] - a[1];
+      }),
+    [data, sortByAlpha],
   );
   const entries = showAll ? allEntries : allEntries.slice(0, limit);
   const max = allEntries[0]?.[1] ?? 1;

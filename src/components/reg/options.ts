@@ -62,7 +62,13 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "Karnataka State Akkamahadevi Women University, Jnana Shakti Campus, Vijayapura",
     "KSAWU",
     "KSAW VIJAYAPURA",
-    "KSAWU - Karnataka State Akkamahadevi Women University, Jnana Shakti Campus, Vijayapura",
+    "Akkamahadevi Women's University Vijayapura",
+    "Karnataka State Akkamahadevi Women's University",
+    "KSAWU Vijayapura",
+    "Karnataka State Akkamahadevi Women's University, Vijayapura",
+    "Karnataka State Akkamahadevi Women's University Vijayapura",
+    "Akkamahadevi Womens University Vijayapura",
+    "Akkamahadevi Women's University",
   ],
   "KSAWU - B.V.V. Sangha's Danammadevi Arts, Commerce and Science College for Women, Mudhol": [
     "B.V.V Sangha's Danammadevi Arts, Commerce and Science College for Women, Mudhol.",
@@ -76,6 +82,8 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "Sri Siddrameshwar Education Society's Chandragiri College of Education for Women, Shivabasava Nagar, Belgaum",
     "Sri Siddrameshwar Education Society's Chandragiri College of Education for Women Shivabasava Nagar Belgaum",
     "KSAWU - Sri Siddrameshwar Education Society's Chandragiri College of Education for Women, Shivabasava Nagar, Belgaum",
+    "Siddrameshwar college",
+    "Siddrameshwar College",
   ],
   "KSAWU - Akkamahadevi Arts & Commerce College for Women, Basavakalyan": [
     "Akkamahadevi Arts & Commerce College for Women, Basavakalyan",
@@ -475,9 +483,7 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "GFGC FOR WOMEN GANDHADAKOTI HASSAN",
     "Government First Grade College Gandhadakoti Hassan",
   ],
-  "KSAWU VIJAYAPURA": [
-    "KSAWU VIJAYAPURA",
-  ],
+
   "Shivkumar": [
     "Shivkumar",
     "Shivakumar",
@@ -789,6 +795,7 @@ export function normalizeCollegeName(rawName?: string | null): string {
   if (upper.includes("VIJAYAVITTALA") || upper.includes("VIJAYAVITHALA") || upper === "VVIT" || upper.includes("VVITBANGALORE") || upper.includes("VVITBENGALURU")) return "VIJAYA VITTALA INSTITUTE OF TECHNOLOGY";
   if ((upper.includes("ADITHYA") || upper.includes("ADITYA")) && (upper.includes("HOSAKOTE") || upper.includes("HOSKOTE") || upper.includes("BANGALORE") || upper.includes("BENGALURU"))) return "Sree adithya degree college hosakote, Bangalore rural district";
   if (upper.includes("BASAVESHWAR") || upper.includes("BASAVESHWARA")) return "Basaveshwar science college, Bagalkote";
+  if (upper.includes("SIDDRAMESHWAR")) return "KSAWU - Sri Siddrameshwar Education Society's Chandragiri College of Education for Women, Shivabasava Nagar, Belgaum";
   if (upper.includes("SIDDHAROODH") || upper.includes("SIDDHAROODHA") || upper.includes("GUMPA")) return "SADGURU SIDDHAROODH WOMENS DEGREE COLLEGE, GUMPA BIDAR";
   if (upper.includes("NAUBAD") || (upper.includes("WOMEN") && upper.includes("BIDAR") && (upper.includes("GFGC") || upper.includes("FIRSTGRADE") || upper.includes("GOVT")))) return "GOVT. FIRST GRADE COLLEGE FOR WOMEN, NAUBAD BIDAR";
   if (upper.includes("AKKAAMAHADEVI") || upper.includes("AKKAMAHADEVI") || upper.includes("SHANTIVARDHAK") || upper.includes("UDGIR") || upper.includes("SVES")) return "Shanti Vardhak Education Society Akkaamahadevi Mahila Mahavidya Bidar, Udgir Road BIDAR";
