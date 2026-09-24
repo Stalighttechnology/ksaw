@@ -49,6 +49,20 @@ export const NEW_KSAWU_COLLEGES: readonly string[] = [
   "KSAWU - Shri Amareshwar Education Trust's Janani Arts College for Women, Surpur",
 ];
 
+const ALL_BUILTIN_DEFAULTS = [...DEFAULT_COLLEGES, ...NEW_KSAWU_COLLEGES];
+const ALL_BUILTIN_DEFAULTS_LOWER = new Set(
+  ALL_BUILTIN_DEFAULTS.map((c) => c.trim().toLowerCase())
+);
+
+export function isBuiltInDefaultCollege(name: string): boolean {
+  return ALL_BUILTIN_DEFAULTS_LOWER.has(name.trim().toLowerCase());
+}
+
+export function findMatchingBuiltInCollege(name: string): string | undefined {
+  const targetLower = name.trim().toLowerCase();
+  return ALL_BUILTIN_DEFAULTS.find((c) => c.trim().toLowerCase() === targetLower);
+}
+
 function getLocalCachedColleges(): string[] {
   try {
     const raw = typeof window !== "undefined" ? window.localStorage?.getItem(LOCAL_STORAGE_KEY) : null;
@@ -108,7 +122,7 @@ export async function fetchCustomColleges(): Promise<string[]> {
     }
   };
 
-  // 1. Direct Public HTTP Fetch from Supabase CDN / Storage (Bypasses any API auth/list limitations)
+  // 1. Direct Public HTTP Fetch from Supabase CDN / Storage
   try {
     const { data: pubData } = supabase.storage
       .from(STORAGE_BUCKET)
@@ -139,11 +153,10 @@ export async function fetchCustomColleges(): Promise<string[]> {
       processManifestArray(parsed);
     }
   } catch (dlErr) {
-    // Non-critical if public URL or folder scan works
     console.warn("Root manifest download notice:", dlErr);
   }
 
-  // 3. Scan manifest folders in cloud storage (pick recent timestamped manifests)
+  // 3. Scan manifest folders in cloud storage
   try {
     const folders = [COLLEGES_FOLDER, FALLBACK_MANIFEST_FOLDER, ""];
     const targetFiles: { folder: string; name: string }[] = [];
@@ -230,7 +243,18 @@ export async function fetchCustomColleges(): Promise<string[]> {
     }
   }
 
-  // 6. Filter removed markers and resolve canonical names
+  // 6. Active custom colleges automatically override and purge any conflicting removed markers
+  for (const raw of collectedColleges) {
+    const rawLower = raw.trim().toLowerCase();
+    for (const marker of Array.from(removedMarkers)) {
+      const markerTarget = marker.replace("__removed__:", "").trim().toLowerCase();
+      if (markerTarget === rawLower) {
+        removedMarkers.delete(marker);
+      }
+    }
+  }
+
+  // 7. Filter removed markers and resolve canonical names
   const removedNamesLower = new Set(
     Array.from(removedMarkers).map((m) =>
       m.replace("__removed__:", "").trim().toLowerCase()
@@ -252,6 +276,7 @@ export async function fetchCustomColleges(): Promise<string[]> {
     const alphaKey = canonical.toLowerCase().replace(/[^a-z0-9]/g, "");
     const rawAlphaKey = raw.toLowerCase().replace(/[^a-z0-9]/g, "");
 
+    // If marked as removed (and is a default), skip
     if (
       removedNamesLower.has(lower) ||
       removedNamesLower.has(rawLower) ||
@@ -278,19 +303,42 @@ export async function fetchCustomColleges(): Promise<string[]> {
   }
 
   activeColleges.sort((a, b) => a.localeCompare(b));
-  const finalMasterList = [...activeColleges, ...Array.from(removedMarkers)];
 
+  // ONLY retain removedMarkers that actually belong to built-in defaults and are NOT active
+  const activeLowerSet = new Set(activeColleges.map((ac) => ac.toLowerCase()));
+  const validRemovedMarkers = Array.from(removedMarkers).filter((m) => {
+    const target = m.replace("__removed__:", "").trim().toLowerCase();
+    return isBuiltInDefaultCollege(target) && !activeLowerSet.has(target);
+  });
+
+  const finalMasterList = [...activeColleges, ...validRemovedMarkers];
   setLocalCachedColleges(finalMasterList);
   return finalMasterList;
 }
 
 // Save a consolidated custom colleges manifest to Supabase Cloud Server (Multi-location)
 export async function saveCustomColleges(colleges: string[]): Promise<void> {
+  const activeItems = new Set(
+    colleges
+      .filter((c) => !c.startsWith("__removed__:") && c.trim().length > 0)
+      .map((c) => c.trim().toLowerCase())
+  );
+
   const cleanList = Array.from(
     new Set(
       colleges
         .map((c) => c.trim())
-        .filter((c) => c.length > 0)
+        .filter((c) => {
+          if (!c) return false;
+          if (c.startsWith("__removed__:")) {
+            const target = c.replace("__removed__:", "").trim().toLowerCase();
+            // If the item is present as active, discard the removed marker
+            if (activeItems.has(target)) return false;
+            // Only keep removed markers for actual built-in defaults
+            if (!isBuiltInDefaultCollege(target)) return false;
+          }
+          return true;
+        })
     )
   ).sort((a, b) => {
     const aRem = a.startsWith("__removed__:");
@@ -421,15 +469,18 @@ export function useColleges() {
   const rawCustomColleges = query.data ?? [];
 
   const { visibleDefaults, customColleges, allColleges } = useMemo(() => {
+    const activeCustomNames = rawCustomColleges
+      .filter((c) => !c.startsWith("__removed__:") && c.trim().length > 0)
+      .map((c) => normalizeCollegeName(c.trim()) || c.trim());
+
+    const activeCustomLowerSet = new Set(activeCustomNames.map((c) => c.toLowerCase()));
+
     const removedDefaults = new Set(
       rawCustomColleges
         .filter((c) => c.startsWith("__removed__:"))
         .map((c) => c.replace("__removed__:", "").trim().toLowerCase())
+        .filter((c) => !activeCustomLowerSet.has(c))
     );
-
-    const activeCustomNames = rawCustomColleges
-      .filter((c) => !c.startsWith("__removed__:") && c.trim().length > 0)
-      .map((c) => normalizeCollegeName(c.trim()) || c.trim());
 
     const defaults = Array.from(
       new Set(
@@ -505,27 +556,28 @@ export function useColleges() {
       if (!trimmed) throw new Error("College name cannot be empty");
 
       const current = await fetchCustomColleges();
-      const currentRemoved = new Set(
-        current
-          .filter((c) => c.startsWith("__removed__:"))
-          .map((c) => c.replace("__removed__:", "").trim().toLowerCase())
-      );
-      const currentVisibleDefaults = DEFAULT_COLLEGES.map((c) => c.trim()).filter(
-        (c) => !currentRemoved.has(c.toLowerCase())
-      );
-      const currentCustom = current.filter((c) => !c.startsWith("__removed__:"));
-      const currentAll = Array.from(new Set([...currentVisibleDefaults, ...currentCustom]));
+      const currentActive = current.filter((c) => !c.startsWith("__removed__:") && c.trim().length > 0);
+      const currentVisibleDefaults = DEFAULT_COLLEGES.map((c) => c.trim()).filter((c) => {
+        const lower = c.toLowerCase();
+        return !current.some((m) => m.toLowerCase() === `__removed__:${lower}`);
+      });
+
+      const currentAll = Array.from(new Set([...currentVisibleDefaults, ...currentActive]));
 
       if (currentAll.some((c) => c.toLowerCase() === trimmed.toLowerCase())) {
         throw new Error("This college already exists in the list");
       }
 
-      const updated = current.filter(
-        (c) => c.toLowerCase() !== `__removed__:${trimmed.toLowerCase()}`
+      // Purge any __removed__ marker for this name
+      const filtered = current.filter(
+        (c) =>
+          c.toLowerCase() !== `__removed__:${trimmed.toLowerCase()}` &&
+          c.trim().toLowerCase() !== trimmed.toLowerCase()
       );
-      if (!DEFAULT_COLLEGES.some((c) => c.trim().toLowerCase() === trimmed.toLowerCase())) {
-        updated.push(trimmed);
-      }
+
+      const updated = isBuiltInDefaultCollege(trimmed)
+        ? filtered
+        : [...filtered, trimmed];
 
       await saveCustomColleges(updated);
       return updated;
@@ -547,27 +599,24 @@ export function useColleges() {
     mutationFn: async (collegeToRemove: string) => {
       const trimmed = collegeToRemove.trim();
       const current = await fetchCustomColleges();
+      const matchedBuiltIn = findMatchingBuiltInCollege(trimmed);
+
       let updated: string[];
-
-      const matchedDefault = DEFAULT_COLLEGES.find(
-        (c) => c.trim().toLowerCase() === trimmed.toLowerCase()
-      );
-
-      if (matchedDefault) {
-        updated = [
-          ...current.filter(
-            (c) =>
-              c.trim().toLowerCase() !== trimmed.toLowerCase() &&
-              c.trim().toLowerCase() !== matchedDefault.trim().toLowerCase() &&
-              c.trim().toLowerCase() !== `__removed__:${matchedDefault.trim().toLowerCase()}`
-          ),
-          `__removed__:${matchedDefault.trim()}`,
-        ];
+      if (matchedBuiltIn) {
+        // For built-ins, add __removed__ marker to suppress it
+        const filtered = current.filter(
+          (c) =>
+            c.trim().toLowerCase() !== trimmed.toLowerCase() &&
+            c.trim().toLowerCase() !== matchedBuiltIn.trim().toLowerCase() &&
+            c.toLowerCase() !== `__removed__:${matchedBuiltIn.trim().toLowerCase()}`
+        );
+        updated = [...filtered, `__removed__:${matchedBuiltIn.trim()}`];
       } else {
+        // For custom colleges, simply remove from list and clean any stale markers
         updated = current.filter(
           (c) =>
             c.trim().toLowerCase() !== trimmed.toLowerCase() &&
-            c.trim().toLowerCase() !== `__removed__:${trimmed.toLowerCase()}`
+            c.toLowerCase() !== `__removed__:${trimmed.toLowerCase()}`
         );
       }
 
@@ -597,16 +646,13 @@ export function useColleges() {
       }
 
       const current = await fetchCustomColleges();
-      const currentRemoved = new Set(
-        current
-          .filter((c) => c.startsWith("__removed__:"))
-          .map((c) => c.replace("__removed__:", "").trim().toLowerCase())
-      );
-      const currentVisibleDefaults = DEFAULT_COLLEGES.map((c) => c.trim()).filter(
-        (c) => !currentRemoved.has(c.toLowerCase())
-      );
-      const currentCustom = current.filter((c) => !c.startsWith("__removed__:"));
-      const currentAll = Array.from(new Set([...currentVisibleDefaults, ...currentCustom]));
+      const currentActive = current.filter((c) => !c.startsWith("__removed__:") && c.trim().length > 0);
+      const currentVisibleDefaults = DEFAULT_COLLEGES.map((c) => c.trim()).filter((c) => {
+        const lower = c.toLowerCase();
+        return !current.some((m) => m.toLowerCase() === `__removed__:${lower}`);
+      });
+
+      const currentAll = Array.from(new Set([...currentVisibleDefaults, ...currentActive]));
 
       if (
         currentAll.some(
@@ -618,33 +664,25 @@ export function useColleges() {
         throw new Error("A college with this name already exists");
       }
 
-      let updated: string[];
-      const matchedDefault = DEFAULT_COLLEGES.find(
-        (c) => c.trim().toLowerCase() === trimmedOld.toLowerCase()
-      );
+      const matchedBuiltInOld = findMatchingBuiltInCollege(trimmedOld);
 
-      if (matchedDefault) {
-        updated = [
-          ...current.filter(
-            (c) =>
-              c.trim().toLowerCase() !== trimmedOld.toLowerCase() &&
-              c.trim().toLowerCase() !== matchedDefault.trim().toLowerCase() &&
-              !c.toLowerCase().startsWith(`__removed__:${matchedDefault.trim().toLowerCase()}`)
-          ),
-          `__removed__:${matchedDefault.trim()}`,
-          trimmedNew,
-        ];
+      // Remove oldName and clean any __removed__ marker for the new name or old name
+      const filtered = current.filter((c) => {
+        const lower = c.trim().toLowerCase();
+        if (lower === trimmedOld.toLowerCase()) return false;
+        if (matchedBuiltInOld && lower === matchedBuiltInOld.trim().toLowerCase()) return false;
+        if (lower === `__removed__:${trimmedNew.toLowerCase()}`) return false;
+        if (lower === `__removed__:${trimmedOld.toLowerCase()}`) return false;
+        return true;
+      });
+
+      let updated: string[];
+      if (matchedBuiltInOld) {
+        // If old name was a built-in default, mark the built-in as removed so it doesn't re-appear
+        updated = [...filtered, `__removed__:${matchedBuiltInOld.trim()}`, trimmedNew];
       } else {
-        const filtered = current.filter(
-          (c) =>
-            c.trim().toLowerCase() !== trimmedOld.toLowerCase() &&
-            !c.toLowerCase().startsWith(`__removed__:${trimmedOld.toLowerCase()}`)
-        );
-        updated = [
-          ...filtered,
-          `__removed__:${trimmedOld.trim()}`,
-          trimmedNew,
-        ];
+        // If old name was a custom college, simply replace with trimmedNew (do NOT mark custom as removed!)
+        updated = [...filtered, trimmedNew];
       }
 
       await saveCustomColleges(updated);
@@ -696,3 +734,4 @@ export function useColleges() {
     isRemoving: removeCollegeMutation.isPending,
   };
 }
+
