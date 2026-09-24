@@ -48,7 +48,7 @@ const PAGE_SIZES = [
   { label: "25 / page", value: 25 },
   { label: "50 / page", value: 50 },
   { label: "100 / page", value: 100 },
-  { label: "View All", value: -1 },
+  { label: "250 / page", value: 250 },
 ];
 
 function extractRefNum(val: unknown): number {
@@ -227,30 +227,12 @@ function AdminPage() {
       let data: Row[] = [];
       let count: number | null = 0;
 
-      if (pageSize === -1) {
-        const CHUNK_SIZE = 1000;
-        let from = 0;
-        let hasMore = true;
-        while (hasMore) {
-          const res = await q.range(from, from + CHUNK_SIZE - 1);
-          if (res.error) throw res.error;
-          if (count === null || count === 0) count = res.count;
-          if (res.data && res.data.length > 0) {
-            data.push(...(res.data as Row[]));
-            from += CHUNK_SIZE;
-            if (res.data.length < CHUNK_SIZE) hasMore = false;
-          } else {
-            hasMore = false;
-          }
-        }
-      } else {
-        const from = page * pageSize;
-        const to = from + pageSize - 1;
-        const res = await q.range(from, to);
-        if (res.error) throw res.error;
-        data = (res.data ?? []) as Row[];
-        count = res.count;
-      }
+      const from = page * pageSize;
+      const to = from + pageSize - 1;
+      const res = await q.range(from, to);
+      if (res.error) throw res.error;
+      data = (res.data ?? []) as Row[];
+      count = res.count;
 
       const normalizedRows = ((data ?? []) as Row[]).map((r) => ({
         ...r,
@@ -832,7 +814,7 @@ function AdminPage() {
   return (
     <div className="kk-page min-h-screen bg-muted/20">
       <SiteHeader variant="admin" />
-      <main className="mx-auto w-full max-w-[1680px] px-3 py-4 sm:px-6 sm:py-6 space-y-5">
+      <main className="mx-auto w-full max-w-[1680px] px-3 py-4 sm:px-6 sm:py-6 pb-24 space-y-5">
         {/* Top Header Row */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -1329,7 +1311,7 @@ function AdminPage() {
               <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border text-xs">
                 <button
                   type="button"
-                  disabled={page === 0 || pageSize === -1 || listQuery.isFetching}
+                  disabled={page === 0 || listQuery.isFetching}
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
                   className="inline-flex items-center justify-center h-7 px-2.5 text-xs font-semibold rounded-lg bg-card border border-border/60 text-foreground hover:bg-muted disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-2xs cursor-pointer"
                 >
@@ -1339,19 +1321,11 @@ function AdminPage() {
                   {listQuery.isFetching && (
                     <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                   )}
-                  {pageSize === -1 ? (
-                    <>
-                      All <strong className="text-foreground font-bold">{total}</strong> Records
-                    </>
-                  ) : (
-                    <>
-                      Page <strong className="text-foreground font-bold">{page + 1}</strong> of <strong className="text-foreground font-bold">{pageCount}</strong>
-                    </>
-                  )}
+                  Page <strong className="text-foreground font-bold">{page + 1}</strong> of <strong className="text-foreground font-bold">{pageCount}</strong>
                 </span>
                 <button
                   type="button"
-                  disabled={page + 1 >= pageCount || pageSize === -1 || listQuery.isFetching}
+                  disabled={page + 1 >= pageCount || listQuery.isFetching}
                   onClick={() => setPage((p) => p + 1)}
                   className="inline-flex items-center justify-center h-7 px-2.5 text-xs font-semibold rounded-lg bg-card border border-border/60 text-foreground hover:bg-muted disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-2xs cursor-pointer"
                 >
@@ -1673,7 +1647,7 @@ function AdminPage() {
             <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border text-xs">
               <button
                 type="button"
-                disabled={page === 0 || pageSize === -1 || listQuery.isFetching}
+                disabled={page === 0 || listQuery.isFetching}
                 onClick={() => {
                   setPage((p) => Math.max(0, p - 1));
                   scrollToTable();
@@ -1686,19 +1660,11 @@ function AdminPage() {
                 {listQuery.isFetching && (
                   <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                 )}
-                {pageSize === -1 ? (
-                  <>
-                    All <strong className="text-foreground font-bold">{total}</strong> Records
-                  </>
-                ) : (
-                  <>
-                    Page <strong className="text-foreground font-bold">{page + 1}</strong> of <strong className="text-foreground font-bold">{pageCount}</strong>
-                  </>
-                )}
+                Page <strong className="text-foreground font-bold">{page + 1}</strong> of <strong className="text-foreground font-bold">{pageCount}</strong>
               </span>
               <button
                 type="button"
-                disabled={page + 1 >= pageCount || pageSize === -1 || listQuery.isFetching}
+                disabled={page + 1 >= pageCount || listQuery.isFetching}
                 onClick={() => {
                   setPage((p) => p + 1);
                   scrollToTable();
@@ -2046,8 +2012,8 @@ function AdminPage() {
         isRemoving={isRemoving}
       />
 
-      {/* Floating Maintenance Mode Toggle - Full Bottom Right */}
-      <aside aria-label="Portal status control" className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+      {/* Floating Maintenance Mode Toggle - Bottom Left (avoids overlapping pagination controls on the right) */}
+      <aside aria-label="Portal status control" className="fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-40 animate-in fade-in slide-in-from-bottom-4 duration-300">
         <div
           className={`flex items-center gap-3 rounded-2xl border px-3.5 py-2.5 shadow-2xl backdrop-blur-md transition-all ${
             isMaintenance

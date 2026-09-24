@@ -83,7 +83,17 @@ const emptyAddress = (): Address => ({
 });
 
 // Temporarily paused Nigamas in the registration form only (can be emptied anytime to re-enable)
-const PAUSED_NIGAMAS = ["Devraj Urs", "Kumbara Abhivrudhi"] as const;
+const PAUSED_NIGAMAS = [
+  "Devraj Urs",
+  "Kumbara Abhivrudhi",
+  "Kadugoulla",
+  "Balija Samudaya Abhivrudhi Nigama",
+  "Ambhiga Abhivrudhi",
+  "Savita Samaaja Abhivrudhi",
+  "Uppara Avhivrudhi",
+  "Madivala Machideva Abhvrudhi",
+  "Alemari mathu Are Alemari Abhivrudhi",
+] as const;
 
 type Errors = Record<string, string>;
 
