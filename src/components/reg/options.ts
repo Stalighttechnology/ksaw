@@ -53,6 +53,7 @@ export const COLLEGES = [
   "Shanti Vardhak Education Society Akkaamahadevi Mahila Mahavidya Bidar, Udgir Road BIDAR",
   "Vizutech Solutions Pvt Ltd.",
   "VIJAYA VITTALA INSTITUTE OF TECHNOLOGY",
+  "Sree adithya degree college hosakote, Bangalore rural district",
 ] as const;
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
@@ -740,6 +741,21 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "Vijaya Vittala College",
     "Vijaya Vithala Institute of Technology",
   ],
+  "Sree adithya degree college hosakote, Bangalore rural district": [
+    "Sree adithya degree college hosakote, Bangalore rural district",
+    "Sree Adithya Degree College Hosakote, Bangalore Rural District",
+    "Sree Adithya Degree College, Hosakote, Bangalore Rural District",
+    "Sree Adithya Degree College Hosakote",
+    "Sree Adithya Degree College, Hosakote",
+    "Sri Adithya Degree College Hosakote",
+    "Sri Adithya Degree College, Hosakote",
+    "Sri Aditya Degree College Hosakote",
+    "Sree Aditya Degree College Hosakote",
+    "Sree Adithya Degree College",
+    "Sri Adithya Degree College",
+    "Sree Aditya Degree College",
+    "Sri Aditya Degree College",
+  ],
 };
 
 export function normalizeCollegeName(rawName?: string | null): string {
@@ -770,6 +786,7 @@ export function normalizeCollegeName(rawName?: string | null): string {
   if ((upper.includes("WOMEN") || upper.includes("WOMENS")) && (upper.includes("RAMNAGAR") || upper.includes("RAMANAGAR")) && !upper.includes("POLYTECHNIC") && !upper.includes("PU")) return "Government Womens college - Ramanagara";
   if ((upper.includes("GIRLS") || upper.includes("PU")) && upper.includes("CHANNAPATNA")) return "Government Girls PU college Channapatna - Ramnagara";
   if (upper.includes("VIJAYAVITTALA") || upper.includes("VIJAYAVITHALA") || upper === "VVIT" || upper.includes("VVITBANGALORE") || upper.includes("VVITBENGALURU")) return "VIJAYA VITTALA INSTITUTE OF TECHNOLOGY";
+  if ((upper.includes("ADITHYA") || upper.includes("ADITYA")) && (upper.includes("HOSAKOTE") || upper.includes("HOSKOTE") || upper.includes("BANGALORE") || upper.includes("BENGALURU"))) return "Sree adithya degree college hosakote, Bangalore rural district";
   if (upper.includes("BASAVESHWAR") || upper.includes("BASAVESHWARA")) return "Basaveshwar science college, Bagalkote";
   if (upper.includes("SIDDHAROODH") || upper.includes("SIDDHAROODHA") || upper.includes("GUMPA")) return "SADGURU SIDDHAROODH WOMENS DEGREE COLLEGE, GUMPA BIDAR";
   if (upper.includes("NAUBAD") || (upper.includes("WOMEN") && upper.includes("BIDAR") && (upper.includes("GFGC") || upper.includes("FIRSTGRADE") || upper.includes("GOVT")))) return "GOVT. FIRST GRADE COLLEGE FOR WOMEN, NAUBAD BIDAR";
