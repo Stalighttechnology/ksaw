@@ -6,8 +6,6 @@ import { toast } from "sonner";
 
 const STORAGE_BUCKET = "registrations";
 const MANIFEST_FILE_NAME = "colleges_manifest.json";
-const COLLEGES_FOLDER = "manifests/colleges";
-const FALLBACK_MANIFEST_FOLDER = "manifests";
 const LOCAL_STORAGE_KEY = "ksaw_custom_colleges_cache";
 const SYNC_CHANNEL_NAME = "ksaw_colleges_sync_channel";
 
@@ -122,26 +120,8 @@ export async function fetchCustomColleges(): Promise<string[]> {
     }
   };
 
-  // 1. Direct Public HTTP Fetch from Supabase CDN / Storage
-  try {
-    const { data: pubData } = supabase.storage
-      .from(STORAGE_BUCKET)
-      .getPublicUrl(MANIFEST_FILE_NAME);
-
-    if (pubData?.publicUrl) {
-      const res = await fetch(`${pubData.publicUrl}?t=${Date.now()}`, {
-        cache: "no-store",
-      });
-      if (res.ok) {
-        const json = await res.json();
-        processManifestArray(json);
-      }
-    }
-  } catch (pubErr) {
-    console.warn("Public CDN manifest fetch notice:", pubErr);
-  }
-
-  // 2. Direct Supabase Storage Download for root manifest
+  // 1. Primary source: root manifest via authenticated download (canonical truth)
+  let rootManifestLoaded = false;
   try {
     const { data: blob } = await supabase.storage
       .from(STORAGE_BUCKET)
@@ -151,64 +131,39 @@ export async function fetchCustomColleges(): Promise<string[]> {
       const text = await blob.text();
       const parsed = JSON.parse(text);
       processManifestArray(parsed);
+      rootManifestLoaded = true;
     }
   } catch (dlErr) {
     console.warn("Root manifest download notice:", dlErr);
   }
 
-  // 3. Scan manifest folders in cloud storage
-  try {
-    const folders = [COLLEGES_FOLDER, FALLBACK_MANIFEST_FOLDER, ""];
-    const targetFiles: { folder: string; name: string }[] = [];
+  // 2. Fallback: public CDN fetch if authenticated download failed
+  if (!rootManifestLoaded) {
+    try {
+      const { data: pubData } = supabase.storage
+        .from(STORAGE_BUCKET)
+        .getPublicUrl(MANIFEST_FILE_NAME);
 
-    for (const folder of folders) {
-      try {
-        const { data: files } = await supabase.storage
-          .from(STORAGE_BUCKET)
-          .list(folder, { limit: 100 });
-
-        if (files && files.length > 0) {
-          const jsonFiles = files
-            .filter((f) => f.name.endsWith(".json") && f.name.includes("college"))
-            .sort((a, b) => {
-              const tsA = parseInt(a.name.replace(/\D/g, ""), 10) || 0;
-              const tsB = parseInt(b.name.replace(/\D/g, ""), 10) || 0;
-              return tsB - tsA;
-            });
-
-          for (const f of jsonFiles.slice(0, 5)) {
-            targetFiles.push({ folder, name: f.name });
-          }
-        }
-      } catch {
-        // Ignore folder list failure
-      }
-    }
-
-    if (targetFiles.length > 0) {
-      const downloads = await Promise.allSettled(
-        targetFiles.map(async (item) => {
-          const path = item.folder ? `${item.folder}/${item.name}` : item.name;
-          const { data: blob } = await supabase.storage
-            .from(STORAGE_BUCKET)
-            .download(path);
-          if (!blob) return null;
-          const text = await blob.text();
-          return JSON.parse(text);
-        })
-      );
-
-      for (const res of downloads) {
-        if (res.status === "fulfilled" && res.value) {
-          processManifestArray(res.value);
+      if (pubData?.publicUrl) {
+        const res = await fetch(`${pubData.publicUrl}?t=${Date.now()}`, {
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const json = await res.json();
+          processManifestArray(json);
         }
       }
+    } catch (pubErr) {
+      console.warn("Public CDN manifest fetch notice:", pubErr);
     }
-  } catch (scanErr) {
-    console.warn("Folder manifest scanning notice:", scanErr);
   }
 
-  // 4. Recover any custom institution names from existing database registrations
+  // NOTE: Intentionally NOT scanning timestamped manifest files in folders.
+  // Those are stale backup files that accumulate with every save and would
+  // resurrect deleted / renamed colleges on every fetch, causing duplicates.
+  // The root manifest (colleges_manifest.json) is the single source of truth.
+
+  // 3. Recover any custom institution names from existing database registrations
   try {
     const { data: dbRecords } = await supabase
       .from("registrations")
@@ -356,11 +311,9 @@ export async function saveCustomColleges(colleges: string[]): Promise<void> {
     type: "application/json",
   });
 
-  const timestamp = Date.now();
-  let uploaded = false;
-  let lastError: Error | null = null;
-
-  // Target 1: Root manifest file (with upsert)
+  // Only write to the single root manifest file (upsert).
+  // Do NOT write timestamped backup files — they accumulate and pollute
+  // future reads by resurrecting old deleted/renamed college entries.
   try {
     const { error } = await supabase.storage
       .from(STORAGE_BUCKET)
@@ -369,50 +322,13 @@ export async function saveCustomColleges(colleges: string[]): Promise<void> {
         upsert: true,
       });
 
-    if (!error) {
-      uploaded = true;
-    } else {
-      lastError = new Error(error.message);
+    if (error) {
+      console.error("Cloud server manifest upload error:", error.message);
+      throw new Error(error.message || "Failed to save colleges to cloud storage.");
     }
   } catch (err: any) {
-    lastError = err;
-  }
-
-  // Target 2: Dedicated manifests folder with timestamp
-  try {
-    const folderPath = `${COLLEGES_FOLDER}/colleges_${timestamp}.json`;
-    const { error } = await supabase.storage
-      .from(STORAGE_BUCKET)
-      .upload(folderPath, jsonBlob, {
-        contentType: "application/json",
-      });
-
-    if (!error) {
-      uploaded = true;
-    }
-  } catch {
-    // Ignore folder upload fallback notice
-  }
-
-  // Target 3: Root timestamped file
-  try {
-    const rootTsPath = `colleges_${timestamp}.json`;
-    const { error } = await supabase.storage
-      .from(STORAGE_BUCKET)
-      .upload(rootTsPath, jsonBlob, {
-        contentType: "application/json",
-      });
-
-    if (!error) {
-      uploaded = true;
-    }
-  } catch {
-    // Ignore root timestamp upload notice
-  }
-
-  if (!uploaded && lastError) {
-    console.error("Cloud server manifest upload error:", lastError);
-    throw new Error(lastError.message || "Failed to save colleges to cloud storage.");
+    console.error("Cloud server manifest upload exception:", err);
+    throw new Error(err?.message || "Failed to save colleges to cloud storage.");
   }
 }
 
