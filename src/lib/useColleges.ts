@@ -1,13 +1,15 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { COLLEGES as DEFAULT_COLLEGES, getCollegeAliases, normalizeCollegeName } from "@/components/reg/options";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const STORAGE_BUCKET = "registrations";
+const MANIFEST_FILE_NAME = "colleges_manifest.json";
 const COLLEGES_FOLDER = "manifests/colleges";
 const FALLBACK_MANIFEST_FOLDER = "manifests";
 const LOCAL_STORAGE_KEY = "ksaw_custom_colleges_cache";
+const SYNC_CHANNEL_NAME = "ksaw_colleges_sync_channel";
 
 export const NEW_KSAWU_COLLEGES: readonly string[] = [
   "KSAWU - BVVS Akkamahadevi Women's Arts, Science & Commerce College, Bagalkot",
@@ -73,13 +75,79 @@ function setLocalCachedColleges(list: string[]): void {
   }
 }
 
-// Fetch custom colleges with cross-folder manifest union and database recovery
-export async function fetchCustomColleges(): Promise<string[]> {
+function broadcastCollegesUpdate(list: string[]): void {
   try {
-    const folders = [COLLEGES_FOLDER, FALLBACK_MANIFEST_FOLDER];
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      const channel = new BroadcastChannel(SYNC_CHANNEL_NAME);
+      channel.postMessage(list);
+      channel.close();
+    }
+  } catch {
+    // Ignore broadcast errors
+  }
+}
+
+// Fetch custom colleges using multi-tier cloud strategy + DB recovery + local cache
+export async function fetchCustomColleges(): Promise<string[]> {
+  const collectedColleges = new Set<string>();
+  const removedMarkers = new Set<string>();
+
+  const processManifestArray = (rawArr: unknown) => {
+    if (Array.isArray(rawArr)) {
+      for (const raw of rawArr) {
+        if (typeof raw === "string") {
+          const trimmed = raw.trim();
+          if (!trimmed) continue;
+          if (trimmed.startsWith("__removed__:")) {
+            removedMarkers.add(trimmed);
+          } else {
+            collectedColleges.add(trimmed);
+          }
+        }
+      }
+    }
+  };
+
+  // 1. Direct Public HTTP Fetch from Supabase CDN / Storage (Bypasses any API auth/list limitations)
+  try {
+    const { data: pubData } = supabase.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(MANIFEST_FILE_NAME);
+
+    if (pubData?.publicUrl) {
+      const res = await fetch(`${pubData.publicUrl}?t=${Date.now()}`, {
+        cache: "no-store",
+      });
+      if (res.ok) {
+        const json = await res.json();
+        processManifestArray(json);
+      }
+    }
+  } catch (pubErr) {
+    console.warn("Public CDN manifest fetch notice:", pubErr);
+  }
+
+  // 2. Direct Supabase Storage Download for root manifest
+  try {
+    const { data: blob } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .download(MANIFEST_FILE_NAME);
+
+    if (blob) {
+      const text = await blob.text();
+      const parsed = JSON.parse(text);
+      processManifestArray(parsed);
+    }
+  } catch (dlErr) {
+    // Non-critical if public URL or folder scan works
+    console.warn("Root manifest download notice:", dlErr);
+  }
+
+  // 3. Scan manifest folders in cloud storage (pick recent timestamped manifests)
+  try {
+    const folders = [COLLEGES_FOLDER, FALLBACK_MANIFEST_FOLDER, ""];
     const targetFiles: { folder: string; name: string }[] = [];
 
-    // 1. Scan manifest folders in cloud storage (pick recent timestamped manifests)
     for (const folder of folders) {
       try {
         const { data: files } = await supabase.storage
@@ -88,33 +156,29 @@ export async function fetchCustomColleges(): Promise<string[]> {
 
         if (files && files.length > 0) {
           const jsonFiles = files
-            .filter((f) => f.name.endsWith(".json"))
+            .filter((f) => f.name.endsWith(".json") && f.name.includes("college"))
             .sort((a, b) => {
               const tsA = parseInt(a.name.replace(/\D/g, ""), 10) || 0;
               const tsB = parseInt(b.name.replace(/\D/g, ""), 10) || 0;
               return tsB - tsA;
             });
 
-          // Take the top 5 most recent manifests from each folder for instant merging
           for (const f of jsonFiles.slice(0, 5)) {
             targetFiles.push({ folder, name: f.name });
           }
         }
-      } catch (scanErr) {
-        console.warn(`Storage folder scan error for ${folder}:`, scanErr);
+      } catch {
+        // Ignore folder list failure
       }
     }
 
-    const collectedColleges = new Set<string>();
-    const removedMarkers = new Set<string>();
-
-    // 2. Download and merge colleges from discovered storage manifests in parallel
     if (targetFiles.length > 0) {
       const downloads = await Promise.allSettled(
         targetFiles.map(async (item) => {
+          const path = item.folder ? `${item.folder}/${item.name}` : item.name;
           const { data: blob } = await supabase.storage
             .from(STORAGE_BUCKET)
-            .download(`${item.folder}/${item.name}`);
+            .download(path);
           if (!blob) return null;
           const text = await blob.text();
           return JSON.parse(text);
@@ -122,189 +186,105 @@ export async function fetchCustomColleges(): Promise<string[]> {
       );
 
       for (const res of downloads) {
-        if (res.status === "fulfilled" && Array.isArray(res.value)) {
-          for (const raw of res.value) {
-            if (typeof raw === "string") {
-              const trimmed = raw.trim();
-              if (!trimmed) continue;
-              if (trimmed.startsWith("__removed__:")) {
-                removedMarkers.add(trimmed);
-              } else {
-                collectedColleges.add(trimmed);
-              }
-            }
-          }
+        if (res.status === "fulfilled" && res.value) {
+          processManifestArray(res.value);
         }
       }
     }
+  } catch (scanErr) {
+    console.warn("Folder manifest scanning notice:", scanErr);
+  }
 
-    // 3. Recover any custom institution names from existing database registrations
-    try {
-      const { data: dbRecords } = await supabase
-        .from("registrations")
-        .select("institution_name")
-        .not("institution_name", "is", null)
-        .limit(1000);
+  // 4. Recover any custom institution names from existing database registrations
+  try {
+    const { data: dbRecords } = await supabase
+      .from("registrations")
+      .select("institution_name")
+      .not("institution_name", "is", null)
+      .limit(1000);
 
-      if (dbRecords && dbRecords.length > 0) {
-        const defaultLower = new Set(DEFAULT_COLLEGES.map((c) => c.toLowerCase()));
-        for (const record of dbRecords) {
-          const inst = record.institution_name?.trim();
-          if (inst && !defaultLower.has(inst.toLowerCase())) {
-            collectedColleges.add(inst);
-          }
+    if (dbRecords && dbRecords.length > 0) {
+      const defaultLower = new Set(DEFAULT_COLLEGES.map((c) => c.toLowerCase()));
+      for (const record of dbRecords) {
+        const inst = record.institution_name?.trim();
+        if (inst && !defaultLower.has(inst.toLowerCase())) {
+          collectedColleges.add(inst);
         }
       }
-    } catch (dbErr) {
-      console.warn("DB institution recovery notice:", dbErr);
     }
+  } catch (dbErr) {
+    console.warn("DB institution recovery notice:", dbErr);
+  }
 
-    // 4. Include all new KSAWU institutions and local cache
-    for (const c of NEW_KSAWU_COLLEGES) {
+  // 5. Include all predefined KSAWU institutions and local cache
+  for (const c of NEW_KSAWU_COLLEGES) {
+    collectedColleges.add(c);
+  }
+
+  const localCached = getLocalCachedColleges();
+  for (const c of localCached) {
+    if (c.startsWith("__removed__:")) {
+      removedMarkers.add(c);
+    } else {
       collectedColleges.add(c);
     }
-
-    const localCached = getLocalCachedColleges();
-    for (const c of localCached) {
-      if (c.startsWith("__removed__:")) {
-        removedMarkers.add(c);
-      } else {
-        collectedColleges.add(c);
-      }
-    }
-
-    // 5. Remove any colleges explicitly marked as removed and resolve aliases to canonical single names
-    const removedNamesLower = new Set(
-      Array.from(removedMarkers).map((m) =>
-        m.replace("__removed__:", "").trim().toLowerCase()
-      )
-    );
-
-    const activeColleges: string[] = [];
-    const seenLower = new Set<string>();
-    const seenAlphaNumeric = new Set<string>();
-    const defaultLower = new Set(DEFAULT_COLLEGES.map((c) => c.toLowerCase()));
-    const defaultAlphaNumeric = new Set(
-      DEFAULT_COLLEGES.map((c) => c.toLowerCase().replace(/[^a-z0-9]/g, ""))
-    );
-
-    for (const raw of collectedColleges) {
-      const canonical = normalizeCollegeName(raw) || raw;
-      const lower = canonical.toLowerCase();
-      const rawLower = raw.toLowerCase();
-      const alphaKey = canonical.toLowerCase().replace(/[^a-z0-9]/g, "");
-      const rawAlphaKey = raw.toLowerCase().replace(/[^a-z0-9]/g, "");
-
-      // If removed explicitly or if this raw variation was marked removed, skip
-      if (
-        removedNamesLower.has(lower) ||
-        removedNamesLower.has(rawLower) ||
-        removedNamesLower.has(alphaKey) ||
-        removedNamesLower.has(rawAlphaKey)
-      ) {
-        continue;
-      }
-
-      // If this maps to a default college, skip from custom list
-      if (defaultLower.has(lower) || defaultAlphaNumeric.has(alphaKey)) {
-        continue;
-      }
-
-      if (!seenLower.has(lower) && !seenAlphaNumeric.has(alphaKey)) {
-        seenLower.add(lower);
-        seenAlphaNumeric.add(alphaKey);
-        // Mark all aliases as seen so old spelling variations don't get added
-        const aliases = getCollegeAliases(canonical);
-        for (const a of aliases) {
-          seenLower.add(a.trim().toLowerCase());
-          seenAlphaNumeric.add(a.toLowerCase().replace(/[^a-z0-9]/g, ""));
-        }
-        activeColleges.push(canonical);
-      }
-    }
-
-    activeColleges.sort((a, b) => a.localeCompare(b));
-
-    const finalMasterList = [...activeColleges, ...Array.from(removedMarkers)];
-
-    // Cache locally immediately
-    setLocalCachedColleges(finalMasterList);
-
-    // Background-sync the consolidated list to cloud storage
-    if (finalMasterList.length >= localCached.length) {
-      void saveCustomColleges(finalMasterList).catch((err) => {
-        console.warn("Background manifest sync notice:", err);
-      });
-    }
-
-    // Safe background update for known duplicate pairs to ensure DB registrations point to canonical names
-    try {
-      const dbPairs: [string, string][] = [
-        ["KSAWU VIJAYAPURA", "KSAWU - Karnataka State Akkamahadevi Women University, Jnana Shakti Campus, Vijayapura"],
-        ["B.V.V Sangha's Danammadevi Arts, Commerce and Science College for Women, Mudhol.", "KSAWU - B.V.V. Sangha's Danammadevi Arts, Commerce and Science College for Women, Mudhol"],
-        ["KASWU-Sri. Siddrameshwar Education Society's chandrageri College of Education for Women Shivabasava nagar, Belguam-591 102,", "KSAWU - Sri Siddrameshwar Education Society's Chandragiri College of Education for Women, Shivabasava Nagar, Belgaum"],
-        ["Akkamahadevi Arts & Commerce College for Women, Basavakalyan", "KSAWU - Akkamahadevi Arts & Commerce College for Women, Basavakalyan"],
-        ["Akkamahadevi Mahila Mahavidyalay, Bidar-", "KSAWU - Akkamahadevi Mahila Mahavidyalay, Bidar"],
-        ["Sri. Shivalingeshwar Degree College for Women, Haveri-", "KSAWU - Sri Shivalingeshwar Degree College for Women, Haveri"],
-        ["B.A.J.S.S. Arts & Commerce College for Women Ranebennur", "KSAWU - B.A.J.S.S. Arts & Commerce College for Women, Ranebennur"],
-        ["Anjuman Degree College for Women, Shamshuddin Circle Near Hotel cola paradise Bhatkal", "KSAWU - Anjuman Degree College for Women, Shamsuddin Circle, Bhatkal"],
-        ["Bethel Christian Fellowship Association ® Bethel Women's Degree College, Virupapura, Anegundi Road, Gangavathi", "KSAWU - Bethel Christian Fellowship Association® Bethel Women's Degree College, Virupapura, Anegundi Road, Gangavati"],
-        ["B.L.D.E's Society's Smt. Bangaramma Sajjan Arts, Commerce and Science College for Women, S.S College Campus BLDE Hospital Road, Vijayapura", "KSAWU - B.L.D.E's Society's Smt. Bangaramma Sajjan Arts, Commerce and Science College for Women, S.S College Campus, BLDE Hospital Road, Vijayapura"],
-        ["B.D.E Society's Arts Science and Commerce College foe Women, Vijayapur", "KSAWU - B.D.E Society's Arts and Commerce College for Women, Vijayapura"],
-        ["Bi Bi Raza Degree College or Women, (Arts & Science) Rouza Buzurg Kalaburgi -585 104,", "KSAWU - Bi Bi Raza Degree College for Women (Arts & Science), Rouza Buzurg, Kalaburgi"],
-        ["Godutai Doddappa Appa rts, Commerce and Science Degree College for Women, Kalaburgi.", "KSAWU - Godutai Dodappa Appa Arts, Commerce and Science Degree College for Women, Kalaburgi"],
-        ["Godutai College of Education for women, Sharananagar, Kalaburgi", "KSAWU - Godutai College of Education for Women, Sharananagar, Kalaburgi"],
-        ["HKE Society's Smt Veeramma Gangasiri College for Women, PDA Engg Coollege Road Aiwan-E-Shahi Area Station Bazar Kalaburagi", "KSAWU - HKE Society's Smt Veeramma Gangasiri College for Women, PDA Engg College Road, Aiwan-E-Shahi Area, Kalaburgi"],
-        ["Reshmi Educational & Charitable Trust's, Kum Sharaneshwari Reshmi Womens B.Ed College, Kalaburgi", "KSAWU - Reshmi Educational & Charitable Trust's, Kum. Sharaneshwari Reshmi Women's B.Ed College, Kalaburgi"],
-        ["Reshmi Educational and Charitable trust Sharaneshwari Reshmi womens degree college (BA, BSC, BOM, BBA, BCA) Kalaburgi", "KSAWU - Reshmi Educational and Charitable Trust's Sharaneshwari Reshmi Women's Degree College, Kalaburgi"],
-        ["BVVS Akkamahadevi Women's Arts ,Science & Commerce College, Bagalkot-587101", "KSAWU - BVVS Akkamahadevi Women's Arts, Science & Commerce College, Bagalkot"],
-        ["Education Society's Akkamahadevi Arts college for women Bailhonga", "KSAWU - Shri Basaveshwar Education Society's Akkamahadevi Arts College for Women, Bailhongal"],
-        ["Gujjamma Education society's, College of Education for women (B.Ed) Near R.E.C ,Humnabad Road, Bhalki", "KSAWU - Gujjam... Education Society's College of Education for Women (B.Ed), Bhalki"],
-        ["J.M.M's Sundrabai B. Patil women's College of Education Tilakwadi, Belguam-590 006,", "KSAWU - J.M.M's Sundrabai B. Patil Women's College of Education, Tilakwadi, Belgaum"],
-        ["KLE Society's Institute of Fashion Technology and apparel Design Womens College, College Road, Belgaum", "KSAWU - KLE Society's Institute of Fashion Technology and Apparel Design College, Belagavi"],
-        ["Kalmath Sri Chanabasava Swamy Arts & Commerce College for Women, Gangavati", "KSAWU - Kalmath Sri Channabasava Swamy Arts & Commerce College for Women, Gangavati"],
-        ["Kudal Sangam Education Societies Arts College for Women, Shahabad", "KSAWU - Kudal Sangam Education Societies Arts College for Women, Shahabad"],
-        ["Matoshri Kantamma Sanganagouda Patil (Sasnoor) College of Education for women, Hirur , Vijayapura", "KSAWU - Matoshri Kantamma Sangannagouda Patil (Sasnoor) College of Education for Women, Hirur"],
-        ["S.J.M. V's Arts & Commerce College for Women J.C. Nagar, Hubli", "KSAWU - S.J.M.V's Arts & Commerce College for Women, J.C. Nagar, Hubli"],
-        ["S.J.M.V's Business Administration College for Women J.C. Nagar, Hubli-", "KSAWU - S.J.M.V's Business Administration College for Women, J.C. Nagar, Hubli"],
-        ["S.J.M.V: B.A.J.S.S Arts & Commerce College for Women Church Road, Post Box No:52, Ranebennur", "KSAWU - S.J.M.V: B.A.J.S.S Arts & Commerce College for Women, Church Road, Ranebennur"],
-        ["Secab's A.R.S. Inamdar Arts, Science & Commerce College for Women, Noubag Vijayapura", "KSAWU - Secab's A.R.S. Inamdar Arts, Science & Commerce College for Women, Noubag, Vijayapura"],
-        ["Shastriji Vasati Education, College for women,  Okkalgeri- Gadag", "KSAWU - Shasthriji Vasati Education College for Women, Okkalgeri, Gadag"],
-        ["Shri Padmaraj Vidyavardhak Society's Shri. Padmaraj Women's Degree College Sindagi", "KSAWU - Shri Padmaraj Vidyavardhak Society's Shri Padmaraj Women's Degree College, Sindagi"],
-        ["Shri. Amareshwar Education Trust's Janani arts college for women, Surpur, Yadgir", "KSAWU - Shri Amareshwar Education Trust's Janani Arts College for Women, Surpur"],
-        ["Shri. Valabellary Channabasaveshwar Educational Trust, Patil Womens Degree College Sindhanoor", "KSAWU - Shri. Valabellary Channabasaveshwar Educational Trust, Patil Women's Degree College, Sindhanoor"],
-        ["Smt. Ahalyabai A. Patil Arts & Commerce College for Women, Chikkodi", "KSAWU - Smt. Ahalyabai A. Patil Arts & Commerce College for Women, Chikodi"],
-        ["Smt. Allum Sumangalamma Memorial Degree College for Wome", "KSAWU - Smt. Allum Sumangalamma Memorial Degree College for Women, Gandhi Nagar, Ballari"],
-        ["Smt. K.S. Jiglur Arts & Dr. (Smt) S.M. Sheshgiri Commerce College for Women Near R.N. Stadium, Dharwad", "KSAWU - Smt. K.S. Jiglur Arts & Dr. (Smt.) S.M. Sheshgiri Commerce College for Women, Dharwad"],
-        ["Smt. Ugama devi Bhavarlal Theosophical Nahar College for Women, Asundi Bheemrao Nagar, Hampi Road, Hospet", "KSAWU - Smt. Uggama Devi Bhavarlal Theosophical Narhar College for Women, Asundi Bheemrao Nagar, Hampi Road, Hospet"],
-        ["Soma Subhadramma Ramangoud Arts & Commerce College for Women Station Road, Raichur", "KSAWU - Soma Subhadramma Ramagoud Arts & Commerce College for Women, Station Road, Raichur"],
-        ["Sri Hucheshwar Vidyavardhak Sanghas, Education College for Women, Kamatgi", "KSAWU - Sri Hucheshwar Vidyavardhak Sangha's Education College for Women, Kamatgi"],
-        ["Sri. Bapugoud Darshnapur Memorial College for Women, Shahapur, Yadgir", "KSAWU - Sri. Bapugoud Darshanpur Memorial College for Women, Shahapur"],
-        ["Sri. Gurubasappa Revansidappa Goled Arts & Commerce College for Women, Shahabad,", "KSAWU - Sri. Gurubasappa Revanasiddappa Goled Arts & Commerce College for Women, Shahabad"],
-        ["Sri. Vijay Mahantesh Arts & Commerce College for Women, Ilkal-587 125", "KSAWU - Sri Vijay Mahantesh Arts & Commerce College for Women, Ilkal"],
-        ["ri Jagadguru Gurusiddeshwara Vidyavardhak & Sanskritika samsthe's College of Education for women Guledgudda- 587203", "KSAWU - Shri Jagadguru Gurusiddeshwara Vidyavardhak & Sanskritika Samsthe's College of Education for Women, Guledgudd"],
-        ["shri Jagadguru Gurusiddeshwara Vidyavardhak & Sanskritika samsthe's College of Education for women Guledgudda- 587203", "KSAWU - Shri Jagadguru Gurusiddeshwara Vidyavardhak & Sanskritika Samsthe's College of Education for Women, Guledgudd"],
-        ["Balaji Degree College ,Hanumanth Nagar", "Balaji Degree College -Hanumanth Nagar"],
-        ["AMC Engineering College Bannerghatta Road, Bengaluru 560083 Autonomous", "AMC Engineering College Bannerghatta Road, Bengaluru 560083 Autonomous Institution"],
-        ["BES College , Jayanagarr", "BES College , Jayanagar"],
-        ["A V K COLLEGE FOR WOMEN", "AVK COLLEGE HASSAN"],
-        ["Shivakumar", "Shivkumar"],
-      ];
-      for (const [oldName, newName] of dbPairs) {
-        void supabase.from("registrations").update({ institution_name: newName }).eq("institution_name", oldName);
-      }
-    } catch {
-      // Non-critical background sync notice
-    }
-
-    return finalMasterList;
-  } catch (err) {
-    console.error("Failed to load custom colleges manifest:", err);
-    return getLocalCachedColleges();
   }
+
+  // 6. Filter removed markers and resolve canonical names
+  const removedNamesLower = new Set(
+    Array.from(removedMarkers).map((m) =>
+      m.replace("__removed__:", "").trim().toLowerCase()
+    )
+  );
+
+  const activeColleges: string[] = [];
+  const seenLower = new Set<string>();
+  const seenAlphaNumeric = new Set<string>();
+  const defaultLower = new Set(DEFAULT_COLLEGES.map((c) => c.toLowerCase()));
+  const defaultAlphaNumeric = new Set(
+    DEFAULT_COLLEGES.map((c) => c.toLowerCase().replace(/[^a-z0-9]/g, ""))
+  );
+
+  for (const raw of collectedColleges) {
+    const canonical = normalizeCollegeName(raw) || raw;
+    const lower = canonical.toLowerCase();
+    const rawLower = raw.toLowerCase();
+    const alphaKey = canonical.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const rawAlphaKey = raw.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    if (
+      removedNamesLower.has(lower) ||
+      removedNamesLower.has(rawLower) ||
+      removedNamesLower.has(alphaKey) ||
+      removedNamesLower.has(rawAlphaKey)
+    ) {
+      continue;
+    }
+
+    if (defaultLower.has(lower) || defaultAlphaNumeric.has(alphaKey)) {
+      continue;
+    }
+
+    if (!seenLower.has(lower) && !seenAlphaNumeric.has(alphaKey)) {
+      seenLower.add(lower);
+      seenAlphaNumeric.add(alphaKey);
+      const aliases = getCollegeAliases(canonical);
+      for (const a of aliases) {
+        seenLower.add(a.trim().toLowerCase());
+        seenAlphaNumeric.add(a.toLowerCase().replace(/[^a-z0-9]/g, ""));
+      }
+      activeColleges.push(canonical);
+    }
+  }
+
+  activeColleges.sort((a, b) => a.localeCompare(b));
+  const finalMasterList = [...activeColleges, ...Array.from(removedMarkers)];
+
+  setLocalCachedColleges(finalMasterList);
+  return finalMasterList;
 }
 
-// Save a new versioned custom colleges manifest to Supabase Storage (Dedicated folder)
+// Save a consolidated custom colleges manifest to Supabase Cloud Server (Multi-location)
 export async function saveCustomColleges(colleges: string[]): Promise<void> {
   const cleanList = Array.from(
     new Set(
@@ -320,24 +300,71 @@ export async function saveCustomColleges(colleges: string[]): Promise<void> {
     return a.localeCompare(b);
   });
 
+  // 1. Update local cache & broadcast to other tabs immediately
   setLocalCachedColleges(cleanList);
+  broadcastCollegesUpdate(cleanList);
 
   const jsonBlob = new Blob([JSON.stringify(cleanList, null, 2)], {
     type: "application/json",
   });
 
   const timestamp = Date.now();
-  const manifestFileName = `${COLLEGES_FOLDER}/colleges_${timestamp}.json`;
+  let uploaded = false;
+  let lastError: Error | null = null;
 
-  const { error } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .upload(manifestFileName, jsonBlob, {
-      contentType: "application/json",
-    });
+  // Target 1: Root manifest file (with upsert)
+  try {
+    const { error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(MANIFEST_FILE_NAME, jsonBlob, {
+        contentType: "application/json",
+        upsert: true,
+      });
 
-  if (error) {
-    console.error("Cloud manifest upload error:", error);
-    throw new Error(error.message || "Failed to save colleges to cloud storage.");
+    if (!error) {
+      uploaded = true;
+    } else {
+      lastError = new Error(error.message);
+    }
+  } catch (err: any) {
+    lastError = err;
+  }
+
+  // Target 2: Dedicated manifests folder with timestamp
+  try {
+    const folderPath = `${COLLEGES_FOLDER}/colleges_${timestamp}.json`;
+    const { error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(folderPath, jsonBlob, {
+        contentType: "application/json",
+      });
+
+    if (!error) {
+      uploaded = true;
+    }
+  } catch {
+    // Ignore folder upload fallback notice
+  }
+
+  // Target 3: Root timestamped file
+  try {
+    const rootTsPath = `colleges_${timestamp}.json`;
+    const { error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(rootTsPath, jsonBlob, {
+        contentType: "application/json",
+      });
+
+    if (!error) {
+      uploaded = true;
+    }
+  } catch {
+    // Ignore root timestamp upload notice
+  }
+
+  if (!uploaded && lastError) {
+    console.error("Cloud server manifest upload error:", lastError);
+    throw new Error(lastError.message || "Failed to save colleges to cloud storage.");
   }
 }
 
@@ -348,9 +375,48 @@ export function useColleges() {
     queryKey: ["custom_colleges"],
     queryFn: fetchCustomColleges,
     placeholderData: getLocalCachedColleges,
-    staleTime: 60 * 1000,
-    refetchOnWindowFocus: false,
+    staleTime: 5 * 1000,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    refetchInterval: 30_000,
   });
+
+  // Cross-tab real-time sync listener
+  useEffect(() => {
+    let channel: BroadcastChannel | null = null;
+    try {
+      if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+        channel = new BroadcastChannel(SYNC_CHANNEL_NAME);
+        channel.onmessage = (event) => {
+          if (Array.isArray(event?.data)) {
+            queryClient.setQueryData(["custom_colleges"], event.data);
+          }
+        };
+      }
+    } catch {
+      // Ignore broadcast channel init errors
+    }
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === LOCAL_STORAGE_KEY && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) {
+            queryClient.setQueryData(["custom_colleges"], parsed);
+          }
+        } catch {
+          // Ignore parse errors
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      if (channel) channel.close();
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, [queryClient]);
 
   const rawCustomColleges = query.data ?? [];
 
@@ -454,7 +520,6 @@ export function useColleges() {
         throw new Error("This college already exists in the list");
       }
 
-      // If it was in removed defaults, un-remove it; otherwise add to custom
       const updated = current.filter(
         (c) => c.toLowerCase() !== `__removed__:${trimmed.toLowerCase()}`
       );
@@ -471,7 +536,7 @@ export function useColleges() {
       void queryClient.invalidateQueries({ queryKey: ["registrations"] });
       void queryClient.invalidateQueries({ queryKey: ["all_registrations"] });
       void queryClient.invalidateQueries({ queryKey: ["registration-stats"] });
-      toast.success("College added successfully!");
+      toast.success("College added & synced to server successfully!");
     },
     onError: (err: any) => {
       toast.error(err.message || "Failed to add college");
@@ -489,7 +554,6 @@ export function useColleges() {
       );
 
       if (matchedDefault) {
-        // Add marker to hide default college
         updated = [
           ...current.filter(
             (c) =>
@@ -500,7 +564,6 @@ export function useColleges() {
           `__removed__:${matchedDefault.trim()}`,
         ];
       } else {
-        // Remove from custom list
         updated = current.filter(
           (c) =>
             c.trim().toLowerCase() !== trimmed.toLowerCase() &&
@@ -561,7 +624,6 @@ export function useColleges() {
       );
 
       if (matchedDefault) {
-        // Hide old default college and add new custom name
         updated = [
           ...current.filter(
             (c) =>
@@ -573,7 +635,6 @@ export function useColleges() {
           trimmedNew,
         ];
       } else {
-        // Update in custom list and add removal marker for old name so past storage snapshots cannot resurrect it
         const filtered = current.filter(
           (c) =>
             c.trim().toLowerCase() !== trimmedOld.toLowerCase() &&
@@ -615,7 +676,7 @@ export function useColleges() {
       void queryClient.invalidateQueries({ queryKey: ["registrations"] });
       void queryClient.invalidateQueries({ queryKey: ["all_registrations"] });
       void queryClient.invalidateQueries({ queryKey: ["registration-stats"] });
-      toast.success("College and existing records updated successfully!");
+      toast.success("College and existing records updated & synced successfully!");
     },
     onError: (err: any) => {
       toast.error(err.message || "Failed to update college");
