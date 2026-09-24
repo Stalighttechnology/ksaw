@@ -302,25 +302,105 @@ function AdminPage() {
     };
   }, [statsQuery.data]);
 
-  // Master filter options based on reference lists and managed active institutions
+  // Lightweight query for calculating dynamic interdependent facets
+  const facetRecordsQuery = useQuery({
+    queryKey: ["all_registrations_facets"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("registrations")
+        .select("id, status, skill_sought, category, center_location, cur_district, saf_number, nigama, institution_name, gender")
+        .limit(10000);
+      if (error) throw error;
+      return ((data ?? []) as Row[]).map((r) => ({
+        ...r,
+        institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
+        nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
+      }));
+    },
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  const facetRecords = facetRecordsQuery.data ?? [];
+
+  // Interdependent faceted filter options calculation
   const dynamicFilterOptions = useMemo(() => {
     const sortAlpha = (arr: string[]) => arr.sort((a, b) => a.localeCompare(b));
 
-    const nigamaList = Array.from(new Set([...NIGAMAS, ...(nigama ? [nigama] : [])]));
-    const partnerList = Array.from(new Set([...colleges, ...(partner ? [partner] : [])]));
-    const courseList = Array.from(new Set([...SKILLS, ...(course ? [course] : [])]));
-    const categoryList = Array.from(new Set([...CATEGORIES, ...(category ? [category] : [])]));
-    const centerList = Array.from(new Set([...(DISTRICTS.KARNATAKA || []), ...(centerLocation ? [centerLocation] : [])]));
+    const matchesFiltersExcept = (r: Row, excludeKey: string) => {
+      if (excludeKey !== "status" && status && r.status !== status) return false;
+      if (excludeKey !== "gender" && gender && r.gender !== gender) return false;
+      if (excludeKey !== "course" && course && r.skill_sought !== course) return false;
+      if (excludeKey !== "category" && category && r.category !== category) return false;
+      if (excludeKey !== "centerLocation" && centerLocation) {
+        const loc = (r.center_location as string) || (r.cur_district as string) || "";
+        if (!loc.toLowerCase().includes(centerLocation.toLowerCase())) return false;
+      }
+      if (excludeKey !== "safStatus" && safStatus) {
+        const saf = (r.saf_number as string) || "";
+        const isFilled = saf.toUpperCase().includes("SAF");
+        if (safStatus === "Filled / Present" && !isFilled) return false;
+        if (safStatus === "Empty / Missing" && isFilled) return false;
+      }
+      if (excludeKey !== "nigama" && nigama) {
+        const rNigama = (r.nigama as string) || "";
+        const aliases = getNigamaAliases(nigama);
+        if (!Array.from(new Set([nigama, ...aliases])).includes(rNigama)) return false;
+      }
+      if (excludeKey !== "partner" && partner) {
+        const rInst = (r.institution_name as string) || "";
+        const aliases = getCollegeAliases(partner);
+        if (!Array.from(new Set([partner, ...aliases])).includes(rInst)) return false;
+      }
+      return true;
+    };
+
+    if (facetRecords.length === 0) {
+      return {
+        nigamas: sortAlpha(Array.from(new Set([...NIGAMAS, ...(nigama ? [nigama] : [])]))),
+        statuses: Array.from(STATUS_OPTIONS),
+        partners: sortAlpha(Array.from(new Set([...colleges, ...(partner ? [partner] : [])]))),
+        courses: sortAlpha(Array.from(new Set([...SKILLS, ...(course ? [course] : [])]))),
+        categories: sortAlpha(Array.from(new Set([...CATEGORIES, ...(category ? [category] : [])]))),
+        centers: sortAlpha(Array.from(new Set([...(DISTRICTS.KARNATAKA || []), ...(centerLocation ? [centerLocation] : [])]))),
+      };
+    }
+
+    const nigamaSet = new Set<string>();
+    const statusSet = new Set<string>();
+    const partnerSet = new Set<string>();
+    const courseSet = new Set<string>();
+    const categorySet = new Set<string>();
+    const centerSet = new Set<string>();
+
+    for (const r of facetRecords) {
+      if (matchesFiltersExcept(r, "nigama") && r.nigama) nigamaSet.add(r.nigama as string);
+      if (matchesFiltersExcept(r, "status") && r.status) statusSet.add(r.status as string);
+      if (matchesFiltersExcept(r, "partner") && r.institution_name) partnerSet.add(r.institution_name as string);
+      if (matchesFiltersExcept(r, "course") && r.skill_sought) courseSet.add(r.skill_sought as string);
+      if (matchesFiltersExcept(r, "category") && r.category) categorySet.add(r.category as string);
+      if (matchesFiltersExcept(r, "centerLocation")) {
+        const loc = (r.center_location as string) || (r.cur_district as string);
+        if (loc) centerSet.add(loc);
+      }
+    }
+
+    if (nigama) nigamaSet.add(nigama);
+    if (status) statusSet.add(status);
+    if (partner) partnerSet.add(partner);
+    if (course) courseSet.add(course);
+    if (category) categorySet.add(category);
+    if (centerLocation) centerSet.add(centerLocation);
 
     return {
-      nigamas: sortAlpha(nigamaList),
-      statuses: Array.from(STATUS_OPTIONS),
-      partners: sortAlpha(partnerList),
-      courses: sortAlpha(courseList),
-      categories: sortAlpha(categoryList),
-      centers: sortAlpha(centerList),
+      nigamas: sortAlpha(Array.from(nigamaSet)),
+      statuses: Array.from(statusSet).sort((a, b) => a.localeCompare(b)),
+      partners: sortAlpha(Array.from(partnerSet)),
+      courses: sortAlpha(Array.from(courseSet)),
+      categories: sortAlpha(Array.from(categorySet)),
+      centers: sortAlpha(Array.from(centerSet)),
     };
-  }, [colleges, nigama, partner, course, category, centerLocation]);
+  }, [facetRecords, status, gender, course, category, centerLocation, safStatus, nigama, partner, colleges]);
 
   const total = listQuery.data?.count ?? 0;
   const pageCount = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
