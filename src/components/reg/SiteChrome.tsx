@@ -60,11 +60,7 @@ export function PageBanner({
             <p className="text-xs sm:text-sm text-white font-medium mt-1.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]">
               Modify details or documents below and click &quot;Save Changes&quot;.
             </p>
-          ) : (
-            <p className="text-xs sm:text-sm text-white/95 font-medium mt-1.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]">
-              Karnataka Skill Development Corporation &amp; University Training Program
-            </p>
-          )}
+          ) : null}
         </div>
       </div>
     </section>
