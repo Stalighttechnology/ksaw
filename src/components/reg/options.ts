@@ -72,6 +72,7 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
   ],
   "KSAWU - Sri Siddrameshwar Education Society's Chandragiri College of Education for Women, Shivabasava Nagar, Belgaum": [
     "KASWU-Sri. Siddrameshwar Education Society's chandrageri College of Education for Women Shivabasava nagar, Belguam-591 102,",
+    "Sri. Siddrameshwar Education Society's chandrageri College of Education for Women Shivabasava nagar, Belguam-591 102,",
     "Sri Siddrameshwar Education Society's Chandragiri College of Education for Women, Shivabasava Nagar, Belgaum",
     "Sri Siddrameshwar Education Society's Chandragiri College of Education for Women Shivabasava Nagar Belgaum",
     "KSAWU - Sri Siddrameshwar Education Society's Chandragiri College of Education for Women, Shivabasava Nagar, Belgaum",

@@ -111,8 +111,11 @@ function AdminPage() {
   const qc = useQueryClient();
 
   const { isMaintenance, toggleMaintenance, isUpdating: isTogglingMaintenance } = useMaintenance();
-  const { colleges, addCollege, editCollege, isAdding, isEditing } = useColleges();
+  const { colleges, addCollege, editCollege, removeCollege, isAdding, isEditing, isRemoving } = useColleges();
   const [collegeModalOpen, setCollegeModalOpen] = useState(false);
+  const [collegeAuthModalOpen, setCollegeAuthModalOpen] = useState(false);
+  const [collegeAuthPassword, setCollegeAuthPassword] = useState("");
+  const [collegeAuthError, setCollegeAuthError] = useState("");
   const [maintenanceConfirmOpen, setMaintenanceConfirmOpen] = useState(false);
 
   const [search, setSearch] = useState("");
@@ -1315,9 +1318,13 @@ function AdminPage() {
 
               <button
                 type="button"
-                onClick={() => setCollegeModalOpen(true)}
+                onClick={() => {
+                  setCollegeAuthPassword("");
+                  setCollegeAuthError("");
+                  setCollegeAuthModalOpen(true);
+                }}
                 className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-xs transition-colors cursor-pointer"
-                title="Manage College / University List"
+                title="Manage College / University List (Password Protected)"
               >
                 <span>🏢</span>
                 <span>Manage Colleges</span>
@@ -2079,14 +2086,97 @@ function AdminPage() {
         </div>
       ) : null}
 
+      {/* Manage Colleges Password Authorization Modal */}
+      {collegeAuthModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl border border-border text-card-foreground animate-in zoom-in-95 duration-200">
+            <div className="flex items-start gap-3.5 mb-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-2xl shadow-inner">
+                🔒
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-bold text-foreground">
+                  Admin Authorization Required
+                </h3>
+                <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                  Enter master admin password to access the Manage Colleges panel.
+                </p>
+              </div>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (collegeAuthPassword === "Stalight@2026") {
+                  setCollegeAuthModalOpen(false);
+                  setCollegeAuthPassword("");
+                  setCollegeAuthError("");
+                  setCollegeModalOpen(true);
+                  toast.success("Password verified! Access granted.");
+                } else {
+                  setCollegeAuthError("Incorrect master password. Access denied.");
+                  toast.error("Incorrect master password!");
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1.5">
+                  Master Admin Password <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="password"
+                  value={collegeAuthPassword}
+                  onChange={(e) => {
+                    setCollegeAuthPassword(e.target.value);
+                    if (collegeAuthError) setCollegeAuthError("");
+                  }}
+                  placeholder="Enter password..."
+                  className="w-full form-ctrl text-xs sm:text-sm h-10 px-3 rounded-xl border border-border bg-background"
+                  autoFocus
+                />
+                {collegeAuthError && (
+                  <p className="mt-1.5 text-xs text-rose-500 font-semibold flex items-center gap-1">
+                    <span>⚠️</span> {collegeAuthError}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCollegeAuthModalOpen(false);
+                    setCollegeAuthPassword("");
+                    setCollegeAuthError("");
+                  }}
+                  className="px-4 py-2 rounded-xl border border-border bg-background hover:bg-muted font-semibold text-xs text-foreground cursor-pointer transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!collegeAuthPassword.trim()}
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 font-bold text-xs text-white shadow-md cursor-pointer transition-colors disabled:opacity-50 inline-flex items-center gap-1.5"
+                >
+                  <span>🔓</span> Verify &amp; Access
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <ManageCollegesModal
         open={collegeModalOpen}
         onClose={() => setCollegeModalOpen(false)}
         colleges={colleges}
         onAdd={addCollege}
         onEdit={editCollege}
+        onRemove={removeCollege}
         isAdding={isAdding}
         isEditing={isEditing}
+        isRemoving={isRemoving}
       />
 
       {/* Floating Maintenance Mode Toggle - Bottom Left (avoids overlapping pagination controls on the right) */}
@@ -2219,21 +2309,26 @@ function ManageCollegesModal({
   colleges,
   onAdd,
   onEdit,
+  onRemove,
   isAdding,
   isEditing,
+  isRemoving,
 }: {
   open: boolean;
   onClose: () => void;
   colleges: string[];
   onAdd: (name: string) => Promise<unknown>;
   onEdit: (oldName: string, newName: string) => Promise<unknown>;
+  onRemove: (name: string) => Promise<unknown>;
   isAdding: boolean;
   isEditing: boolean;
+  isRemoving: boolean;
 }) {
   const [newCollegeName, setNewCollegeName] = useState("");
   const [filterQuery, setFilterQuery] = useState("");
   const [editingCollege, setEditingCollege] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
+  const [deletingCollege, setDeletingCollege] = useState<string | null>(null);
 
   const filteredList = useMemo(() => {
     if (!open) return [];
@@ -2299,7 +2394,7 @@ function ManageCollegesModal({
                 Manage Colleges / Universities
               </h3>
               <p className="text-xs text-muted-foreground">
-                Add or edit institution names for the applicant registration form &amp; admin filters.
+                Add, edit, or delete institution names for the applicant registration form &amp; admin filters.
               </p>
             </div>
           </div>
@@ -2409,15 +2504,24 @@ function ManageCollegesModal({
                           <span className="text-emerald-600 font-bold shrink-0">✓</span>
                           <span className="font-semibold text-foreground break-words">{c}</span>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-2.5 shrink-0">
                           <button
                             type="button"
-                            disabled={isEditing}
+                            disabled={isEditing || isRemoving}
                             onClick={() => handleStartEdit(c)}
                             className="text-xs text-purple-600 dark:text-purple-400 hover:underline font-semibold cursor-pointer disabled:opacity-50 inline-flex items-center gap-1"
                             title={`Edit "${c}"`}
                           >
                             ✏️ Edit
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isEditing || isRemoving}
+                            onClick={() => setDeletingCollege(c)}
+                            className="text-xs text-rose-600 dark:text-rose-400 hover:underline font-semibold cursor-pointer disabled:opacity-50 inline-flex items-center gap-1"
+                            title={`Delete "${c}"`}
+                          >
+                            🗑️ Delete
                           </button>
                         </div>
                       </>
@@ -2442,6 +2546,53 @@ function ManageCollegesModal({
           </button>
         </div>
       </div>
+
+      {/* Delete Confirmation Popup */}
+      {deletingCollege && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl border border-border text-card-foreground">
+            <div className="flex items-start gap-3.5 mb-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 border border-rose-500/20 text-2xl">
+                🗑️
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-foreground">
+                  Delete Institution?
+                </h3>
+                <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                  Are you sure you want to remove <strong className="text-foreground">"{deletingCollege}"</strong> from the institution list? This will remove it from the cloud database immediately.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 mt-6">
+              <button
+                type="button"
+                disabled={isRemoving}
+                onClick={() => setDeletingCollege(null)}
+                className="px-4 py-2 rounded-xl border border-border bg-background hover:bg-muted font-semibold text-xs text-foreground cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isRemoving}
+                onClick={async () => {
+                  try {
+                    await onRemove(deletingCollege);
+                    setDeletingCollege(null);
+                  } catch {
+                    // Toast handled in mutation
+                  }
+                }}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 font-bold text-xs text-white shadow-md cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {isRemoving ? "Deleting…" : "Yes, Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
