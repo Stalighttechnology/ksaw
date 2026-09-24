@@ -25,16 +25,20 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const [mounted, setMounted] = useState(false);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/admin", replace: true });
     });
   }, [navigate]);
+
+  if (!mounted) return null;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +60,11 @@ function AuthPage() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/admin` },
+          options: {
+            emailRedirectTo: typeof window !== "undefined"
+              ? `${window.location.origin}/admin`
+              : "/admin",
+          },
         });
         if (error) throw error;
         toast.success("Account created. You can sign in now.");
@@ -72,7 +80,9 @@ function AuthPage() {
   const google = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin },
+      options: {
+        redirectTo: typeof window !== "undefined" ? window.location.origin : "/",
+      },
     });
     if (error) {
       toast.error("Google sign in failed");
