@@ -62,6 +62,8 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "Karnataka State Akkamahadevi Women University, Jnana Shakti Campus, Vijayapura",
     "KSAWU",
     "KSAW VIJAYAPURA",
+    "KSAW Registry",
+    "KSAW REGISTRY",
     "Akkamahadevi Women's University Vijayapura",
     "Karnataka State Akkamahadevi Women's University",
     "KSAWU Vijayapura",
