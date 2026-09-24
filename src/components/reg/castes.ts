@@ -220,7 +220,7 @@ export const CASTES: readonly CasteEntry[] = [
   { name: "Wannan - ವನ್ನನ್", category: "2A", nigama: "Madivala Machideva Abhvrudhi" },
   { name: "Welluteddan - ವೆಲ್ಲು ತೇಡನ್", category: "2A", nigama: "Madivala Machideva Abhvrudhi" },
   { name: "Sakalavaaddu - ಸಾಕಲವಾಡು", category: "2A", nigama: "Madivala Machideva Abhvrudhi" },
-  { name: "Pariyala (South Kannada and Udupi District) - ಪರಿಯಾಳ (ದಕ್ಷಿಣ ಕನ್ನಡ ಮತ್ತು ಉಡುಪಿ ಜಿಲ್ಲೆ)", category: "2A", nigama: "Savita Samaaja Abhivrudhi" },
+  { name: "Pariyala (South Kannada and Udupi District) - ಪರಿಯಾಳ (ದಕ್ಷಿಣ ಕನ್ನಡ ಮತ್ತು ಉಡುಪಿ ಜಿಲ್ಲೆ)", category: "2A", nigama: "Savita Samaaja Abivrudhi" },
   { name: "Ambattan - ಅಂಬಟ್ಟನ್", category: "2A", nigama: "Savita Samaaja Abivrudhi" },
   { name: "Bajantri - ಬಜಂತ್ರಿ", category: "2A", nigama: "Savita Samaaja Abivrudhi" },
   { name: "Bhanddari - ಬಂಡಾರಿ", category: "2A", nigama: "Savita Samaaja Abivrudhi" },
@@ -742,6 +742,7 @@ export const NIGAMAS = Array.from(new Set(CASTES.map((c) => c.nigama))).filter((
 export const NIGAMA_ALIASES: Record<string, readonly string[]> = {
   "Vokkaliga": ["Vokkaliga", "VOKKALIGA", "vokkaliga"],
   "Veerashaiva Lingayat": ["Veerashaiva Lingayat", "Veerashaiva Lingayath", "LINGAYAT", "LINGAYATH", "Lingayat", "Lingayath"],
+  "Savita Samaaja Abivrudhi": ["Savita Samaaja Abivrudhi", "Savita Samaaja Abhivrudhi"],
 };
 
 export function normalizeNigamaName(rawName?: string | null): string {
