@@ -1235,9 +1235,9 @@ function AdminPage() {
 
               <button
                 type="button"
-                onClick={() => setCollegeModalOpen(true)}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-xs hover:shadow-md transition-all active:scale-95 cursor-pointer"
-                title="Manage College / University List"
+                disabled
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-xl bg-purple-600/50 text-white/70 shadow-xs cursor-not-allowed opacity-60 pointer-events-none"
+                title="Manage College / University List (Disabled)"
               >
                 <span>🏢</span>
                 <span>Manage Colleges</span>
