@@ -184,19 +184,15 @@ export async function fetchCustomColleges(): Promise<string[]> {
     console.warn("DB institution recovery notice:", dbErr);
   }
 
-  // 5. Include all predefined KSAWU institutions and local cache
+  // 5. Include all predefined KSAWU institutions
   for (const c of NEW_KSAWU_COLLEGES) {
     collectedColleges.add(c);
   }
 
-  const localCached = getLocalCachedColleges();
-  for (const c of localCached) {
-    if (c.startsWith("__removed__:")) {
-      removedMarkers.add(c);
-    } else {
-      collectedColleges.add(c);
-    }
-  }
+  // NOTE: We intentionally DO NOT merge getLocalCachedColleges() here.
+  // Merging stale local storage was causing other laptops to hide newly added
+  // colleges (or resurrect deleted ones) until local storage was manually cleared.
+  // Supabase Storage (colleges_manifest.json) is the single source of truth.
 
   // 6. Active custom colleges automatically override and purge any conflicting removed markers
   for (const raw of collectedColleges) {
