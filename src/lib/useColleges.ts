@@ -62,26 +62,14 @@ export function findMatchingBuiltInCollege(name: string): string | undefined {
 }
 
 function getLocalCachedColleges(): string[] {
-  try {
-    const raw = typeof window !== "undefined" ? window.localStorage?.getItem(LOCAL_STORAGE_KEY) : null;
-    const parsed = raw ? JSON.parse(raw) : [];
-    const fromStorage = Array.isArray(parsed) ? parsed : [];
-    return Array.from(
-      new Set(
-        [...fromStorage, ...NEW_KSAWU_COLLEGES]
-          .filter((c): c is string => typeof c === "string" && c.trim().length > 0)
-          .map((c) => c.trim())
-      )
-    );
-  } catch {
-    return [...NEW_KSAWU_COLLEGES];
-  }
+  return [...NEW_KSAWU_COLLEGES];
 }
 
-function setLocalCachedColleges(list: string[]): void {
+function setLocalCachedColleges(_list: string[]): void {
   try {
-    if (typeof window === "undefined") return;
-    window.localStorage?.setItem(LOCAL_STORAGE_KEY, JSON.stringify(list));
+    if (typeof window !== "undefined") {
+      window.localStorage?.removeItem(LOCAL_STORAGE_KEY);
+    }
   } catch {
     // Ignore localStorage write errors
   }
@@ -99,7 +87,7 @@ function broadcastCollegesUpdate(list: string[]): void {
   }
 }
 
-// Fetch custom colleges using multi-tier cloud strategy + DB recovery + local cache
+// Fetch custom colleges using multi-tier cloud strategy + DB recovery
 export async function fetchCustomColleges(): Promise<string[]> {
   const collectedColleges = new Set<string>();
   const removedMarkers = new Set<string>();
@@ -120,48 +108,48 @@ export async function fetchCustomColleges(): Promise<string[]> {
     }
   };
 
-  // 1. Primary source: root manifest via authenticated download (canonical truth)
+  // 1. Primary source: fetch direct from public CDN with cache-busting timestamp
   let rootManifestLoaded = false;
   try {
-    const { data: blob } = await supabase.storage
+    const { data: pubData } = supabase.storage
       .from(STORAGE_BUCKET)
-      .download(MANIFEST_FILE_NAME);
+      .getPublicUrl(MANIFEST_FILE_NAME);
 
-    if (blob) {
-      const text = await blob.text();
-      const parsed = JSON.parse(text);
-      processManifestArray(parsed);
-      rootManifestLoaded = true;
+    if (pubData?.publicUrl) {
+      const res = await fetch(`${pubData.publicUrl}?t=${Date.now()}`, {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+        },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        processManifestArray(json);
+        rootManifestLoaded = true;
+      }
     }
-  } catch (dlErr) {
-    console.warn("Root manifest download notice:", dlErr);
+  } catch (pubErr) {
+    console.warn("Public CDN manifest fetch notice:", pubErr);
   }
 
-  // 2. Fallback: public CDN fetch if authenticated download failed
+  // 2. Fallback: authenticated storage download
   if (!rootManifestLoaded) {
     try {
-      const { data: pubData } = supabase.storage
+      const { data: blob } = await supabase.storage
         .from(STORAGE_BUCKET)
-        .getPublicUrl(MANIFEST_FILE_NAME);
+        .download(MANIFEST_FILE_NAME);
 
-      if (pubData?.publicUrl) {
-        const res = await fetch(`${pubData.publicUrl}?t=${Date.now()}`, {
-          cache: "no-store",
-        });
-        if (res.ok) {
-          const json = await res.json();
-          processManifestArray(json);
-        }
+      if (blob) {
+        const text = await blob.text();
+        const parsed = JSON.parse(text);
+        processManifestArray(parsed);
+        rootManifestLoaded = true;
       }
-    } catch (pubErr) {
-      console.warn("Public CDN manifest fetch notice:", pubErr);
+    } catch (dlErr) {
+      console.warn("Root manifest download notice:", dlErr);
     }
   }
-
-  // NOTE: Intentionally NOT scanning timestamped manifest files in folders.
-  // Those are stale backup files that accumulate with every save and would
-  // resurrect deleted / renamed colleges on every fetch, causing duplicates.
-  // The root manifest (colleges_manifest.json) is the single source of truth.
 
   // 3. Recover any custom institution names from existing database registrations
   try {
@@ -188,11 +176,6 @@ export async function fetchCustomColleges(): Promise<string[]> {
   for (const c of NEW_KSAWU_COLLEGES) {
     collectedColleges.add(c);
   }
-
-  // NOTE: We intentionally DO NOT merge getLocalCachedColleges() here.
-  // Merging stale local storage was causing other laptops to hide newly added
-  // colleges (or resurrect deleted ones) until local storage was manually cleared.
-  // Supabase Storage (colleges_manifest.json) is the single source of truth.
 
   // 6. Active custom colleges automatically override and purge any conflicting removed markers
   for (const raw of collectedColleges) {
@@ -263,7 +246,6 @@ export async function fetchCustomColleges(): Promise<string[]> {
   });
 
   const finalMasterList = [...activeColleges, ...validRemovedMarkers];
-  setLocalCachedColleges(finalMasterList);
   return finalMasterList;
 }
 
@@ -299,17 +281,13 @@ export async function saveCustomColleges(colleges: string[]): Promise<void> {
     return a.localeCompare(b);
   });
 
-  // 1. Update local cache & broadcast to other tabs immediately
-  setLocalCachedColleges(cleanList);
+  // Broadcast to other local tabs immediately
   broadcastCollegesUpdate(cleanList);
 
   const jsonBlob = new Blob([JSON.stringify(cleanList, null, 2)], {
     type: "application/json",
   });
 
-  // Only write to the single root manifest file (upsert).
-  // Do NOT write timestamped backup files — they accumulate and pollute
-  // future reads by resurrecting old deleted/renamed college entries.
   try {
     const { error } = await supabase.storage
       .from(STORAGE_BUCKET)
@@ -334,11 +312,10 @@ export function useColleges() {
   const query = useQuery({
     queryKey: ["custom_colleges"],
     queryFn: fetchCustomColleges,
-    placeholderData: getLocalCachedColleges,
-    staleTime: 5 * 1000,
+    staleTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
-    refetchInterval: 30_000,
+    refetchInterval: 10_000,
   });
 
   // Cross-tab real-time sync listener
