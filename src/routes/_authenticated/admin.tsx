@@ -198,8 +198,26 @@ function AdminPage() {
         q = q.in("nigama", Array.from(new Set([filters.nigama, ...nigamaAliases])));
       }
       if (filters.partner) {
-        const aliases = getCollegeAliases(filters.partner);
-        q = q.in("institution_name", Array.from(new Set([filters.partner, ...aliases])));
+        const pLower = filters.partner.toLowerCase();
+        if (pLower.includes("angadi") || pLower.includes("aitm")) {
+          q = q.or("institution_name.ilike.%Angadi%,institution_name.ilike.%AITM%");
+        } else {
+          const aliases = getCollegeAliases(filters.partner);
+          const norm = normalizeCollegeName(filters.partner);
+          const allVariants = Array.from(new Set([filters.partner, norm, ...aliases].filter(Boolean)));
+
+          const orClause = allVariants
+            .map((v) => {
+              const clean = v.replace(/["%,()]/g, "").trim();
+              return clean ? `institution_name.ilike.%${clean}%` : null;
+            })
+            .filter(Boolean)
+            .join(",");
+
+          if (orClause) {
+            q = q.or(orClause);
+          }
+        }
       }
       if (filters.dateFilter === "today") {
         const now = new Date();
@@ -364,6 +382,14 @@ function AdminPage() {
   const dynamicFilterOptions = useMemo(() => {
     const sortAlpha = (arr: string[]) => arr.sort((a, b) => a.localeCompare(b));
 
+    const partnerAliasSet = partner
+      ? new Set([partner, normalizeCollegeName(partner) || partner, ...getCollegeAliases(partner)].filter(Boolean).map((s) => s.toLowerCase()))
+      : null;
+
+    const nigamaAliasSet = nigama
+      ? new Set([nigama, ...getNigamaAliases(nigama)].filter(Boolean).map((s) => s.toLowerCase()))
+      : null;
+
     const matchesFiltersExcept = (r: Row, excludeKey: string) => {
       if (excludeKey !== "status" && status && r.status !== status) return false;
       if (excludeKey !== "gender" && gender && r.gender !== gender) return false;
@@ -379,15 +405,14 @@ function AdminPage() {
         if (safStatus === "Filled / Present" && !isFilled) return false;
         if (safStatus === "Empty / Missing" && isFilled) return false;
       }
-      if (excludeKey !== "nigama" && nigama) {
-        const rNigama = (r.nigama as string) || "";
-        const aliases = getNigamaAliases(nigama);
-        if (!Array.from(new Set([nigama, ...aliases])).includes(rNigama)) return false;
+      if (excludeKey !== "nigama" && nigamaAliasSet) {
+        const rNigama = ((r.nigama as string) || "").toLowerCase();
+        if (!nigamaAliasSet.has(rNigama)) return false;
       }
-      if (excludeKey !== "partner" && partner) {
-        const rInst = (r.institution_name as string) || "";
-        const aliases = getCollegeAliases(partner);
-        if (!Array.from(new Set([partner, ...aliases])).includes(rInst)) return false;
+      if (excludeKey !== "partner" && partnerAliasSet) {
+        const rInst = ((r.institution_name as string) || "").toLowerCase();
+        const rNorm = (normalizeCollegeName(rInst) || rInst).toLowerCase();
+        if (!partnerAliasSet.has(rInst) && !partnerAliasSet.has(rNorm)) return false;
       }
       return true;
     };

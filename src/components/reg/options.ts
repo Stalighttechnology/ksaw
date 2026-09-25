@@ -369,7 +369,16 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "Angadi Institute of Technology Belagavi",
     "ANGADI INSTITUTE OF TECHNOLOGY BELAGAVI",
     "Angadi Institute of Technology Management Belagavi",
+    "Angadi Institute of Technology",
+    "Angadi Institute of Technology, Belagavi",
+    "Angadi Institute of Technology Belgaum",
+    "Angadi Institute of Technology, Belgaum",
+    "Angadi Institute of Technology Management",
+    "Angadi institute of technology belagavi",
+    "Angadi Institute Of Technology Belagavi",
     "AITM BELAGAVI",
+    "AITM Belagavi",
+    "AITM Belgaum",
     "AITM",
   ],
   "AVK COLLEGE HASSAN": [
@@ -779,10 +788,16 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
   ],
 };
 
+const normCollegeNameCache = new Map<string, string>();
+
 export function normalizeCollegeName(rawName?: string | null): string {
   if (!rawName) return "";
   const trimmed = rawName.trim();
   if (!trimmed) return "";
+
+  if (normCollegeNameCache.has(trimmed)) {
+    return normCollegeNameCache.get(trimmed)!;
+  }
 
   const cleanAlphaNumeric = trimmed.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -840,24 +855,51 @@ export function normalizeCollegeName(rawName?: string | null): string {
   if (upper.includes("SIDHARTHA") || upper.includes("SIDDHARTHA")) return "SIDHARTHA COLLEGE BIDAR";
   if (upper.includes("DADAPHEER")) return "Dadapheer Huballi";
   if (upper.includes("HUBBALLI") || upper.includes("HUBBALI")) return "Hubballi Center";
-  if (upper.includes("ANGADI") || upper.includes("AITM")) return "Angadi Institute of Technology Belagavi";
-
-  return trimmed;
+  const result = (upper.includes("ANGADI") || upper.includes("AITM")) ? "Angadi Institute of Technology Belagavi" : trimmed;
+  normCollegeNameCache.set(trimmed, result);
+  return result;
 }
+
+const collegeAliasesCache = new Map<string, string[]>();
 
 export function getCollegeAliases(name: string): string[] {
   if (!name) return [];
   const trimmed = name.trim();
+  if (!trimmed) return [];
+  
+  if (collegeAliasesCache.has(trimmed)) {
+    return collegeAliasesCache.get(trimmed)!;
+  }
+
   const lower = trimmed.toLowerCase();
+  const cleanAlpha = lower.replace(/[^a-z0-9]/g, "");
+
+  const canonicalFromNorm = normalizeCollegeName(trimmed);
+
+  const matchedSet = new Set<string>([trimmed]);
+  if (canonicalFromNorm) {
+    matchedSet.add(canonicalFromNorm);
+  }
+
   for (const [canonical, aliases] of Object.entries(COLLEGE_ALIASES)) {
-    if (
-      canonical.trim().toLowerCase() === lower ||
-      aliases.some((a) => a.trim().toLowerCase() === lower)
-    ) {
-      return Array.from(new Set([canonical, ...aliases]));
+    const canonicalClean = canonical.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+    const matchesCanonical = canonical.trim().toLowerCase() === lower || canonicalClean === cleanAlpha || (canonicalFromNorm && canonical.trim().toLowerCase() === canonicalFromNorm.toLowerCase());
+    const matchesAliases = aliases.some((a) => {
+      const aLower = a.trim().toLowerCase();
+      return aLower === lower || aLower.replace(/[^a-z0-9]/g, "") === cleanAlpha;
+    });
+
+    if (matchesCanonical || matchesAliases) {
+      matchedSet.add(canonical);
+      for (const a of aliases) {
+        matchedSet.add(a);
+      }
     }
   }
-  return [trimmed];
+
+  const result = Array.from(matchedSet);
+  collegeAliasesCache.set(trimmed, result);
+  return result;
 }
 
 
