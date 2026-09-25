@@ -106,6 +106,77 @@ function compareRegistrationRows(a: Row, b: Row, colKey: string, order: "asc" | 
     : strA.localeCompare(strB, undefined, { numeric: true, sensitivity: "base" });
 }
 
+function normalizeCourseName(raw?: string | null): string {
+  if (!raw) return "";
+  const trimmed = raw.trim();
+  const lower = trimmed.toLowerCase();
+  for (const s of SKILLS) {
+    if (s.toLowerCase() === lower) return s;
+  }
+  return trimmed;
+}
+
+interface RegistrationFilters {
+  search?: string;
+  status?: string;
+  course?: string;
+  category?: string;
+  centerLocation?: string;
+  nigama?: string;
+  partner?: string;
+  safStatus?: string;
+  gender?: string;
+  dateFilter?: "today" | "week" | "";
+}
+
+function applyRegistrationFilters<T extends any>(baseQuery: T, filters: RegistrationFilters): T {
+  let q = baseQuery as any;
+  if (filters.status) q = q.eq("status", filters.status);
+  if (filters.gender) q = q.eq("gender", filters.gender);
+  if (filters.course) q = q.ilike("skill_sought", filters.course);
+  if (filters.category) q = q.ilike("category", filters.category);
+  if (filters.centerLocation) {
+    q = q.or(`center_location.ilike.%${filters.centerLocation}%,cur_district.ilike.%${filters.centerLocation}%`);
+  }
+  if (filters.safStatus === "Empty / Missing") {
+    q = q.or("saf_number.is.null,saf_number.eq.,saf_number.eq.N/A,saf_number.eq.NA,saf_number.not.ilike.%SAF%");
+  } else if (filters.safStatus === "Filled / Present") {
+    q = q.ilike("saf_number", "%SAF%");
+  }
+  if (filters.nigama) {
+    const nigamaAliases = getNigamaAliases(filters.nigama);
+    const nigamaList = Array.from(new Set([filters.nigama, ...nigamaAliases].filter(Boolean)));
+    q = q.in("nigama", nigamaList);
+  }
+  if (filters.partner) {
+    const pLower = filters.partner.toLowerCase();
+    if (pLower.includes("angadi") || pLower.includes("aitm")) {
+      q = q.or("institution_name.ilike.%Angadi%,institution_name.ilike.%AITM%");
+    } else {
+      const aliases = getCollegeAliases(filters.partner);
+      const norm = normalizeCollegeName(filters.partner);
+      const allVariants = Array.from(new Set([filters.partner, norm, ...aliases].filter(Boolean)));
+      q = q.in("institution_name", allVariants);
+    }
+  }
+  if (filters.dateFilter === "today") {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    q = q.gte("created_at", startOfToday);
+  } else if (filters.dateFilter === "week") {
+    const now = new Date();
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).toISOString();
+    q = q.gte("created_at", startOfWeek);
+  }
+  if (filters.search) {
+    const s = filters.search.replace(/[%,()]/g, "");
+    q = q.or(
+      `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,gender.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,caste_sub_category.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
+    );
+  }
+  return q;
+}
+
 function AdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -174,66 +245,14 @@ function AdminPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const filters = { search: debouncedSearch.trim(), status, course, category, centerLocation, nigama, partner, safStatus, gender, dateFilter };
+  const filters: RegistrationFilters = { search: debouncedSearch.trim(), status, course, category, centerLocation, nigama, partner, safStatus, gender, dateFilter };
 
   const listQuery = useQuery({
     queryKey: ["registrations", filters, page, pageSize, sortColumn, sortOrder],
     queryFn: async () => {
       const selectCols = ["id", ...COLUMNS.map((c) => c.key)].join(",");
       let q = supabase.from("registrations").select(selectCols, { count: "exact" });
-      if (filters.status) q = q.eq("status", filters.status);
-      if (filters.gender) q = q.eq("gender", filters.gender);
-      if (filters.course) q = q.eq("skill_sought", filters.course);
-      if (filters.category) q = q.eq("category", filters.category);
-      if (filters.centerLocation) {
-        q = q.or(`center_location.ilike.%${filters.centerLocation}%,cur_district.ilike.%${filters.centerLocation}%`);
-      }
-      if (filters.safStatus === "Empty / Missing") {
-        q = q.or("saf_number.is.null,saf_number.eq.,saf_number.eq.N/A,saf_number.eq.NA,saf_number.not.ilike.%SAF%");
-      } else if (filters.safStatus === "Filled / Present") {
-        q = q.ilike("saf_number", "%SAF%");
-      }
-      if (filters.nigama) {
-        const nigamaAliases = getNigamaAliases(filters.nigama);
-        q = q.in("nigama", Array.from(new Set([filters.nigama, ...nigamaAliases])));
-      }
-      if (filters.partner) {
-        const pLower = filters.partner.toLowerCase();
-        if (pLower.includes("angadi") || pLower.includes("aitm")) {
-          q = q.or("institution_name.ilike.%Angadi%,institution_name.ilike.%AITM%");
-        } else {
-          const aliases = getCollegeAliases(filters.partner);
-          const norm = normalizeCollegeName(filters.partner);
-          const allVariants = Array.from(new Set([filters.partner, norm, ...aliases].filter(Boolean)));
-
-          const orClause = allVariants
-            .map((v) => {
-              const clean = v.replace(/["%,()]/g, "").trim();
-              return clean ? `institution_name.ilike.%${clean}%` : null;
-            })
-            .filter(Boolean)
-            .join(",");
-
-          if (orClause) {
-            q = q.or(orClause);
-          }
-        }
-      }
-      if (filters.dateFilter === "today") {
-        const now = new Date();
-        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-        q = q.gte("created_at", startOfToday);
-      } else if (filters.dateFilter === "week") {
-        const now = new Date();
-        const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).toISOString();
-        q = q.gte("created_at", startOfWeek);
-      }
-      if (filters.search) {
-        const s = filters.search.replace(/[%,()]/g, "");
-        q = q.or(
-          `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,gender.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,caste_sub_category.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
-        );
-      }
+      q = applyRegistrationFilters(q, filters);
 
       if (sortColumn === "reference_number") {
         // Because reference_number is string ('KSAW 999' vs 'KSAW 3000'), SQL alphabetical sort puts 999 above 3000.
@@ -308,60 +327,15 @@ function AdminPage() {
     refetchOnWindowFocus: false,
   });
 
-  // Lightweight query for calculating dynamic interdependent facets
-  const facetRecordsQuery = useQuery<Row[]>({
-    queryKey: ["all_registrations_facets"],
-    queryFn: async () => {
-      let allRecords: Row[] = [];
-      let from = 0;
-      const step = 1000;
-      while (true) {
-        const { data, error } = await supabase
-          .from("registrations")
-          .select("id, status, skill_sought, category, center_location, cur_district, saf_number, nigama, institution_name, gender")
-          .range(from, from + step - 1);
-        if (error) throw error;
-        if (!data || data.length === 0) break;
-        allRecords.push(...(data as Row[]));
-        if (data.length < step) break;
-        from += step;
-      }
-      return allRecords.map((r) => ({
-        ...r,
-        institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
-        nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
-      })) as Row[];
-    },
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
-  });
-
-  const facetRecords = facetRecordsQuery.data ?? [];
-
   const stats = useMemo(() => {
     const data = statsQuery.data;
     const rawByPartner = data?.byPartner ?? {};
     const normalizedByPartner: Record<string, number> = {};
 
-    if (facetRecords.length > 0) {
-      for (const r of facetRecords) {
-        if (!r.institution_name) continue;
-        const norm = normalizeCollegeName(r.institution_name as string) || (r.institution_name as string);
-        normalizedByPartner[norm] = (normalizedByPartner[norm] || 0) + 1;
-      }
-    } else {
-      for (const [key, count] of Object.entries(rawByPartner)) {
-        const norm = normalizeCollegeName(key) || key;
-        if (count > 0) {
-          normalizedByPartner[norm] = (normalizedByPartner[norm] || 0) + count;
-        }
-      }
-    }
-
-    const activePartnersWithData: Record<string, number> = {};
-    for (const [key, count] of Object.entries(normalizedByPartner)) {
+    for (const [key, count] of Object.entries(rawByPartner)) {
+      const norm = normalizeCollegeName(key) || key;
       if (count > 0) {
-        activePartnersWithData[key] = count;
+        normalizedByPartner[norm] = (normalizedByPartner[norm] || 0) + count;
       }
     }
 
@@ -373,99 +347,136 @@ function AdminPage() {
       byCourse: data?.byCourse ?? {},
       byGender: data?.byGender ?? {},
       byCenter: data?.byCenter ?? {},
-      byPartner: activePartnersWithData,
+      byPartner: normalizedByPartner,
       byNigama: data?.byNigama ?? {},
     };
-  }, [statsQuery.data, facetRecords]);
+  }, [statsQuery.data]);
 
-  // Interdependent faceted filter options calculation
+  interface CompactRegistration {
+    status: string;
+    course: string;
+    partner: string;
+    nigama: string;
+    category: string;
+    center: string;
+    safStatus: "Empty / Missing" | "Filled / Present";
+  }
+
+  // Fast parallel facet index loaded once and cached for real-time interdependent faceting
+  const facetIndexQuery = useQuery<CompactRegistration[]>({
+    queryKey: ["registrations-facet-index"],
+    queryFn: async () => {
+      const { count } = await supabase.from("registrations").select("*", { count: "exact", head: true });
+      const totalCount = count || 4000;
+      const PAGE_SIZE = 1000;
+      const numPages = Math.ceil(totalCount / PAGE_SIZE);
+
+      const pagePromises = Array.from({ length: numPages }, (_, i) =>
+        supabase
+          .from("registrations")
+          .select("status, skill_sought, category, center_location, cur_district, nigama, institution_name, saf_number")
+          .range(i * PAGE_SIZE, (i + 1) * PAGE_SIZE - 1)
+      );
+
+      const results = await Promise.all(pagePromises);
+      const rawRows = results.flatMap((r) => r.data || []);
+
+      return rawRows.map((r) => {
+        const rawSaf = (r["saf_number"] as string) || "";
+        const isFilled = rawSaf.toUpperCase().includes("SAF");
+        return {
+          status: ((r["status"] as string) || "Pending").trim(),
+          course: normalizeCourseName(r["skill_sought"] as string),
+          partner: normalizeCollegeName(r["institution_name"] as string) || ((r["institution_name"] as string) || "").trim(),
+          nigama: normalizeNigamaName(r["nigama"] as string) || ((r["nigama"] as string) || "").trim(),
+          category: ((r["category"] as string) || "").trim(),
+          center: (((r["center_location"] as string) || (r["cur_district"] as string)) || "").trim().toUpperCase(),
+          safStatus: isFilled ? "Filled / Present" : "Empty / Missing",
+        };
+      });
+    },
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  // Dynamic interdependent faceted options: only shows options that have actual records matching other filters
   const dynamicFilterOptions = useMemo(() => {
-    const sortAlpha = (arr: string[]) => arr.sort((a, b) => a.localeCompare(b));
+    const records = facetIndexQuery.data ?? [];
+    const sortAlpha = (s: Set<string>) => Array.from(s).filter(Boolean).sort((a, b) => a.localeCompare(b));
 
-    const partnerAliasSet = partner
-      ? new Set([partner, normalizeCollegeName(partner) || partner, ...getCollegeAliases(partner)].filter(Boolean).map((s) => s.toLowerCase()))
-      : null;
+    if (records.length === 0) {
+      const dbPartners = Object.keys(stats.byPartner);
+      const dbNigamas = Object.keys(stats.byNigama).map((n) => normalizeNigamaName(n) || n);
+      const dbCourses = Object.keys(stats.byCourse).map((c) => normalizeCourseName(c) || c);
+      const dbCenters = Object.keys(stats.byCenter);
 
-    const nigamaAliasSet = nigama
-      ? new Set([nigama, ...getNigamaAliases(nigama)].filter(Boolean).map((s) => s.toLowerCase()))
-      : null;
-
-    const matchesFiltersExcept = (r: Row, excludeKey: string) => {
-      if (excludeKey !== "status" && status && r.status !== status) return false;
-      if (excludeKey !== "gender" && gender && r.gender !== gender) return false;
-      if (excludeKey !== "course" && course && r.skill_sought !== course) return false;
-      if (excludeKey !== "category" && category && r.category !== category) return false;
-      if (excludeKey !== "centerLocation" && centerLocation) {
-        const loc = (r.center_location as string) || (r.cur_district as string) || "";
-        if (!loc.toLowerCase().includes(centerLocation.toLowerCase())) return false;
-      }
-      if (excludeKey !== "safStatus" && safStatus) {
-        const saf = (r.saf_number as string) || "";
-        const isFilled = saf.toUpperCase().includes("SAF");
-        if (safStatus === "Filled / Present" && !isFilled) return false;
-        if (safStatus === "Empty / Missing" && isFilled) return false;
-      }
-      if (excludeKey !== "nigama" && nigamaAliasSet) {
-        const rNigama = ((r.nigama as string) || "").toLowerCase();
-        if (!nigamaAliasSet.has(rNigama)) return false;
-      }
-      if (excludeKey !== "partner" && partnerAliasSet) {
-        const rInst = ((r.institution_name as string) || "").toLowerCase();
-        const rNorm = (normalizeCollegeName(rInst) || rInst).toLowerCase();
-        if (!partnerAliasSet.has(rInst) && !partnerAliasSet.has(rNorm)) return false;
-      }
-      return true;
-    };
-
-    if (facetRecords.length === 0) {
       return {
-        nigamas: sortAlpha(Array.from(new Set([...NIGAMAS, ...(nigama ? [nigama] : [])]))),
+        nigamas: sortAlpha(new Set([...NIGAMAS, ...dbNigamas, ...(nigama ? [nigama] : [])])),
         statuses: Array.from(STATUS_OPTIONS),
-        partners: sortAlpha(Array.from(new Set([...colleges, ...(partner ? [partner] : [])]))),
-        courses: sortAlpha(Array.from(new Set([...SKILLS, ...(course ? [course] : [])]))),
-        categories: sortAlpha(Array.from(new Set([...CATEGORIES, ...(category ? [category] : [])]))),
-        centers: sortAlpha(Array.from(new Set([...(DISTRICTS.KARNATAKA || []), ...(centerLocation ? [centerLocation] : [])]))),
+        partners: sortAlpha(new Set([...colleges, ...COLLEGES, ...dbPartners, ...(partner ? [partner] : [])])),
+        courses: sortAlpha(new Set([...SKILLS, ...dbCourses, ...(course ? [course] : [])])),
+        categories: sortAlpha(new Set([...CATEGORIES, ...(category ? [category] : [])])),
+        centers: sortAlpha(new Set([...(DISTRICTS["KARNATAKA"] || []), ...dbCenters, ...(centerLocation ? [centerLocation] : [])])),
       };
     }
 
-    const nigamaSet = new Set<string>();
     const statusSet = new Set<string>();
     const partnerSet = new Set<string>();
     const courseSet = new Set<string>();
     const categorySet = new Set<string>();
+    const nigamaSet = new Set<string>();
     const centerSet = new Set<string>();
 
-    for (const r of facetRecords) {
-      if (matchesFiltersExcept(r, "nigama") && r.nigama) nigamaSet.add(r.nigama as string);
-      if (matchesFiltersExcept(r, "status") && r.status) statusSet.add(r.status as string);
-      if (matchesFiltersExcept(r, "partner") && r.institution_name) {
-        const norm = normalizeCollegeName(r.institution_name as string) || (r.institution_name as string);
-        partnerSet.add(norm);
-      }
-      if (matchesFiltersExcept(r, "course") && r.skill_sought) courseSet.add(r.skill_sought as string);
-      if (matchesFiltersExcept(r, "category") && r.category) categorySet.add(r.category as string);
-      if (matchesFiltersExcept(r, "centerLocation")) {
-        const loc = (r.center_location as string) || (r.cur_district as string);
-        if (loc) centerSet.add(loc);
-      }
+    const partnerNorm = partner ? (normalizeCollegeName(partner) || partner).toLowerCase() : "";
+    const courseNorm = course ? normalizeCourseName(course).toLowerCase() : "";
+    const statusNorm = status ? status.toLowerCase() : "";
+    const categoryNorm = category ? category.toLowerCase() : "";
+    const nigamaNorm = nigama ? (normalizeNigamaName(nigama) || nigama).toLowerCase() : "";
+    const centerNorm = centerLocation ? centerLocation.toLowerCase() : "";
+    const safNorm = safStatus;
+
+    for (let i = 0; i < records.length; i++) {
+      const r = records[i];
+      const rStatus = r.status.toLowerCase();
+      const rPartner = r.partner.toLowerCase();
+      const rCourse = r.course.toLowerCase();
+      const rCat = r.category.toLowerCase();
+      const rNigama = r.nigama.toLowerCase();
+      const rCenter = r.center.toLowerCase();
+      const rSaf = r.safStatus;
+
+      const mStatus = !statusNorm || rStatus === statusNorm;
+      const mPartner = !partnerNorm || rPartner === partnerNorm;
+      const mCourse = !courseNorm || rCourse === courseNorm;
+      const mCat = !categoryNorm || rCat === categoryNorm;
+      const mNigama = !nigamaNorm || rNigama === nigamaNorm;
+      const mCenter = !centerNorm || rCenter.includes(centerNorm);
+      const mSaf = !safNorm || rSaf === safNorm;
+
+      if (mPartner && mCourse && mCat && mNigama && mCenter && mSaf && r.status) statusSet.add(r.status);
+      if (mStatus && mCourse && mCat && mNigama && mCenter && mSaf && r.partner) partnerSet.add(r.partner);
+      if (mStatus && mPartner && mCat && mNigama && mCenter && mSaf && r.course) courseSet.add(r.course);
+      if (mStatus && mPartner && mCourse && mNigama && mCenter && mSaf && r.category) categorySet.add(r.category);
+      if (mStatus && mPartner && mCourse && mCat && mCenter && mSaf && r.nigama) nigamaSet.add(r.nigama);
+      if (mStatus && mPartner && mCourse && mCat && mNigama && mSaf && r.center) centerSet.add(r.center);
     }
 
-    if (nigama) nigamaSet.add(nigama);
     if (status) statusSet.add(status);
     if (partner) partnerSet.add(partner);
     if (course) courseSet.add(course);
     if (category) categorySet.add(category);
+    if (nigama) nigamaSet.add(nigama);
     if (centerLocation) centerSet.add(centerLocation);
 
     return {
-      nigamas: sortAlpha(Array.from(nigamaSet)),
-      statuses: Array.from(statusSet).sort((a, b) => a.localeCompare(b)),
-      partners: sortAlpha(Array.from(partnerSet)),
-      courses: sortAlpha(Array.from(courseSet)),
-      categories: sortAlpha(Array.from(categorySet)),
-      centers: sortAlpha(Array.from(centerSet)),
+      nigamas: sortAlpha(nigamaSet),
+      statuses: sortAlpha(statusSet),
+      partners: sortAlpha(partnerSet),
+      courses: sortAlpha(courseSet),
+      categories: sortAlpha(categorySet),
+      centers: sortAlpha(centerSet),
     };
-  }, [facetRecords, status, gender, course, category, centerLocation, safStatus, nigama, partner, colleges]);
+  }, [facetIndexQuery.data, stats, colleges, status, partner, course, category, nigama, centerLocation, safStatus]);
 
   const total = listQuery.data?.count ?? 0;
   const pageCount = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
@@ -583,41 +594,7 @@ function AdminPage() {
 
       while (hasMore) {
         let q = supabase.from("registrations").select(selectCols);
-        if (filters.status) q = q.eq("status", filters.status);
-        if (filters.gender) q = q.eq("gender", filters.gender);
-        if (filters.course) q = q.eq("skill_sought", filters.course);
-        if (filters.category) q = q.eq("category", filters.category);
-        if (filters.centerLocation) {
-          q = q.or(`center_location.ilike.%${filters.centerLocation}%,cur_district.ilike.%${filters.centerLocation}%`);
-        }
-        if (filters.safStatus === "Empty / Missing") {
-          q = q.or("saf_number.is.null,saf_number.eq.,saf_number.eq.N/A,saf_number.eq.NA,saf_number.not.ilike.%SAF%");
-        } else if (filters.safStatus === "Filled / Present") {
-          q = q.ilike("saf_number", "%SAF%");
-        }
-        if (filters.nigama) {
-          const nigamaAliases = getNigamaAliases(filters.nigama);
-          q = q.in("nigama", Array.from(new Set([filters.nigama, ...nigamaAliases])));
-        }
-        if (filters.partner) {
-          const aliases = getCollegeAliases(filters.partner);
-          q = q.in("institution_name", Array.from(new Set([filters.partner, ...aliases])));
-        }
-        if (filters.dateFilter === "today") {
-          const now = new Date();
-          const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-          q = q.gte("created_at", startOfToday);
-        } else if (filters.dateFilter === "week") {
-          const now = new Date();
-          const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).toISOString();
-          q = q.gte("created_at", startOfWeek);
-        }
-        if (filters.search) {
-          const s = filters.search.replace(/[%,()]/g, "");
-          q = q.or(
-            `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,gender.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,caste_sub_category.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
-          );
-        }
+        q = applyRegistrationFilters(q, filters);
         const { data, error } = await q.range(from, from + CHUNK_SIZE - 1);
         if (error) throw error;
 
