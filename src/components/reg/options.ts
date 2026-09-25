@@ -10,6 +10,7 @@ export const COLLEGES = [
   "MARI MALLAPPA WOMENS COLLEGE MYSORE",
   "Maharani science college , Mysore",
   "JSS college of women's, Mysore",
+  "JSS College For Women, Chamarajanagara",
   "Maharani commerce and management college , Mysore",
   "GFGC Womens college, Mysore",
   "GFGC Byrapur , Mysore",
@@ -429,6 +430,17 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "JSS COLLEGE FOR WOMEN MYSORE",
     "JSS COLLEGE OF WOMEN'S MYSORE",
   ],
+  "JSS College For Women, Chamarajanagara": [
+    "JSS College For Women, Chamarajanagara",
+    "JSS College For Women Chamarajanagara",
+    "JSS College for Women Chamarajanagara",
+    "JSS College for Women, Chamarajanagara",
+    "JSS College for Women Chamarajanagar",
+    "JSS College for Women, Chamarajanagar",
+    "JSS COLLEGE FOR WOMEN CHAMARAJANAGARA",
+    "JSS COLLEGE FOR WOMEN CHAMARAJANAGAR",
+    "JSS College For Women chamarajanagara",
+  ],
   "Maharani commerce and management college , Mysore": [
     "Maharani commerce and management college , Mysore",
     "Maharani Commerce and Management College Mysore",
@@ -812,6 +824,7 @@ export function normalizeCollegeName(rawName?: string | null): string {
   if (upper.includes("MALNAD") || upper === "MCE" || upper.includes("MCEHASSAN")) return "MALNAD COLLEGE OF ENGINEERING HASSAN";
   if (upper.includes("MAHARANI") && (upper.includes("SCIENCE") || upper.includes("SCI"))) return "Maharani science college , Mysore";
   if (upper.includes("MAHARANI") && (upper.includes("COMMERCE") || upper.includes("MANAGEMENT"))) return "Maharani commerce and management college , Mysore";
+  if (upper.includes("JSS") && (upper.includes("CHAMARAJANAGAR") || upper.includes("CHAMARAJANAGARA"))) return "JSS College For Women, Chamarajanagara";
   if (upper.includes("JSS") && (upper.includes("WOMEN") || upper.includes("MYSORE") || upper.includes("MYSURU"))) return "JSS college of women's, Mysore";
   if ((upper.includes("GFGC") || upper.includes("GOVTFIRSTGRADE")) && (upper.includes("MYSORE") || upper.includes("MYSURU"))) return "GFGC Womens college, Mysore";
   if (upper.includes("BES") && (upper.includes("DEGREE") || upper.includes("ARTS") || upper.includes("COMMERCE") || upper.includes("BANGALORE") || upper.includes("BENGALURU"))) return "BES Degree College Of Arts Commerce & Science- Bangalore";
