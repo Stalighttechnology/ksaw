@@ -1131,62 +1131,6 @@ function AdminPage() {
           />
         </section>
 
-        {/* 5 Analytics Breakdown Cards */}
-        <section className="grid gap-2.5 sm:gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-          <Breakdown
-            title="Registrations by Course"
-            data={stats.byCourse}
-            limit={5}
-            barColor="bg-primary/80"
-            activeValue={course}
-            onItemClick={(selectedCourse) => {
-              resetPage(setCourse)(course === selectedCourse ? "" : selectedCourse);
-              scrollToTable();
-            }}
-          />
-          <Breakdown
-            title="By Nigama"
-            data={stats.byNigama}
-            limit={5}
-            barColor="bg-primary/80"
-            activeValue={nigama}
-            onItemClick={(selectedNigama) => {
-              resetPage(setNigama)(nigama === selectedNigama ? "" : selectedNigama);
-              scrollToTable();
-            }}
-          />
-          <Breakdown
-            title="By Partner"
-            data={stats.byPartner}
-            limit={5}
-            barColor="bg-primary/80"
-            activeValue={partner}
-            sortByAlpha
-            onItemClick={(selectedPartner) => {
-              resetPage(setPartner)(partner === selectedPartner ? "" : selectedPartner);
-              scrollToTable();
-            }}
-          />
-          <GenderDonut
-            data={stats.byGender}
-            activeGender={gender}
-            onItemClick={(g) => {
-              resetPage(setGender)(gender === g ? "" : g);
-              scrollToTable();
-            }}
-          />
-          <Breakdown
-            title="Center Locations"
-            data={stats.byCenter}
-            limit={5}
-            barColor="bg-primary/80"
-            activeValue={centerLocation}
-            onItemClick={(selectedCenter) => {
-              resetPage(setCenterLocation)(centerLocation === selectedCenter ? "" : selectedCenter);
-              scrollToTable();
-            }}
-          />
-        </section>
 
         {/* Filter Bar & Controls Panel */}
         <section
