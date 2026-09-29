@@ -1,6 +1,6 @@
 import { useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { COLLEGES as DEFAULT_COLLEGES, getCollegeAliases, normalizeCollegeName } from "@/components/reg/options";
+import { COLLEGES as DEFAULT_COLLEGES, getCollegeAliases, normalizeCollegeName, isCollegeHiddenForApplicant } from "@/components/reg/options";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -439,6 +439,10 @@ export function useColleges() {
     };
   }, [rawCustomColleges]);
 
+  const applicantColleges = useMemo(() => {
+    return allColleges.filter((c) => !isCollegeHiddenForApplicant(c));
+  }, [allColleges]);
+
   const addCollegeMutation = useMutation({
     mutationFn: async (newCollegeName: string) => {
       const trimmed = newCollegeName.trim();
@@ -612,6 +616,7 @@ export function useColleges() {
 
   return {
     colleges: allColleges,
+    applicantColleges,
     customColleges,
     isLoading: query.isLoading,
     addCollege: addCollegeMutation.mutateAsync,

@@ -902,6 +902,62 @@ export function getCollegeAliases(name: string): string[] {
   return result;
 }
 
+export const HIDDEN_APPLICANT_COLLEGES: readonly string[] = [
+  "Government College for Women (Autonomous), Mandya",
+  "Government Womens college - Ramanagara",
+  "GOVT. FIRST GRADE COLLEGE FOR WOMEN, NAUBAD BIDAR",
+  "KSAWU - HKE Society's Smt Veeramma Gangasiri College for Women, PDA Engg College Road, Aiwan-E-Shahi Area, Kalaburgi",
+  "KSAWU - Reshmi Educational & Charitable Trust's, Kum. Sharaneshwari Reshmi Women's B.Ed College, Kalaburgi",
+  "KSAWU - S.J.M.V's Business Administration College for Women, J.C. Nagar, Hubli",
+  "KSAWU - Smt. K.S. Jiglur Arts & Dr. (Smt.) S.M. Sheshgiri Commerce College for Women, Dharwad",
+  "KSAWU - Sri Shivalingeshwar Degree College for Women, Haveri",
+  "Maratha Mandal College of Engineering",
+  "Royal Degree College, Mathikere, Bangalore",
+  "Shanti Vardhak Education Society Akkaamahadevi Mahila Mahavidya Bidar, Udgir Road BIDAR",
+  "Shridevi Degree College and P.G. Center Tumkur",
+] as const;
+
+const hiddenApplicantCollegesSet = new Set<string>();
+const hiddenApplicantKeysSet = new Set<string>();
+
+for (const c of HIDDEN_APPLICANT_COLLEGES) {
+  const norm = normalizeCollegeName(c) || c;
+  hiddenApplicantCollegesSet.add(c.toLowerCase().trim());
+  hiddenApplicantCollegesSet.add(norm.toLowerCase().trim());
+  hiddenApplicantKeysSet.add(c.toLowerCase().replace(/[^a-z0-9]/g, ""));
+  hiddenApplicantKeysSet.add(norm.toLowerCase().replace(/[^a-z0-9]/g, ""));
+
+  const aliases = getCollegeAliases(c);
+  for (const a of aliases) {
+    hiddenApplicantCollegesSet.add(a.toLowerCase().trim());
+    hiddenApplicantKeysSet.add(a.toLowerCase().replace(/[^a-z0-9]/g, ""));
+  }
+}
+
+export function isCollegeHiddenForApplicant(rawName?: string | null): boolean {
+  if (!rawName) return false;
+  const trimmed = rawName.trim();
+  if (!trimmed) return false;
+
+  const lower = trimmed.toLowerCase();
+  const cleanAlpha = lower.replace(/[^a-z0-9]/g, "");
+
+  if (hiddenApplicantCollegesSet.has(lower) || hiddenApplicantKeysSet.has(cleanAlpha)) {
+    return true;
+  }
+
+  const normalized = normalizeCollegeName(trimmed);
+  if (normalized) {
+    const normLower = normalized.toLowerCase().trim();
+    const normAlpha = normLower.replace(/[^a-z0-9]/g, "");
+    if (hiddenApplicantCollegesSet.has(normLower) || hiddenApplicantKeysSet.has(normAlpha)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 
 export const RELIGIONS = ["Buddhist", "Christian", "Hindu", "Jain", "Muslim", "Other", "Sikh"] as const;
 

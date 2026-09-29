@@ -98,7 +98,7 @@ const PAUSED_NIGAMAS = [
 type Errors = Record<string, string>;
 
 function RegistrationPage() {
-  const { colleges } = useColleges();
+  const { colleges, applicantColleges } = useColleges();
   const { isMaintenance, message: maintenanceMessage } = useMaintenance();
 
   const activeCasteNames = useMemo(() => {
@@ -1097,7 +1097,7 @@ function RegistrationPage() {
                       searchable
                       single
                       placeholder="Select College / Institute / University"
-                      options={institutionName && !colleges.includes(institutionName) ? [institutionName, ...colleges] : colleges}
+                      options={institutionName && !applicantColleges.includes(institutionName) ? [institutionName, ...applicantColleges] : applicantColleges}
                       value={institutionName ? [institutionName] : []}
                       onChange={(v) => setInstitutionName(v[0] ?? "")}
                       error={errors["institutionName"]}
