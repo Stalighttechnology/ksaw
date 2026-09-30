@@ -1176,7 +1176,7 @@ function RegistrationPage() {
                       name="gender"
                       value={gender}
                       onChange={setGender}
-                      options={["Female"]}
+                      options={["Female", "Male"]}
                     />
                   </Row>
                   <Row>
