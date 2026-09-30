@@ -376,6 +376,7 @@ export function useColleges() {
         DEFAULT_COLLEGES
           .map((c) => c.trim())
           .filter((c) => {
+            if (isCollegeHiddenForApplicant(c)) return false;
             const lower = c.toLowerCase();
             if (removedDefaults.has(lower)) return false;
             const aliases = getCollegeAliases(c).map((a) => a.toLowerCase());
@@ -394,7 +395,9 @@ export function useColleges() {
     const defaultAlpha = new Set(defaults.map((d) => d.toLowerCase().replace(/[^a-z0-9]/g, "")));
 
     for (const raw of activeCustomNames) {
+      if (isCollegeHiddenForApplicant(raw)) continue;
       const canonical = normalizeCollegeName(raw) || raw;
+      if (isCollegeHiddenForApplicant(canonical)) continue;
       const lower = canonical.toLowerCase();
       const alpha = canonical.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -417,6 +420,7 @@ export function useColleges() {
     const all: string[] = [];
     for (const c of [...custom, ...defaults]) {
       const canonical = normalizeCollegeName(c) || c;
+      if (isCollegeHiddenForApplicant(canonical) || isCollegeHiddenForApplicant(c)) continue;
       const key = canonical.trim().toLowerCase();
       const alpha = canonical.toLowerCase().replace(/[^a-z0-9]/g, "");
       if (key && !seen.has(key) && !seenAlpha.has(alpha)) {

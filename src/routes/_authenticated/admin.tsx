@@ -16,6 +16,7 @@ import {
   COLLEGES,
   getCollegeAliases,
   normalizeCollegeName,
+  isCollegeHiddenForApplicant,
 } from "@/components/reg/options";
 import { NIGAMAS, CASTES, CASTE_NAMES, CASTE_CATEGORIES, normalizeNigamaName, getNigamaAliases, getCasteCertificateType } from "@/components/reg/castes";
 import { supabase } from "@/integrations/supabase/client";
@@ -333,7 +334,9 @@ function AdminPage() {
     const normalizedByPartner: Record<string, number> = {};
 
     for (const [key, count] of Object.entries(rawByPartner)) {
+      if (isCollegeHiddenForApplicant(key)) continue;
       const norm = normalizeCollegeName(key) || key;
+      if (isCollegeHiddenForApplicant(norm)) continue;
       if (count > 0) {
         normalizedByPartner[norm] = (normalizedByPartner[norm] || 0) + count;
       }
@@ -405,7 +408,7 @@ function AdminPage() {
     const sortAlpha = (s: Set<string>) => Array.from(s).filter(Boolean).sort((a, b) => a.localeCompare(b));
 
     if (records.length === 0) {
-      const dbPartners = Object.keys(stats.byPartner);
+      const dbPartners = Object.keys(stats.byPartner).filter((p) => !isCollegeHiddenForApplicant(p));
       const dbNigamas = Object.keys(stats.byNigama).map((n) => normalizeNigamaName(n) || n);
       const dbCourses = Object.keys(stats.byCourse).map((c) => normalizeCourseName(c) || c);
       const dbCenters = Object.keys(stats.byCenter);
@@ -413,7 +416,13 @@ function AdminPage() {
       return {
         nigamas: sortAlpha(new Set([...NIGAMAS, ...dbNigamas, ...(nigama ? [nigama] : [])])),
         statuses: Array.from(STATUS_OPTIONS),
-        partners: sortAlpha(new Set([...colleges, ...COLLEGES, ...dbPartners, ...(partner ? [partner] : [])])),
+        partners: sortAlpha(
+          new Set(
+            [...colleges, ...COLLEGES, ...dbPartners, ...(partner ? [partner] : [])].filter(
+              (p) => !isCollegeHiddenForApplicant(p)
+            )
+          )
+        ),
         courses: sortAlpha(new Set([...SKILLS, ...dbCourses, ...(course ? [course] : [])])),
         categories: sortAlpha(new Set([...CATEGORIES, ...(category ? [category] : [])])),
         centers: sortAlpha(new Set([...(DISTRICTS["KARNATAKA"] || []), ...dbCenters, ...(centerLocation ? [centerLocation] : [])])),
@@ -454,7 +463,7 @@ function AdminPage() {
       const mSaf = !safNorm || rSaf === safNorm;
 
       if (mPartner && mCourse && mCat && mNigama && mCenter && mSaf && r.status) statusSet.add(r.status);
-      if (mStatus && mCourse && mCat && mNigama && mCenter && mSaf && r.partner) partnerSet.add(r.partner);
+      if (mStatus && mCourse && mCat && mNigama && mCenter && mSaf && r.partner && !isCollegeHiddenForApplicant(r.partner)) partnerSet.add(r.partner);
       if (mStatus && mPartner && mCat && mNigama && mCenter && mSaf && r.course) courseSet.add(r.course);
       if (mStatus && mPartner && mCourse && mNigama && mCenter && mSaf && r.category) categorySet.add(r.category);
       if (mStatus && mPartner && mCourse && mCat && mCenter && mSaf && r.nigama) nigamaSet.add(r.nigama);
@@ -462,7 +471,7 @@ function AdminPage() {
     }
 
     if (status) statusSet.add(status);
-    if (partner) partnerSet.add(partner);
+    if (partner && !isCollegeHiddenForApplicant(partner)) partnerSet.add(partner);
     if (course) courseSet.add(course);
     if (category) categorySet.add(category);
     if (nigama) nigamaSet.add(nigama);
@@ -471,7 +480,7 @@ function AdminPage() {
     return {
       nigamas: sortAlpha(nigamaSet),
       statuses: sortAlpha(statusSet),
-      partners: sortAlpha(partnerSet),
+      partners: sortAlpha(partnerSet).filter((p) => !isCollegeHiddenForApplicant(p)),
       courses: sortAlpha(courseSet),
       categories: sortAlpha(categorySet),
       centers: sortAlpha(centerSet),
