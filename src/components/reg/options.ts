@@ -57,7 +57,7 @@ export const COLLEGES = [
   "Sree adithya degree college hosakote, Bangalore rural district",
   "Maratha Mandal College of Engineering",
   "Nehru Memorial College, Sullia",
-  "GT- Jnanavikas Vidya Sangha - Bidadi",
+  "Jnanavikas Vidya Sangha - Bidadi",
 ];
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
