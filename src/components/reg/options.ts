@@ -55,7 +55,8 @@ export const COLLEGES = [
   "Vizutech Solutions Pvt Ltd.",
   "VIJAYA VITTALA INSTITUTE OF TECHNOLOGY",
   "Sree adithya degree college hosakote, Bangalore rural district",
-] as const;
+  "Maratha Mandal College of Engineering",
+];
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
   "KSAWU - Karnataka State Akkamahadevi Women University, Jnana Shakti Campus, Vijayapura": [
@@ -911,7 +912,6 @@ export const HIDDEN_APPLICANT_COLLEGES: readonly string[] = [
   "KSAWU - S.J.M.V's Business Administration College for Women, J.C. Nagar, Hubli",
   "KSAWU - Smt. K.S. Jiglur Arts & Dr. (Smt.) S.M. Sheshgiri Commerce College for Women, Dharwad",
   "KSAWU - Sri Shivalingeshwar Degree College for Women, Haveri",
-  "Maratha Mandal College of Engineering",
   "Royal Degree College, Mathikere, Bangalore",
   "Shanti Vardhak Education Society Akkaamahadevi Mahila Mahavidya Bidar, Udgir Road BIDAR",
   "Shridevi Degree College and P.G. Center Tumkur",
