@@ -128,14 +128,31 @@ interface RegistrationFilters {
   safStatus?: string;
   gender?: string;
   dateFilter?: "today" | "week" | "";
+  allowedInstitutionsForApproved?: string[];
+  qualifyingPartnersSet?: Set<string>;
 }
 
 function applyRegistrationFilters<T extends any>(baseQuery: T, filters: RegistrationFilters): T {
   let q = baseQuery as any;
-  // Strict Admin Visibility Rule: Strictly OBC + Female candidates only
-  q = q.ilike("category", "OBC").ilike("gender", "Female");
+  // Strict Admin Visibility Rule: Strictly Female + OBC + Hindu candidates only
+  q = q.ilike("category", "OBC").ilike("gender", "Female").ilike("religion", "Hindu");
 
-  if (filters.status) q = q.eq("status", filters.status);
+  if (filters.status) {
+    q = q.eq("status", filters.status);
+    if (filters.status === "Approved") {
+      if (filters.partner) {
+        const normP = (normalizeCollegeName(filters.partner) || filters.partner).toLowerCase();
+        if (filters.qualifyingPartnersSet && !filters.qualifyingPartnersSet.has(normP)) {
+          q = q.eq("id", "00000000-0000-0000-0000-000000000000");
+        }
+      } else if (filters.allowedInstitutionsForApproved && filters.allowedInstitutionsForApproved.length > 0) {
+        q = q.in("institution_name", filters.allowedInstitutionsForApproved);
+      } else if (filters.allowedInstitutionsForApproved && filters.allowedInstitutionsForApproved.length === 0) {
+        q = q.eq("id", "00000000-0000-0000-0000-000000000000");
+      }
+    }
+  }
+
   if (filters.gender && filters.gender.toLowerCase() === "female") q = q.ilike("gender", filters.gender);
   if (filters.course) q = q.ilike("skill_sought", filters.course);
   if (filters.category && filters.category.toUpperCase() === "OBC") q = q.ilike("category", filters.category);
@@ -249,7 +266,123 @@ function AdminPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const filters: RegistrationFilters = { search: debouncedSearch.trim(), status, course, category, centerLocation, nigama, partner, safStatus, gender, dateFilter };
+  interface CompactRegistration {
+    status: string;
+    course: string;
+    partner: string;
+    nigama: string;
+    category: string;
+    center: string;
+    gender: string;
+    religion: string;
+    created_at?: string;
+    safStatus: "Empty / Missing" | "Filled / Present";
+  }
+
+  // Fast parallel facet index loaded once and cached for real-time interdependent faceting (strictly Female + OBC + Hindu)
+  const facetIndexQuery = useQuery<CompactRegistration[]>({
+    queryKey: ["registrations-facet-index-female-obc-hindu"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("registrations")
+        .select("*", { count: "exact", head: true })
+        .ilike("category", "OBC")
+        .ilike("gender", "Female")
+        .ilike("religion", "Hindu");
+
+      const totalCount = count || 0;
+      if (totalCount === 0) return [];
+
+      const PAGE_SIZE = 1000;
+      const numPages = Math.ceil(totalCount / PAGE_SIZE);
+
+      const pagePromises = Array.from({ length: numPages }, (_, i) =>
+        supabase
+          .from("registrations")
+          .select("status, skill_sought, category, center_location, cur_district, nigama, institution_name, saf_number, created_at, gender, religion")
+          .ilike("category", "OBC")
+          .ilike("gender", "Female")
+          .ilike("religion", "Hindu")
+          .range(i * PAGE_SIZE, (i + 1) * PAGE_SIZE - 1)
+      );
+
+      const results = await Promise.all(pagePromises);
+      const rawRows = results.flatMap((r) => r.data || []);
+
+      return rawRows.map((r) => {
+        const rawSaf = (r["saf_number"] as string) || "";
+        const isFilled = rawSaf.toUpperCase().includes("SAF");
+        return {
+          status: ((r["status"] as string) || "Pending").trim(),
+          course: normalizeCourseName(r["skill_sought"] as string),
+          partner: normalizeCollegeName(r["institution_name"] as string) || ((r["institution_name"] as string) || "").trim(),
+          nigama: normalizeNigamaName(r["nigama"] as string) || ((r["nigama"] as string) || "").trim(),
+          category: ((r["category"] as string) || "OBC").trim(),
+          gender: ((r["gender"] as string) || "Female").trim(),
+          religion: ((r["religion"] as string) || "Hindu").trim(),
+          created_at: r["created_at"] as string,
+          center: (((r["center_location"] as string) || (r["cur_district"] as string)) || "").trim().toUpperCase(),
+          safStatus: isFilled ? "Filled / Present" : "Empty / Missing",
+        };
+      });
+    },
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  // Calculate combined pipeline counts per partner across Sent to Dept + Approved by Dept + Approved
+  const partnerPipelineCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const r of facetIndexQuery.data ?? []) {
+      const st = r.status || "Pending";
+      if (st === "Sent to Department" || st === "Approved by Dept" || st === "Approved") {
+        const p = r.partner || "";
+        if (p) {
+          map[p] = (map[p] || 0) + 1;
+        }
+      }
+    }
+    return map;
+  }, [facetIndexQuery.data]);
+
+  const qualifyingPartnersSet = useMemo(() => {
+    const set = new Set<string>();
+    for (const [partnerName, count] of Object.entries(partnerPipelineCounts)) {
+      if (count >= 15) {
+        set.add(partnerName.toLowerCase());
+      }
+    }
+    return set;
+  }, [partnerPipelineCounts]);
+
+  const allowedInstitutionsForApproved = useMemo(() => {
+    const result = new Set<string>();
+    for (const [partnerName, count] of Object.entries(partnerPipelineCounts)) {
+      if (count >= 15) {
+        result.add(partnerName);
+        const norm = normalizeCollegeName(partnerName);
+        if (norm) result.add(norm);
+        const aliases = getCollegeAliases(partnerName);
+        for (const a of aliases) result.add(a);
+      }
+    }
+    return Array.from(result).filter(Boolean);
+  }, [partnerPipelineCounts]);
+
+  const filters: RegistrationFilters = {
+    search: debouncedSearch.trim(),
+    status,
+    course,
+    category,
+    centerLocation,
+    nigama,
+    partner,
+    safStatus,
+    gender,
+    dateFilter,
+    allowedInstitutionsForApproved,
+    qualifyingPartnersSet,
+  };
 
   const listQuery = useQuery({
     queryKey: ["registrations", filters, page, pageSize, sortColumn, sortOrder],
@@ -259,8 +392,6 @@ function AdminPage() {
       q = applyRegistrationFilters(q, filters);
 
       if (sortColumn === "reference_number") {
-        // Because reference_number is string ('KSAW 999' vs 'KSAW 3000'), SQL alphabetical sort puts 999 above 3000.
-        // Sorting by created_at provides true chronological / numeric reference order.
         q = q.order("created_at", { ascending: sortOrder === "asc", nullsFirst: false });
       } else if (sortColumn) {
         q = q.order(sortColumn, { ascending: sortOrder === "asc", nullsFirst: false });
@@ -291,66 +422,6 @@ function AdminPage() {
     refetchOnWindowFocus: false,
   });
 
-  interface CompactRegistration {
-    status: string;
-    course: string;
-    partner: string;
-    nigama: string;
-    category: string;
-    center: string;
-    gender: string;
-    created_at?: string;
-    safStatus: "Empty / Missing" | "Filled / Present";
-  }
-
-  // Fast parallel facet index loaded once and cached for real-time interdependent faceting (strictly OBC + Female)
-  const facetIndexQuery = useQuery<CompactRegistration[]>({
-    queryKey: ["registrations-facet-index-obc-female"],
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("registrations")
-        .select("*", { count: "exact", head: true })
-        .ilike("category", "OBC")
-        .ilike("gender", "Female");
-
-      const totalCount = count || 0;
-      if (totalCount === 0) return [];
-
-      const PAGE_SIZE = 1000;
-      const numPages = Math.ceil(totalCount / PAGE_SIZE);
-
-      const pagePromises = Array.from({ length: numPages }, (_, i) =>
-        supabase
-          .from("registrations")
-          .select("status, skill_sought, category, center_location, cur_district, nigama, institution_name, saf_number, created_at, gender")
-          .ilike("category", "OBC")
-          .ilike("gender", "Female")
-          .range(i * PAGE_SIZE, (i + 1) * PAGE_SIZE - 1)
-      );
-
-      const results = await Promise.all(pagePromises);
-      const rawRows = results.flatMap((r) => r.data || []);
-
-      return rawRows.map((r) => {
-        const rawSaf = (r["saf_number"] as string) || "";
-        const isFilled = rawSaf.toUpperCase().includes("SAF");
-        return {
-          status: ((r["status"] as string) || "Pending").trim(),
-          course: normalizeCourseName(r["skill_sought"] as string),
-          partner: normalizeCollegeName(r["institution_name"] as string) || ((r["institution_name"] as string) || "").trim(),
-          nigama: normalizeNigamaName(r["nigama"] as string) || ((r["nigama"] as string) || "").trim(),
-          category: ((r["category"] as string) || "OBC").trim(),
-          gender: ((r["gender"] as string) || "Female").trim(),
-          created_at: r["created_at"] as string,
-          center: (((r["center_location"] as string) || (r["cur_district"] as string)) || "").trim().toUpperCase(),
-          safStatus: isFilled ? "Filled / Present" : "Empty / Missing",
-        };
-      });
-    },
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
-  });
-
   const stats = useMemo(() => {
     const records = facetIndexQuery.data ?? [];
     const total = records.length;
@@ -375,7 +446,15 @@ function AdminPage() {
       }
 
       const st = r.status || "Pending";
-      byStatus[st] = (byStatus[st] || 0) + 1;
+      if (st === "Approved") {
+        // Only count under Approved if the partner meets >= 15 pipeline threshold
+        const pCount = partnerPipelineCounts[r.partner] || 0;
+        if (pCount >= 15) {
+          byStatus["Approved"] = (byStatus["Approved"] || 0) + 1;
+        }
+      } else {
+        byStatus[st] = (byStatus[st] || 0) + 1;
+      }
 
       if (r.course) byCourse[r.course] = (byCourse[r.course] || 0) + 1;
       if (r.center) byCenter[r.center] = (byCenter[r.center] || 0) + 1;
@@ -397,7 +476,7 @@ function AdminPage() {
       byPartner,
       byNigama,
     };
-  }, [facetIndexQuery.data]);
+  }, [facetIndexQuery.data, partnerPipelineCounts]);
 
   // Dynamic interdependent faceted options: only shows options that have actual records matching other filters
   const dynamicFilterOptions = useMemo(() => {
@@ -451,6 +530,10 @@ function AdminPage() {
       const rCenter = r.center.toLowerCase();
       const rSaf = r.safStatus;
 
+      // If Approved, only consider records whose partner meets >= 15 threshold
+      const isApprovedQualifying = r.status !== "Approved" || (partnerPipelineCounts[r.partner] || 0) >= 15;
+      if (!isApprovedQualifying) continue;
+
       const mStatus = !statusNorm || rStatus === statusNorm;
       const mPartner = !partnerNorm || rPartner === partnerNorm;
       const mCourse = !courseNorm || rCourse === courseNorm;
@@ -460,7 +543,15 @@ function AdminPage() {
       const mSaf = !safNorm || rSaf === safNorm;
 
       if (mPartner && mCourse && mCat && mNigama && mCenter && mSaf && r.status) statusSet.add(r.status);
-      if (mStatus && mCourse && mCat && mNigama && mCenter && mSaf && r.partner && !isCollegeHiddenForApplicant(r.partner)) partnerSet.add(r.partner);
+      if (mStatus && mCourse && mCat && mNigama && mCenter && mSaf && r.partner && !isCollegeHiddenForApplicant(r.partner)) {
+        if (statusNorm === "approved") {
+          if ((partnerPipelineCounts[r.partner] || 0) >= 15) {
+            partnerSet.add(r.partner);
+          }
+        } else {
+          partnerSet.add(r.partner);
+        }
+      }
       if (mStatus && mPartner && mCat && mNigama && mCenter && mSaf && r.course) courseSet.add(r.course);
       if (mStatus && mPartner && mCourse && mNigama && mCenter && mSaf && r.category) categorySet.add(r.category);
       if (mStatus && mPartner && mCourse && mCat && mCenter && mSaf && r.nigama) nigamaSet.add(r.nigama);
@@ -556,7 +647,7 @@ function AdminPage() {
     toast.success(`Status updated to ${newStatus}${detail ? ` (${detail})` : ""}`);
     setStatusTarget(null);
     void qc.invalidateQueries({ queryKey: ["registrations"] });
-    void qc.invalidateQueries({ queryKey: ["registrations-facet-index-obc-female"] });
+    void qc.invalidateQueries({ queryKey: ["registrations-facet-index-female-obc-hindu"] });
   };
 
   const remove = (row: Row) => {
@@ -586,7 +677,7 @@ function AdminPage() {
     setSelectedIds((prev) => prev.filter((id) => !ids.includes(id)));
     setDeleteTarget(null);
     void qc.invalidateQueries({ queryKey: ["registrations"] });
-    void qc.invalidateQueries({ queryKey: ["registrations-facet-index-obc-female"] });
+    void qc.invalidateQueries({ queryKey: ["registrations-facet-index-female-obc-hindu"] });
   };
 
   const exportCsv = async () => {
@@ -886,7 +977,7 @@ function AdminPage() {
       setSafImportModalOpen(true);
 
       void qc.invalidateQueries({ queryKey: ["registrations"] });
-      void qc.invalidateQueries({ queryKey: ["registrations-facet-index-obc-female"] });
+      void qc.invalidateQueries({ queryKey: ["registrations-facet-index-female-obc-hindu"] });
 
       if (updatedCount > 0) {
         toast.success(`Successfully updated SAF Numbers for ${updatedCount} matched applicant(s)!`);

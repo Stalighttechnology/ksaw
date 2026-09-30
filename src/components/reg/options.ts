@@ -58,6 +58,8 @@ export const COLLEGES = [
   "Maratha Mandal College of Engineering",
   "Nehru Memorial College, Sullia",
   "Jnanavikas Vidya Sangha - Bidadi",
+  "Chanakya Computer Classes",
+  "Kukke Sri Subramanya College, Subramanya, Kadaba DK",
 ];
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
@@ -789,6 +791,36 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "Sree Aditya Degree College",
     "Sri Aditya Degree College",
   ],
+  "Chanakya Computer Classes": [
+    "Chanakya Computer Classes",
+    "CHANAKYA COMPUTER CLASSES",
+    "Chanakya Computer Center",
+    "Chanakya Computer Institute",
+    "Chanakya Computers",
+    "Chanakya Computer Training Centre",
+    "Chanakya Computer Training Center",
+    "Chanakya College",
+  ],
+  "Kukke Sri Subramanya College, Subramanya, Kadaba DK": [
+    "Kukke Sri Subramanya College, Subramanya, Kadaba DK",
+    "Kukke Sri Subramanya College, Subramanya, Kadaba, DK",
+    "Kukke sri subramanya college subramanya kadaba dk",
+    "Kukke Sri Subramanya College Subramanya Kadaba DK",
+    "Kukke Sri Subramanya College Subramanya",
+    "Kukke Sri Subramanya College, Subramanya",
+    "Kukke Sri Subramanya College",
+    "Kukke Shri Subramanya College",
+    "Kukke Sri Subrahmanya College",
+    "Kukke Sri Subramanya First Grade College",
+    "Kukke Subrahmanya College",
+    "Kukke Subramanya College",
+    "KSS College Subramanya",
+    "KSS College, Subramanya",
+    "KSS College",
+    "KSS Subramanya",
+    "KUKKE SRI SUBRAMANYA COLLEGE SUBRAMANYA KADABA DK",
+    "KUKKE SRI SUBRAMANYA COLLEGE",
+  ],
 };
 
 const normCollegeNameCache = new Map<string, string>();
@@ -819,6 +851,16 @@ export function normalizeCollegeName(rawName?: string | null): string {
 
   const upper = trimmed.toUpperCase().replace(/[^A-Z0-9]/g, "");
   if (upper === "SHIVAKUMAR" || upper === "SHIVKUMAR") return "Shivkumar";
+  if (upper.includes("CHANAKYA")) return "Chanakya Computer Classes";
+  if (
+    upper.includes("KUKKE") ||
+    upper.includes("SUBRAHMANYA") ||
+    (upper.includes("SUBRAMANYA") && (upper.includes("KADABA") || upper.includes("KUKKE") || upper.includes("COLLEGE") || upper.includes("DK"))) ||
+    upper === "KSSCOLLEGE" ||
+    upper === "KSS"
+  ) {
+    return "Kukke Sri Subramanya College, Subramanya, Kadaba DK";
+  }
   if (upper.includes("VIZUTECH")) return "Vizutech Solutions Pvt Ltd.";
   if (upper.includes("POLYTECHNIC") && (upper.includes("RAMNAGAR") || upper.includes("RAMANAGAR"))) return "Government Polytechnic for Women Ramanagar";
   if ((upper.includes("SCIENCE") || upper.includes("SCI")) && upper.includes("HASSAN")) return "Government Science College (Autonomous) - Hassan";
