@@ -3564,7 +3564,7 @@ function EditDialog({ row, onClose, onSaved }: { row: Row; onClose: () => void; 
   const [busy, setBusy] = useState(false);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
 
-  const visibleColumns = COLUMNS.filter((c) => c.key !== "created_at" && shouldShowField(c.key, form as Row));
+  const visibleColumns = COLUMNS.filter((c) => c.key !== "created_at" && c.key !== "batch_name" && shouldShowField(c.key, form as Row));
   const groups = [...new Set(visibleColumns.map((c) => c.group))];
 
   const handleFileUpload = async (key: string, file: File | undefined) => {
@@ -3633,7 +3633,7 @@ function EditDialog({ row, onClose, onSaved }: { row: Row; onClose: () => void; 
     }
     const payload: Record<string, unknown> = {};
     for (const c of COLUMNS) {
-      if (c.key === "created_at") continue;
+      if (c.key === "created_at" || c.key === "batch_name") continue;
       let v = form[c.key];
       if (c.key === "institution_name") {
         v = normalizeCollegeName(v as string) || v;
