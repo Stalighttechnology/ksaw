@@ -160,10 +160,7 @@ function applyRegistrationFilters<T extends any>(baseQuery: T, filters: Registra
 
   if (filters.batch) {
     if (filters.batch === "Unassigned / No Batch") {
-      if (filters.allBatchApplicantIds && filters.allBatchApplicantIds.length > 0) {
-        // Show applicants NOT assigned to any batch
-        q = q.not("id", "in", `(${filters.allBatchApplicantIds.join(",")})`);
-      }
+      // Handled via page-sliced ID fetching in listQuery & exportCsv to avoid HTTP 414 URL length limits
     } else if (filters.batchApplicantIds && filters.batchApplicantIds.length > 0) {
       q = q.in("id", filters.batchApplicantIds);
     } else {
@@ -433,9 +430,63 @@ function AdminPage() {
   };
 
   const listQuery = useQuery({
-    queryKey: ["registrations", filters, page, pageSize, sortColumn, sortOrder],
+    queryKey: ["registrations", filters, page, pageSize, sortColumn, sortOrder, facetIndexQuery.data?.length],
     queryFn: async () => {
       const selectCols = ["id", ...COLUMNS.filter(c => c.key !== "batch_name").map((c) => c.key)].join(",");
+
+      // Fast, resilient handling for "Unassigned / No Batch" using in-memory facet index
+      if (filters.batch === "Unassigned / No Batch") {
+        const records = facetIndexQuery.data ?? [];
+        const unassignedRecords = records.filter((r) => {
+          if (r.batch) return false;
+          if (filters.gender && filters.gender.toLowerCase() === "female" && r.gender?.toLowerCase() !== "female") return false;
+          if (filters.category && filters.category.toUpperCase() === "OBC" && r.category?.toUpperCase() !== "OBC") return false;
+          if (filters.course && r.course?.toLowerCase() !== filters.course.toLowerCase()) return false;
+          if (filters.status && r.status?.toLowerCase() !== filters.status.toLowerCase()) return false;
+          if (filters.nigama && r.nigama?.toLowerCase() !== filters.nigama.toLowerCase()) return false;
+          if (filters.partner) {
+            const pNorm = (normalizeCollegeName(filters.partner) || filters.partner).toLowerCase();
+            const rPNorm = (normalizeCollegeName(r.partner) || r.partner).toLowerCase();
+            if (pNorm !== rPNorm) return false;
+          }
+          if (filters.centerLocation && !r.center?.toLowerCase().includes(filters.centerLocation.toLowerCase())) return false;
+          if (filters.safStatus === "Empty / Missing" && r.safStatus !== "Empty / Missing") return false;
+          if (filters.safStatus === "Filled / Present" && r.safStatus !== "Filled / Present") return false;
+          return true;
+        });
+
+        const totalUnassigned = unassignedRecords.length;
+        const from = page * pageSize;
+        const to = from + pageSize;
+        const pageRecords = unassignedRecords.slice(from, to);
+        const pageIds = pageRecords.map((r) => r.id).filter(Boolean);
+
+        if (pageIds.length === 0) {
+          return { rows: [], count: totalUnassigned };
+        }
+
+        const { data: dbRows, error } = await supabase
+          .from("registrations")
+          .select(selectCols)
+          .in("id", pageIds);
+
+        if (error) throw error;
+
+        // Preserve page order
+        const rowMap = new Map((dbRows || []).map((r) => [r.id, r]));
+        const orderedRows = pageIds.map((id) => rowMap.get(id)).filter(Boolean) as Row[];
+
+        const normalizedRows = orderedRows.map((r) => ({
+          ...r,
+          batch_name: getApplicantBatch(r) || (r.batch_name as string) || "—",
+          institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
+          nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
+          caste_cert_type: (r.caste_cert_type as string) || getCasteCertificateType(r.category as string, r.caste_sub_category as string, r.caste as string) || r.caste_cert_type,
+        }));
+
+        return { rows: normalizedRows, count: totalUnassigned };
+      }
+
       let q = supabase.from("registrations").select(selectCols, { count: "exact" });
       q = applyRegistrationFilters(q, filters);
 
@@ -739,24 +790,37 @@ function AdminPage() {
       setIsExporting(true);
       const selectCols = ["id", ...COLUMNS.filter(c => c.key !== "batch_name").map((c) => c.key)].join(",");
       const allExportRows: Row[] = [];
-      const CHUNK_SIZE = 1000;
-      let from = 0;
-      let hasMore = true;
+      if (filters.batch === "Unassigned / No Batch") {
+        const records = facetIndexQuery.data ?? [];
+        const unassignedRecords = records.filter((r) => !r.batch);
+        const allIds = unassignedRecords.map((r) => r.id).filter(Boolean);
+        const CHUNK = 80;
+        for (let i = 0; i < allIds.length; i += CHUNK) {
+          const chunkIds = allIds.slice(i, i + CHUNK);
+          const { data, error } = await supabase.from("registrations").select(selectCols).in("id", chunkIds);
+          if (error) throw error;
+          if (data) allExportRows.push(...(data as Row[]));
+        }
+      } else {
+        const CHUNK_SIZE = 1000;
+        let from = 0;
+        let hasMore = true;
 
-      while (hasMore) {
-        let q = supabase.from("registrations").select(selectCols);
-        q = applyRegistrationFilters(q, filters);
-        const { data, error } = await q.range(from, from + CHUNK_SIZE - 1);
-        if (error) throw error;
+        while (hasMore) {
+          let q = supabase.from("registrations").select(selectCols);
+          q = applyRegistrationFilters(q, filters);
+          const { data, error } = await q.range(from, from + CHUNK_SIZE - 1);
+          if (error) throw error;
 
-        if (!data || data.length === 0) {
-          hasMore = false;
-        } else {
-          allExportRows.push(...(data as Row[]));
-          if (data.length < CHUNK_SIZE) {
+          if (!data || data.length === 0) {
             hasMore = false;
           } else {
-            from += CHUNK_SIZE;
+            allExportRows.push(...(data as Row[]));
+            if (data.length < CHUNK_SIZE) {
+              hasMore = false;
+            } else {
+              from += CHUNK_SIZE;
+            }
           }
         }
       }
