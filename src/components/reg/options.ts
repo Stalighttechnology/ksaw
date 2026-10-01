@@ -61,9 +61,20 @@ export const COLLEGES = [
   "Jnanavikas Vidya Sangha - Bidadi",
   "Chanakya Computer Classes",
   "Kukke Sri Subramanya College, Subramanya, Kadaba DK",
+  "Government first grade college Zalaki taluk Indi",
 ];
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
+  "Government first grade college Zalaki taluk Indi": [
+    "Government first grade college Zalaki taluk Indi",
+    "Government First Grade College, Zalaki, Taluk Indi",
+    "Government First Grade College Zalaki Taluk Indi",
+    "Government First Grade College Zalaki Indi",
+    "GFGC Zalaki Indi",
+    "GFGC Zalaki",
+    "Government First Grade College Zalaki",
+    "Govt First Grade College Zalaki",
+  ],
   "KSAWU - Karnataka State Akkamahadevi Women University, Jnana Shakti Campus, Vijayapura": [
     "KSAWU VIJAYAPURA",
     "Karnataka State Akkamahadevi Women University, Jnana Shakti Campus, Vijayapura",
