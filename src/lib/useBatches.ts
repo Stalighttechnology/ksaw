@@ -7143,7 +7143,42 @@ function buildStaticMaps(batches: BatchItem[]) {
 
 const STATIC_MAPS = buildStaticMaps(BUILTIN_BATCHES);
 
-export const DEFAULT_BATCHES: readonly string[] = [
+export function extractBatchSerialNumber(name: string): number | null {
+  if (!name) return null;
+  // Match number after trailing dash e.g. "0926-47" -> 47, "0926-2" -> 2
+  const dashMatch = name.match(/-(\d+)\s*$/);
+  if (dashMatch) {
+    const n = parseInt(dashMatch[1], 10);
+    if (!Number.isNaN(n)) return n;
+  }
+  // Fallback: match any number at the end of the string
+  const numMatch = name.match(/(\d+)(?:\D*)$/);
+  if (numMatch) {
+    const n = parseInt(numMatch[1], 10);
+    if (!Number.isNaN(n)) return n;
+  }
+  return null;
+}
+
+export function sortBatchNames(batches: (string | null | undefined)[]): string[] {
+  const filtered = Array.from(new Set(batches.filter((b): b is string => Boolean(b && b.trim()))));
+  return filtered.sort((a, b) => {
+    const numA = extractBatchSerialNumber(a);
+    const numB = extractBatchSerialNumber(b);
+
+    if (numA !== null && numB !== null) {
+      if (numA !== numB) {
+        return numA - numB;
+      }
+      return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+    }
+    if (numA !== null) return -1;
+    if (numB !== null) return 1;
+    return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+  });
+}
+
+export const DEFAULT_BATCHES: readonly string[] = sortBatchNames([
   "KSAWU/BGM/CPG/0926-47",
   "KSAWU/HSN/CHN/0926-2",
   "KSAWU/HSN/CHN/0926-3",
@@ -7199,7 +7234,7 @@ export const DEFAULT_BATCHES: readonly string[] = [
   "KSAWU/MYR/CPG/0926-19",
   "KSAWU/MYR/CPG/0926-45",
   "KSAWU/UDP/CPG/0926-63"
-];
+]);
 
 const INITIAL_MANIFEST: BatchesManifest = {
   version: 5,
@@ -7252,7 +7287,7 @@ export function useBatches() {
         else if (b.id) set.add(b.id);
       });
     }
-    return Array.from(set).sort();
+    return sortBatchNames(Array.from(set));
   }, [activeManifest]);
 
   const getApplicantBatch = useMemo(() => {
