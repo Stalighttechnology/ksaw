@@ -21,6 +21,7 @@ import {
 import { NIGAMAS, CASTES, CASTE_NAMES, CASTE_CATEGORIES, normalizeNigamaName, getNigamaAliases, getCasteCertificateType } from "@/components/reg/castes";
 import { supabase } from "@/integrations/supabase/client";
 import { useColleges } from "@/lib/useColleges";
+import { useBatches } from "@/lib/useBatches";
 import { useMaintenance } from "@/lib/useMaintenance";
 import { read, utils } from "xlsx";
 
@@ -119,6 +120,7 @@ function normalizeCourseName(raw?: string | null): string {
 
 interface RegistrationFilters {
   search?: string;
+  searchBatchIds?: string[];
   status?: string;
   course?: string;
   category?: string;
@@ -126,16 +128,49 @@ interface RegistrationFilters {
   nigama?: string;
   partner?: string;
   safStatus?: string;
+  batch?: string;
+  batchApplicantIds?: string[];
+  allBatchApplicantIds?: string[];
   gender?: string;
   dateFilter?: "today" | "week" | "";
+  allowedInstitutionsForApproved?: string[];
+  qualifyingPartnersSet?: Set<string>;
 }
 
 function applyRegistrationFilters<T extends any>(baseQuery: T, filters: RegistrationFilters): T {
   let q = baseQuery as any;
-  if (filters.status) q = q.eq("status", filters.status);
-  if (filters.gender) q = q.eq("gender", filters.gender);
+  // Strict Admin Visibility Rule: Strictly Female + OBC + Hindu candidates only
+  q = q.ilike("category", "OBC").ilike("gender", "Female").ilike("religion", "Hindu");
+
+  if (filters.status) {
+    q = q.eq("status", filters.status);
+    if (filters.status === "Approved") {
+      if (filters.partner) {
+        const normP = (normalizeCollegeName(filters.partner) || filters.partner).toLowerCase();
+        if (filters.qualifyingPartnersSet && !filters.qualifyingPartnersSet.has(normP)) {
+          q = q.eq("id", "00000000-0000-0000-0000-000000000000");
+        }
+      } else if (filters.allowedInstitutionsForApproved && filters.allowedInstitutionsForApproved.length > 0) {
+        q = q.in("institution_name", filters.allowedInstitutionsForApproved);
+      } else if (filters.allowedInstitutionsForApproved && filters.allowedInstitutionsForApproved.length === 0) {
+        q = q.eq("id", "00000000-0000-0000-0000-000000000000");
+      }
+    }
+  }
+
+  if (filters.batch) {
+    if (filters.batch === "Unassigned / No Batch") {
+      // Handled via page-sliced ID fetching in listQuery & exportCsv to avoid HTTP 414 URL length limits
+    } else if (filters.batchApplicantIds && filters.batchApplicantIds.length > 0) {
+      q = q.in("id", filters.batchApplicantIds);
+    } else {
+      q = q.eq("id", "00000000-0000-0000-0000-000000000000");
+    }
+  }
+
+  if (filters.gender && filters.gender.toLowerCase() === "female") q = q.ilike("gender", filters.gender);
   if (filters.course) q = q.ilike("skill_sought", filters.course);
-  if (filters.category) q = q.ilike("category", filters.category);
+  if (filters.category && filters.category.toUpperCase() === "OBC") q = q.ilike("category", filters.category);
   if (filters.centerLocation) {
     q = q.or(`center_location.ilike.%${filters.centerLocation}%,cur_district.ilike.%${filters.centerLocation}%`);
   }
@@ -170,10 +205,13 @@ function applyRegistrationFilters<T extends any>(baseQuery: T, filters: Registra
     q = q.gte("created_at", startOfWeek);
   }
   if (filters.search) {
-    const s = filters.search.replace(/[%,()]/g, "");
-    q = q.or(
-      `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,gender.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,caste_sub_category.ilike.%${s}%,nigama.ilike.%${s}%,category.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
-    );
+    const s = filters.search.replace(/[%,()]/g, "").trim();
+    let orTerms = `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,caste_sub_category.ilike.%${s}%,nigama.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`;
+    if (filters.searchBatchIds && filters.searchBatchIds.length > 0) {
+      const idChunk = filters.searchBatchIds.slice(0, 35).map(id => `id.eq.${id}`).join(",");
+      orTerms += `,${idChunk}`;
+    }
+    q = q.or(orTerms);
   }
   return q;
 }
@@ -184,6 +222,7 @@ function AdminPage() {
 
   const { isMaintenance, toggleMaintenance, isUpdating: isTogglingMaintenance } = useMaintenance();
   const { colleges, addCollege, editCollege, removeCollege, isAdding, isEditing, isRemoving } = useColleges();
+  const { batches, manifest: batchesManifest, getApplicantBatch, getBatchApplicantIds, allBatchApplicantIds } = useBatches();
   const [collegeModalOpen, setCollegeModalOpen] = useState(false);
   const [collegeAuthModalOpen, setCollegeAuthModalOpen] = useState(false);
   const [collegeAuthPassword, setCollegeAuthPassword] = useState("");
@@ -198,6 +237,7 @@ function AdminPage() {
   const [nigama, setNigama] = useState("");
   const [partner, setPartner] = useState("");
   const [safStatus, setSafStatus] = useState("");
+  const [batch, setBatch] = useState("");
   const [gender, setGender] = useState("");
   const [dateFilter, setDateFilter] = useState<"today" | "week" | "">("");
   const [sortColumn, setSortColumn] = useState<string>("created_at");
@@ -246,18 +286,211 @@ function AdminPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const filters: RegistrationFilters = { search: debouncedSearch.trim(), status, course, category, centerLocation, nigama, partner, safStatus, gender, dateFilter };
+  interface CompactRegistration {
+    id: string;
+    status: string;
+    course: string;
+    partner: string;
+    nigama: string;
+    category: string;
+    center: string;
+    gender: string;
+    religion: string;
+    created_at?: string;
+    safStatus: "Empty / Missing" | "Filled / Present";
+    batch?: string;
+  }
+
+  // Fast parallel facet index loaded once and cached for real-time interdependent faceting (strictly Female + OBC + Hindu)
+  const facetIndexQuery = useQuery<CompactRegistration[]>({
+    queryKey: ["registrations-facet-index-female-obc-hindu"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("registrations")
+        .select("*", { count: "exact", head: true })
+        .ilike("category", "OBC")
+        .ilike("gender", "Female")
+        .ilike("religion", "Hindu");
+
+      const totalCount = count || 0;
+      if (totalCount === 0) return [];
+
+      const PAGE_SIZE = 1000;
+      const numPages = Math.ceil(totalCount / PAGE_SIZE);
+
+      const pagePromises = Array.from({ length: numPages }, (_, i) =>
+        supabase
+          .from("registrations")
+          .select("id, status, skill_sought, category, center_location, cur_district, nigama, institution_name, saf_number, reference_number, aadhaar_number, created_at, gender, religion")
+          .ilike("category", "OBC")
+          .ilike("gender", "Female")
+          .ilike("religion", "Hindu")
+          .range(i * PAGE_SIZE, (i + 1) * PAGE_SIZE - 1)
+      );
+
+      const results = await Promise.all(pagePromises);
+      const rawRows = results.flatMap((r) => r.data || []);
+
+      return rawRows.map((r) => {
+        const rawSaf = (r["saf_number"] as string) || "";
+        const isFilled = rawSaf.toUpperCase().includes("SAF");
+        const studentBatch = getApplicantBatch(r as unknown as Row) || "";
+        return {
+          id: (r["id"] as string) || "",
+          status: ((r["status"] as string) || "Pending").trim(),
+          course: normalizeCourseName(r["skill_sought"] as string),
+          partner: normalizeCollegeName(r["institution_name"] as string) || ((r["institution_name"] as string) || "").trim(),
+          nigama: normalizeNigamaName(r["nigama"] as string) || ((r["nigama"] as string) || "").trim(),
+          category: ((r["category"] as string) || "OBC").trim(),
+          gender: ((r["gender"] as string) || "Female").trim(),
+          religion: ((r["religion"] as string) || "Hindu").trim(),
+          created_at: r["created_at"] as string,
+          center: (((r["center_location"] as string) || (r["cur_district"] as string)) || "").trim().toUpperCase(),
+          safStatus: isFilled ? "Filled / Present" : "Empty / Missing",
+          batch: studentBatch,
+        };
+      });
+    },
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  // Calculate combined pipeline counts per partner across Sent to Dept + Approved by Dept + Approved
+  const partnerPipelineCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const r of facetIndexQuery.data ?? []) {
+      const st = r.status || "Pending";
+      if (st === "Sent to Department" || st === "Approved by Dept" || st === "Approved") {
+        const p = r.partner || "";
+        if (p) {
+          map[p] = (map[p] || 0) + 1;
+        }
+      }
+    }
+    return map;
+  }, [facetIndexQuery.data]);
+
+  const qualifyingPartnersSet = useMemo(() => {
+    const set = new Set<string>();
+    for (const [partnerName, count] of Object.entries(partnerPipelineCounts)) {
+      if (count >= 15) {
+        set.add(partnerName.toLowerCase());
+      }
+    }
+    return set;
+  }, [partnerPipelineCounts]);
+
+  const allowedInstitutionsForApproved = useMemo(() => {
+    const result = new Set<string>();
+    for (const [partnerName, count] of Object.entries(partnerPipelineCounts)) {
+      if (count >= 15) {
+        result.add(partnerName);
+        const norm = normalizeCollegeName(partnerName);
+        if (norm) result.add(norm);
+        const aliases = getCollegeAliases(partnerName);
+        for (const a of aliases) result.add(a);
+      }
+    }
+    return Array.from(result).filter(Boolean);
+  }, [partnerPipelineCounts]);
+
+  const searchBatchIds = useMemo(() => {
+    const s = debouncedSearch.trim().toLowerCase();
+    if (!s) return [];
+    const matched: string[] = [];
+    batches.forEach((bName) => {
+      if (bName.toLowerCase().includes(s)) {
+        matched.push(...getBatchApplicantIds(bName));
+      }
+    });
+    return Array.from(new Set(matched));
+  }, [debouncedSearch, batches, getBatchApplicantIds]);
+
+  const batchApplicantIds = useMemo(() => {
+    return getBatchApplicantIds(batch);
+  }, [batch, getBatchApplicantIds]);
+
+  const filters: RegistrationFilters = {
+    search: debouncedSearch.trim(),
+    searchBatchIds,
+    status,
+    course,
+    category,
+    centerLocation,
+    nigama,
+    partner,
+    safStatus,
+    batch,
+    batchApplicantIds,
+    allBatchApplicantIds,
+    gender,
+    dateFilter,
+    allowedInstitutionsForApproved,
+    qualifyingPartnersSet,
+  };
 
   const listQuery = useQuery({
-    queryKey: ["registrations", filters, page, pageSize, sortColumn, sortOrder],
+    queryKey: ["registrations", filters, page, pageSize, sortColumn, sortOrder, facetIndexQuery.data?.length],
     queryFn: async () => {
-      const selectCols = ["id", ...COLUMNS.map((c) => c.key)].join(",");
+      const selectCols = ["id", ...COLUMNS.filter(c => c.key !== "batch_name").map((c) => c.key)].join(",");
+
+      // Fast, resilient handling for "Unassigned / No Batch" using in-memory facet index
+      if (filters.batch === "Unassigned / No Batch") {
+        const records = facetIndexQuery.data ?? [];
+        const unassignedRecords = records.filter((r) => {
+          if (r.batch) return false;
+          if (filters.gender && filters.gender.toLowerCase() === "female" && r.gender?.toLowerCase() !== "female") return false;
+          if (filters.category && filters.category.toUpperCase() === "OBC" && r.category?.toUpperCase() !== "OBC") return false;
+          if (filters.course && r.course?.toLowerCase() !== filters.course.toLowerCase()) return false;
+          if (filters.status && r.status?.toLowerCase() !== filters.status.toLowerCase()) return false;
+          if (filters.nigama && r.nigama?.toLowerCase() !== filters.nigama.toLowerCase()) return false;
+          if (filters.partner) {
+            const pNorm = (normalizeCollegeName(filters.partner) || filters.partner).toLowerCase();
+            const rPNorm = (normalizeCollegeName(r.partner) || r.partner).toLowerCase();
+            if (pNorm !== rPNorm) return false;
+          }
+          if (filters.centerLocation && !r.center?.toLowerCase().includes(filters.centerLocation.toLowerCase())) return false;
+          if (filters.safStatus === "Empty / Missing" && r.safStatus !== "Empty / Missing") return false;
+          if (filters.safStatus === "Filled / Present" && r.safStatus !== "Filled / Present") return false;
+          return true;
+        });
+
+        const totalUnassigned = unassignedRecords.length;
+        const from = page * pageSize;
+        const to = from + pageSize;
+        const pageRecords = unassignedRecords.slice(from, to);
+        const pageIds = pageRecords.map((r) => r.id).filter(Boolean);
+
+        if (pageIds.length === 0) {
+          return { rows: [], count: totalUnassigned };
+        }
+
+        const { data: dbRows, error } = await supabase
+          .from("registrations")
+          .select(selectCols)
+          .in("id", pageIds);
+
+        if (error) throw error;
+
+        // Preserve page order
+        const rowMap = new Map((dbRows || []).map((r) => [r.id, r]));
+        const orderedRows = pageIds.map((id) => rowMap.get(id)).filter(Boolean) as Row[];
+
+        const normalizedRows = orderedRows.map((r) => ({
+          ...r,
+          batch_name: getApplicantBatch(r) || (r.batch_name as string) || "—",
+          institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
+          nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
+          caste_cert_type: (r.caste_cert_type as string) || getCasteCertificateType(r.category as string, r.caste_sub_category as string, r.caste as string) || r.caste_cert_type,
+        }));
+
+        return { rows: normalizedRows, count: totalUnassigned };
+      }
+
       let q = supabase.from("registrations").select(selectCols, { count: "exact" });
       q = applyRegistrationFilters(q, filters);
 
       if (sortColumn === "reference_number") {
-        // Because reference_number is string ('KSAW 999' vs 'KSAW 3000'), SQL alphabetical sort puts 999 above 3000.
-        // Sorting by created_at provides true chronological / numeric reference order.
         q = q.order("created_at", { ascending: sortOrder === "asc", nullsFirst: false });
       } else if (sortColumn) {
         q = q.order(sortColumn, { ascending: sortOrder === "asc", nullsFirst: false });
@@ -277,6 +510,7 @@ function AdminPage() {
 
       const normalizedRows = ((data ?? []) as Row[]).map((r) => ({
         ...r,
+        batch_name: getApplicantBatch(r) || (r.batch_name as string) || "—",
         institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
         nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
         caste_cert_type: (r.caste_cert_type as string) || getCasteCertificateType(r.category as string, r.caste_sub_category as string, r.caste as string) || r.caste_cert_type,
@@ -288,119 +522,61 @@ function AdminPage() {
     refetchOnWindowFocus: false,
   });
 
-  const statsQuery = useQuery({
-    queryKey: ["registration-stats"],
-    queryFn: async () => {
-      // 1. Fetch fast server-side aggregation stats via read-only PostgreSQL RPC
-      const { data, error } = await supabase.rpc("get_admin_dashboard_stats");
-      if (!error && data) {
-        return data as {
-          total: number;
-          today: number;
-          week: number;
-          byStatus: Record<string, number>;
-          byGender: Record<string, number>;
-          byCourse: Record<string, number>;
-          byCenter: Record<string, number>;
-          byPartner: Record<string, number>;
-          byNigama: Record<string, number>;
-        };
+  const stats = useMemo(() => {
+    const records = facetIndexQuery.data ?? [];
+    const total = records.length;
+
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).getTime();
+
+    let todayCount = 0;
+    let weekCount = 0;
+    const byStatus: Record<string, number> = {};
+    const byCourse: Record<string, number> = {};
+    const byCenter: Record<string, number> = {};
+    const byNigama: Record<string, number> = {};
+    const byPartner: Record<string, number> = {};
+
+    for (const r of records) {
+      if (r.created_at) {
+        const cTime = new Date(r.created_at).getTime();
+        if (cTime >= startOfToday) todayCount++;
+        if (cTime >= startOfWeek) weekCount++;
       }
 
-      // 2. Resilient fallback: Get exact total count directly from PostgreSQL if RPC is not yet loaded
-      const { count: exactTotal } = await supabase
-        .from("registrations")
-        .select("*", { count: "exact", head: true });
+      const st = r.status || "Pending";
+      if (st === "Approved") {
+        // Only count under Approved if the partner meets >= 15 pipeline threshold
+        const pCount = partnerPipelineCounts[r.partner] || 0;
+        if (pCount >= 15) {
+          byStatus["Approved"] = (byStatus["Approved"] || 0) + 1;
+        }
+      } else {
+        byStatus[st] = (byStatus[st] || 0) + 1;
+      }
 
-      return {
-        total: exactTotal ?? 0,
-        today: 0,
-        week: 0,
-        byStatus: {},
-        byGender: {},
-        byCourse: {},
-        byCenter: {},
-        byPartner: {},
-        byNigama: {},
-      };
-    },
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
-  });
+      if (r.course) byCourse[r.course] = (byCourse[r.course] || 0) + 1;
+      if (r.center) byCenter[r.center] = (byCenter[r.center] || 0) + 1;
+      if (r.nigama) byNigama[r.nigama] = (byNigama[r.nigama] || 0) + 1;
 
-  const stats = useMemo(() => {
-    const data = statsQuery.data;
-    const rawByPartner = data?.byPartner ?? {};
-    const normalizedByPartner: Record<string, number> = {};
-
-    for (const [key, count] of Object.entries(rawByPartner)) {
-      if (isCollegeHiddenForApplicant(key)) continue;
-      const norm = normalizeCollegeName(key) || key;
-      if (isCollegeHiddenForApplicant(norm)) continue;
-      if (count > 0) {
-        normalizedByPartner[norm] = (normalizedByPartner[norm] || 0) + count;
+      if (r.partner && !isCollegeHiddenForApplicant(r.partner)) {
+        byPartner[r.partner] = (byPartner[r.partner] || 0) + 1;
       }
     }
 
     return {
-      total: data?.total ?? 0,
-      today: data?.today ?? 0,
-      week: data?.week ?? 0,
-      byStatus: data?.byStatus ?? {},
-      byCourse: data?.byCourse ?? {},
-      byGender: data?.byGender ?? {},
-      byCenter: data?.byCenter ?? {},
-      byPartner: normalizedByPartner,
-      byNigama: data?.byNigama ?? {},
+      total,
+      today: todayCount,
+      week: weekCount,
+      byStatus,
+      byCourse,
+      byGender: { Female: total },
+      byCenter,
+      byPartner,
+      byNigama,
     };
-  }, [statsQuery.data]);
-
-  interface CompactRegistration {
-    status: string;
-    course: string;
-    partner: string;
-    nigama: string;
-    category: string;
-    center: string;
-    safStatus: "Empty / Missing" | "Filled / Present";
-  }
-
-  // Fast parallel facet index loaded once and cached for real-time interdependent faceting
-  const facetIndexQuery = useQuery<CompactRegistration[]>({
-    queryKey: ["registrations-facet-index"],
-    queryFn: async () => {
-      const { count } = await supabase.from("registrations").select("*", { count: "exact", head: true });
-      const totalCount = count || 4000;
-      const PAGE_SIZE = 1000;
-      const numPages = Math.ceil(totalCount / PAGE_SIZE);
-
-      const pagePromises = Array.from({ length: numPages }, (_, i) =>
-        supabase
-          .from("registrations")
-          .select("status, skill_sought, category, center_location, cur_district, nigama, institution_name, saf_number")
-          .range(i * PAGE_SIZE, (i + 1) * PAGE_SIZE - 1)
-      );
-
-      const results = await Promise.all(pagePromises);
-      const rawRows = results.flatMap((r) => r.data || []);
-
-      return rawRows.map((r) => {
-        const rawSaf = (r["saf_number"] as string) || "";
-        const isFilled = rawSaf.toUpperCase().includes("SAF");
-        return {
-          status: ((r["status"] as string) || "Pending").trim(),
-          course: normalizeCourseName(r["skill_sought"] as string),
-          partner: normalizeCollegeName(r["institution_name"] as string) || ((r["institution_name"] as string) || "").trim(),
-          nigama: normalizeNigamaName(r["nigama"] as string) || ((r["nigama"] as string) || "").trim(),
-          category: ((r["category"] as string) || "").trim(),
-          center: (((r["center_location"] as string) || (r["cur_district"] as string)) || "").trim().toUpperCase(),
-          safStatus: isFilled ? "Filled / Present" : "Empty / Missing",
-        };
-      });
-    },
-    staleTime: 5 * 60_000,
-    refetchOnWindowFocus: false,
-  });
+  }, [facetIndexQuery.data, partnerPipelineCounts]);
 
   // Dynamic interdependent faceted options: only shows options that have actual records matching other filters
   const dynamicFilterOptions = useMemo(() => {
@@ -414,6 +590,7 @@ function AdminPage() {
       const dbCenters = Object.keys(stats.byCenter);
 
       return {
+        batches: ["Unassigned / No Batch", ...batches],
         nigamas: sortAlpha(new Set([...NIGAMAS, ...dbNigamas, ...(nigama ? [nigama] : [])])),
         statuses: Array.from(STATUS_OPTIONS),
         partners: sortAlpha(
@@ -424,7 +601,7 @@ function AdminPage() {
           )
         ),
         courses: sortAlpha(new Set([...SKILLS, ...dbCourses, ...(course ? [course] : [])])),
-        categories: sortAlpha(new Set([...CATEGORIES, ...(category ? [category] : [])])),
+        categories: ["OBC"],
         centers: sortAlpha(new Set([...(DISTRICTS["KARNATAKA"] || []), ...dbCenters, ...(centerLocation ? [centerLocation] : [])])),
       };
     }
@@ -443,6 +620,7 @@ function AdminPage() {
     const nigamaNorm = nigama ? (normalizeNigamaName(nigama) || nigama).toLowerCase() : "";
     const centerNorm = centerLocation ? centerLocation.toLowerCase() : "";
     const safNorm = safStatus;
+    const batchNorm = batch ? batch.trim() : "";
 
     for (let i = 0; i < records.length; i++) {
       const r = records[i];
@@ -453,6 +631,11 @@ function AdminPage() {
       const rNigama = r.nigama.toLowerCase();
       const rCenter = r.center.toLowerCase();
       const rSaf = r.safStatus;
+      const rBatch = r.batch || "";
+
+      // If Approved, only consider records whose partner meets >= 15 threshold
+      const isApprovedQualifying = r.status !== "Approved" || (partnerPipelineCounts[r.partner] || 0) >= 15;
+      if (!isApprovedQualifying) continue;
 
       const mStatus = !statusNorm || rStatus === statusNorm;
       const mPartner = !partnerNorm || rPartner === partnerNorm;
@@ -461,13 +644,22 @@ function AdminPage() {
       const mNigama = !nigamaNorm || rNigama === nigamaNorm;
       const mCenter = !centerNorm || rCenter.includes(centerNorm);
       const mSaf = !safNorm || rSaf === safNorm;
+      const mBatch = !batchNorm || (batchNorm === "Unassigned / No Batch" ? !rBatch : rBatch === batchNorm);
 
-      if (mPartner && mCourse && mCat && mNigama && mCenter && mSaf && r.status) statusSet.add(r.status);
-      if (mStatus && mCourse && mCat && mNigama && mCenter && mSaf && r.partner && !isCollegeHiddenForApplicant(r.partner)) partnerSet.add(r.partner);
-      if (mStatus && mPartner && mCat && mNigama && mCenter && mSaf && r.course) courseSet.add(r.course);
-      if (mStatus && mPartner && mCourse && mNigama && mCenter && mSaf && r.category) categorySet.add(r.category);
-      if (mStatus && mPartner && mCourse && mCat && mCenter && mSaf && r.nigama) nigamaSet.add(r.nigama);
-      if (mStatus && mPartner && mCourse && mCat && mNigama && mSaf && r.center) centerSet.add(r.center);
+      if (mPartner && mCourse && mCat && mNigama && mCenter && mSaf && mBatch && r.status) statusSet.add(r.status);
+      if (mStatus && mCourse && mCat && mNigama && mCenter && mSaf && mBatch && r.partner && !isCollegeHiddenForApplicant(r.partner)) {
+        if (statusNorm === "approved") {
+          if ((partnerPipelineCounts[r.partner] || 0) >= 15) {
+            partnerSet.add(r.partner);
+          }
+        } else {
+          partnerSet.add(r.partner);
+        }
+      }
+      if (mStatus && mPartner && mCat && mNigama && mCenter && mSaf && mBatch && r.course) courseSet.add(r.course);
+      if (mStatus && mPartner && mCourse && mNigama && mCenter && mSaf && mBatch && r.category) categorySet.add(r.category);
+      if (mStatus && mPartner && mCourse && mCat && mCenter && mSaf && mBatch && r.nigama) nigamaSet.add(r.nigama);
+      if (mStatus && mPartner && mCourse && mCat && mNigama && mSaf && mBatch && r.center) centerSet.add(r.center);
     }
 
     if (status) statusSet.add(status);
@@ -478,14 +670,15 @@ function AdminPage() {
     if (centerLocation) centerSet.add(centerLocation);
 
     return {
+      batches: ["Unassigned / No Batch", ...batches],
       nigamas: sortAlpha(nigamaSet),
       statuses: sortAlpha(statusSet),
       partners: sortAlpha(partnerSet).filter((p) => !isCollegeHiddenForApplicant(p)),
       courses: sortAlpha(courseSet),
-      categories: sortAlpha(categorySet),
+      categories: ["OBC"],
       centers: sortAlpha(centerSet),
     };
-  }, [facetIndexQuery.data, stats, colleges, status, partner, course, category, nigama, centerLocation, safStatus]);
+  }, [facetIndexQuery.data, stats, colleges, batches, batch, status, partner, course, category, nigama, centerLocation, safStatus]);
 
   const total = listQuery.data?.count ?? 0;
   const pageCount = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
@@ -559,7 +752,7 @@ function AdminPage() {
     toast.success(`Status updated to ${newStatus}${detail ? ` (${detail})` : ""}`);
     setStatusTarget(null);
     void qc.invalidateQueries({ queryKey: ["registrations"] });
-    void qc.invalidateQueries({ queryKey: ["registration-stats"] });
+    void qc.invalidateQueries({ queryKey: ["registrations-facet-index-female-obc-hindu"] });
   };
 
   const remove = (row: Row) => {
@@ -589,38 +782,52 @@ function AdminPage() {
     setSelectedIds((prev) => prev.filter((id) => !ids.includes(id)));
     setDeleteTarget(null);
     void qc.invalidateQueries({ queryKey: ["registrations"] });
-    void qc.invalidateQueries({ queryKey: ["registration-stats"] });
+    void qc.invalidateQueries({ queryKey: ["registrations-facet-index-female-obc-hindu"] });
   };
 
   const exportCsv = async () => {
     try {
       setIsExporting(true);
-      const selectCols = ["id", ...COLUMNS.map((c) => c.key)].join(",");
+      const selectCols = ["id", ...COLUMNS.filter(c => c.key !== "batch_name").map((c) => c.key)].join(",");
       const allExportRows: Row[] = [];
-      const CHUNK_SIZE = 1000;
-      let from = 0;
-      let hasMore = true;
+      if (filters.batch === "Unassigned / No Batch") {
+        const records = facetIndexQuery.data ?? [];
+        const unassignedRecords = records.filter((r) => !r.batch);
+        const allIds = unassignedRecords.map((r) => r.id).filter(Boolean);
+        const CHUNK = 80;
+        for (let i = 0; i < allIds.length; i += CHUNK) {
+          const chunkIds = allIds.slice(i, i + CHUNK);
+          const { data, error } = await supabase.from("registrations").select(selectCols).in("id", chunkIds);
+          if (error) throw error;
+          if (data) allExportRows.push(...(data as Row[]));
+        }
+      } else {
+        const CHUNK_SIZE = 1000;
+        let from = 0;
+        let hasMore = true;
 
-      while (hasMore) {
-        let q = supabase.from("registrations").select(selectCols);
-        q = applyRegistrationFilters(q, filters);
-        const { data, error } = await q.range(from, from + CHUNK_SIZE - 1);
-        if (error) throw error;
+        while (hasMore) {
+          let q = supabase.from("registrations").select(selectCols);
+          q = applyRegistrationFilters(q, filters);
+          const { data, error } = await q.range(from, from + CHUNK_SIZE - 1);
+          if (error) throw error;
 
-        if (!data || data.length === 0) {
-          hasMore = false;
-        } else {
-          allExportRows.push(...(data as Row[]));
-          if (data.length < CHUNK_SIZE) {
+          if (!data || data.length === 0) {
             hasMore = false;
           } else {
-            from += CHUNK_SIZE;
+            allExportRows.push(...(data as Row[]));
+            if (data.length < CHUNK_SIZE) {
+              hasMore = false;
+            } else {
+              from += CHUNK_SIZE;
+            }
           }
         }
       }
 
       let rows = allExportRows.map((r) => ({
         ...r,
+        batch_name: getApplicantBatch(r) || (r.batch_name as string) || "—",
         institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
         nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
         caste_cert_type: (r.caste_cert_type as string) || getCasteCertificateType(r.category as string, r.caste_sub_category as string, r.caste as string) || r.caste_cert_type,
@@ -889,7 +1096,7 @@ function AdminPage() {
       setSafImportModalOpen(true);
 
       void qc.invalidateQueries({ queryKey: ["registrations"] });
-      void qc.invalidateQueries({ queryKey: ["registration-stats"] });
+      void qc.invalidateQueries({ queryKey: ["registrations-facet-index-female-obc-hindu"] });
 
       if (updatedCount > 0) {
         toast.success(`Successfully updated SAF Numbers for ${updatedCount} matched applicant(s)!`);
@@ -913,6 +1120,7 @@ function AdminPage() {
     nigama,
     partner,
     safStatus,
+    batch,
     gender,
     dateFilter,
   ].filter(Boolean).length;
@@ -926,6 +1134,7 @@ function AdminPage() {
     setNigama("");
     setPartner("");
     setSafStatus("");
+    setBatch("");
     setGender("");
     setDateFilter("");
     setPage(0);
@@ -1051,17 +1260,17 @@ function AdminPage() {
             }}
           />
           <StatCard
-            label="Last 7 Days"
-            value={stats.week}
-            badgeText="7 Days"
+            label="Approved by Department"
+            value={stats.byStatus["Approved by Dept"] ?? 0}
+            percent={stats.total > 0 ? `${(((stats.byStatus["Approved by Dept"] ?? 0) / stats.total) * 100).toFixed(1)}%` : undefined}
             icon={
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             }
-            isActive={dateFilter === "week"}
+            isActive={status === "Approved by Dept"}
             onClick={() => {
-              resetPage(setDateFilter)(dateFilter === "week" ? "" : "week");
+              resetPage(setStatus)(status === "Approved by Dept" ? "" : "Approved by Dept");
               scrollToTable();
             }}
           />
@@ -1150,28 +1359,28 @@ function AdminPage() {
           style={{ scrollMarginTop: "5.5rem" }}
           className="rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-xs scroll-mt-24"
         >
-          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
-            <div className="sm:col-span-2 xl:col-span-2 flex flex-col gap-1">
-              <label className="text-[11px] font-semibold text-muted-foreground flex items-center justify-between" htmlFor="q">
+          <div className="grid gap-3 sm:gap-3.5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="sm:col-span-2 lg:col-span-2 xl:col-span-2 flex flex-col gap-1.5 min-w-0">
+              <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 tracking-wide flex items-center justify-between" htmlFor="q">
                 <span>Search Applicants</span>
                 {search && (
                   <button
                     type="button"
                     onClick={() => resetPage(setSearch)("")}
-                    className="text-[10px] text-primary hover:underline cursor-pointer"
+                    className="text-[10px] text-primary hover:underline cursor-pointer font-medium"
                   >
-                    Clear
+                    Clear Search
                   </button>
                 )}
               </label>
-              <div className="relative flex items-center">
-                <span className="pointer-events-none absolute left-3 text-muted-foreground text-xs select-none z-10">
+              <div className="relative flex items-center min-w-0">
+                <span className="pointer-events-none absolute left-3.5 text-muted-foreground/70 text-xs select-none z-10">
                   🔍
                 </span>
                 <input
                   id="q"
-                  className="w-full form-ctrl text-xs sm:text-sm h-9.5 rounded-xl border border-border/80 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                  style={{ paddingLeft: "2.3rem", paddingRight: "2rem" }}
+                  className="w-full form-ctrl text-xs sm:text-[13px] h-10 rounded-xl border border-border/80 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-2xs"
+                  style={{ paddingLeft: "2.4rem", paddingRight: "2.2rem" }}
                   placeholder="Search Name, Ref ID, SAF No, Aadhaar, Phone..."
                   value={search}
                   onChange={(e) => resetPage(setSearch)(e.target.value)}
@@ -1181,6 +1390,7 @@ function AdminPage() {
                     type="button"
                     onClick={() => resetPage(setSearch)("")}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs cursor-pointer p-1"
+                    title="Clear search"
                   >
                     ✕
                   </button>
@@ -1188,15 +1398,11 @@ function AdminPage() {
               </div>
             </div>
 
-            <FilterSelect label="Nigama" value={nigama} onChange={resetPage(setNigama)} options={dynamicFilterOptions.nigamas} />
+            <FilterSelect label="Batch" value={batch} onChange={resetPage(setBatch)} options={dynamicFilterOptions.batches} />
             <FilterSelect label="Status" value={status} onChange={resetPage(setStatus)} options={dynamicFilterOptions.statuses} />
-            <FilterSelect
-              label="Partner"
-              value={partner}
-              onChange={resetPage(setPartner)}
-              options={dynamicFilterOptions.partners}
-            />
+            <FilterSelect label="Partner" value={partner} onChange={resetPage(setPartner)} options={dynamicFilterOptions.partners} />
             <FilterSelect label="Course" value={course} onChange={resetPage(setCourse)} options={dynamicFilterOptions.courses} />
+            <FilterSelect label="Nigama" value={nigama} onChange={resetPage(setNigama)} options={dynamicFilterOptions.nigamas} />
             <FilterSelect label="Category" value={category} onChange={resetPage(setCategory)} options={dynamicFilterOptions.categories} />
             <FilterSelect label="Center Location" value={centerLocation} onChange={resetPage(setCenterLocation)} options={dynamicFilterOptions.centers} />
             <FilterSelect
@@ -1232,6 +1438,12 @@ function AdminPage() {
                     <span>✕ Reset All ({activeFilterCount})</span>
                   </button>
 
+                  {batch && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-700 border border-indigo-500/20 max-w-[240px] truncate">
+                      Batch: {batch}
+                      <button type="button" onClick={() => resetPage(setBatch)("")} className="cursor-pointer hover:text-indigo-900 ml-0.5">✕</button>
+                    </span>
+                  )}
                   {dateFilter && (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-700 border border-amber-500/20">
                       Date: {dateFilter === "today" ? "Today" : "Last 7 Days"}
@@ -1573,6 +1785,20 @@ function AdminPage() {
                           // Show status in Admin Notes when notes are empty
                           if (c.key === "admin_notes" && (cellVal === null || cellVal === undefined || cellVal === "")) {
                             cellVal = r["status"] || "Pending";
+                          }
+                          if (c.key === "batch_name") {
+                            const batchName = (cellVal as string) || getApplicantBatch(r);
+                            return (
+                              <td key={c.key} className="whitespace-nowrap px-3 py-2.5 text-foreground max-w-[280px]">
+                                {batchName && batchName !== "—" && batchName !== "N/A" ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-700 border border-indigo-500/20 shadow-2xs">
+                                    📦 {batchName}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground/60">—</span>
+                                )}
+                              </td>
+                            );
                           }
                           const isUrl = typeof cellVal === "string" && cellVal.startsWith("http");
                           return (
@@ -2943,34 +3169,60 @@ function FilterSelect({
   value,
   onChange,
   options,
+  className = "",
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: readonly string[];
+  className?: string;
 }) {
   const isSelected = !!value;
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-[11px] font-semibold text-muted-foreground tracking-tight flex items-center justify-between">
-        <span>{label}</span>
-        {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+    <div className={`flex flex-col gap-1.5 min-w-0 ${className}`}>
+      <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 tracking-wide flex items-center justify-between truncate">
+        <span className="truncate">{label}</span>
+        {isSelected && (
+          <span className="flex items-center gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange("");
+              }}
+              className="text-[10px] text-muted-foreground hover:text-foreground cursor-pointer"
+              title={`Clear ${label}`}
+            >
+              ✕
+            </button>
+          </span>
+        )}
       </label>
-      <select
-        className={`form-ctrl text-xs h-9.5 rounded-xl border transition-all ${isSelected
-            ? "border-primary ring-1 ring-primary/20 bg-primary/[0.02] font-semibold text-foreground"
-            : "border-border/80 bg-background text-foreground hover:border-border"
+      <div className="relative flex items-center min-w-0">
+        <select
+          style={{ WebkitAppearance: "none", MozAppearance: "none", appearance: "none" }}
+          className={`w-full text-xs sm:text-[13px] h-10 rounded-xl border appearance-none pr-8 pl-3 truncate transition-all duration-150 cursor-pointer shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${
+            isSelected
+              ? "border-indigo-500 ring-2 ring-indigo-500/15 bg-indigo-50/40 dark:bg-indigo-950/20 font-semibold text-indigo-950 dark:text-indigo-200"
+              : "border-border/80 bg-background text-foreground hover:border-border/90 hover:bg-muted/20"
           }`}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        <option value="">All {label}</option>
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="">All {label}</option>
+          {options.map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
+        </select>
+        <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/70 flex items-center justify-center">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
     </div>
   );
 }
@@ -3313,7 +3565,7 @@ function EditDialog({ row, onClose, onSaved }: { row: Row; onClose: () => void; 
   const [busy, setBusy] = useState(false);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
 
-  const visibleColumns = COLUMNS.filter((c) => c.key !== "created_at" && shouldShowField(c.key, form as Row));
+  const visibleColumns = COLUMNS.filter((c) => c.key !== "created_at" && c.key !== "batch_name" && shouldShowField(c.key, form as Row));
   const groups = [...new Set(visibleColumns.map((c) => c.group))];
 
   const handleFileUpload = async (key: string, file: File | undefined) => {
@@ -3382,7 +3634,7 @@ function EditDialog({ row, onClose, onSaved }: { row: Row; onClose: () => void; 
     }
     const payload: Record<string, unknown> = {};
     for (const c of COLUMNS) {
-      if (c.key === "created_at") continue;
+      if (c.key === "created_at" || c.key === "batch_name") continue;
       let v = form[c.key];
       if (c.key === "institution_name") {
         v = normalizeCollegeName(v as string) || v;

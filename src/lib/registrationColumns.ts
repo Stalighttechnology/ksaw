@@ -33,6 +33,7 @@ export const STATUS_OPTIONS = [
 export const COLUMNS: ColumnDef[] = [
   { key: "reference_number", label: "Reference ID", group: "Meta" },
   { key: "saf_number", label: "SAF Number", group: "Meta" },
+  { key: "batch_name", label: "Batch", group: "Meta" },
   { key: "created_at", label: "Submitted On", group: "Meta", type: "date" },
   { key: "status", label: "Status", group: "Meta", type: "select", options: STATUS_OPTIONS },
   { key: "admin_notes", label: "Admin Notes", group: "Meta" },

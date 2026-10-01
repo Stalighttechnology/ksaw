@@ -44,6 +44,7 @@ export const COLLEGES = [
   "Government Science College (Autonomous) - Hassan",
   "Shanikethan College - Ramnagara",
   "Government first grade College Ramnagar",
+  "GFGC- Ramanagar Town",
   "New expert college , Ramanagar",
   "GT Ramanagara",
   "VISHWA GANGA COMPUTER TRAINING CENTRE YADGIR",
@@ -55,9 +56,49 @@ export const COLLEGES = [
   "Vizutech Solutions Pvt Ltd.",
   "VIJAYA VITTALA INSTITUTE OF TECHNOLOGY",
   "Sree adithya degree college hosakote, Bangalore rural district",
-] as const;
+  "Maratha Mandal College of Engineering",
+  "Nehru Memorial College, Sullia",
+  "Jnanavikas Vidya Sangha - Bidadi",
+  "Chanakya Computer Classes",
+  "Kukke Sri Subramanya College, Subramanya, Kadaba DK",
+  "Government first grade college Zalaki taluk Indi",
+  "Sharada vivek womens degree college kalburgi",
+  "DMS Mandal BK College Belgaum",
+];
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
+  "DMS Mandal BK College Belgaum": [
+    "DMS Mandal BK College Belgaum",
+    "DMS mandal BK college belgaum",
+    "DMS Mandal's BK College, Belgaum",
+    "D.M.S. Mandal's B.K. College, Belgaum",
+    "D.M.S. Mandal's B.K. College Belgaum",
+    "D.M.S. Mandal's B.K. Arts, Science and Commerce College, Belgaum",
+    "DMS Mandal BK College Belagavi",
+    "DMS Mandal B K College Belgaum",
+    "BK College Belgaum",
+    "B.K. College Belgaum",
+  ],
+  "Sharada vivek womens degree college kalburgi": [
+    "Sharada vivek womens degree college kalburgi",
+    "Sharada Vivek Women's Degree College, Kalaburagi",
+    "Sharada Vivek Womens Degree College Kalaburagi",
+    "Sharada Vivek Womens Degree College Gulbarga",
+    "Sharada Vivek Women's Degree College, Kalburgi",
+    "Sharada Vivek Womens Degree College Kalburgi",
+    "Sharada Vivek Degree College Kalaburagi",
+    "Sharada Vivek Degree College Kalburgi",
+  ],
+  "Government first grade college Zalaki taluk Indi": [
+    "Government first grade college Zalaki taluk Indi",
+    "Government First Grade College, Zalaki, Taluk Indi",
+    "Government First Grade College Zalaki Taluk Indi",
+    "Government First Grade College Zalaki Indi",
+    "GFGC Zalaki Indi",
+    "GFGC Zalaki",
+    "Government First Grade College Zalaki",
+    "Govt First Grade College Zalaki",
+  ],
   "KSAWU - Karnataka State Akkamahadevi Women University, Jnana Shakti Campus, Vijayapura": [
     "KSAWU VIJAYAPURA",
     "Karnataka State Akkamahadevi Women University, Jnana Shakti Campus, Vijayapura",
@@ -566,6 +607,24 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "GOVT FIRST GRADE COLLEGE RAMNAGAR",
     "Govt First Grade College Ramnagar",
   ],
+  "GFGC- Ramanagar Town": [
+    "GFGC- Ramanagar Town",
+    "GFGC - Ramanagar Town",
+    "GFGC Ramanagar Town",
+    "GFGC Ramanagara Town",
+    "GFGC Ramnagar Town",
+    "GFGC Ramnagara Town",
+    "GFGC- Ramanagara Town",
+    "GFGC - Ramanagara Town",
+    "Government First Grade College Ramanagar Town",
+    "Government First Grade College Ramanagara Town",
+    "Government First Grade College, Ramanagar Town",
+    "Government First Grade College, Ramanagara Town",
+    "GFGC Town Ramanagar",
+    "GFGC Town Ramanagara",
+    "GFGC TOWN RAMANAGAR",
+    "GFGC TOWN RAMANAGARA",
+  ],
   "New expert college , Ramanagar": [
     "New expert college , Ramanagar",
     "New Expert College, Ramanagar",
@@ -786,6 +845,36 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "Sree Aditya Degree College",
     "Sri Aditya Degree College",
   ],
+  "Chanakya Computer Classes": [
+    "Chanakya Computer Classes",
+    "CHANAKYA COMPUTER CLASSES",
+    "Chanakya Computer Center",
+    "Chanakya Computer Institute",
+    "Chanakya Computers",
+    "Chanakya Computer Training Centre",
+    "Chanakya Computer Training Center",
+    "Chanakya College",
+  ],
+  "Kukke Sri Subramanya College, Subramanya, Kadaba DK": [
+    "Kukke Sri Subramanya College, Subramanya, Kadaba DK",
+    "Kukke Sri Subramanya College, Subramanya, Kadaba, DK",
+    "Kukke sri subramanya college subramanya kadaba dk",
+    "Kukke Sri Subramanya College Subramanya Kadaba DK",
+    "Kukke Sri Subramanya College Subramanya",
+    "Kukke Sri Subramanya College, Subramanya",
+    "Kukke Sri Subramanya College",
+    "Kukke Shri Subramanya College",
+    "Kukke Sri Subrahmanya College",
+    "Kukke Sri Subramanya First Grade College",
+    "Kukke Subrahmanya College",
+    "Kukke Subramanya College",
+    "KSS College Subramanya",
+    "KSS College, Subramanya",
+    "KSS College",
+    "KSS Subramanya",
+    "KUKKE SRI SUBRAMANYA COLLEGE SUBRAMANYA KADABA DK",
+    "KUKKE SRI SUBRAMANYA COLLEGE",
+  ],
 };
 
 const normCollegeNameCache = new Map<string, string>();
@@ -816,6 +905,16 @@ export function normalizeCollegeName(rawName?: string | null): string {
 
   const upper = trimmed.toUpperCase().replace(/[^A-Z0-9]/g, "");
   if (upper === "SHIVAKUMAR" || upper === "SHIVKUMAR") return "Shivkumar";
+  if (upper.includes("CHANAKYA")) return "Chanakya Computer Classes";
+  if (
+    upper.includes("KUKKE") ||
+    upper.includes("SUBRAHMANYA") ||
+    (upper.includes("SUBRAMANYA") && (upper.includes("KADABA") || upper.includes("KUKKE") || upper.includes("COLLEGE") || upper.includes("DK"))) ||
+    upper === "KSSCOLLEGE" ||
+    upper === "KSS"
+  ) {
+    return "Kukke Sri Subramanya College, Subramanya, Kadaba DK";
+  }
   if (upper.includes("VIZUTECH")) return "Vizutech Solutions Pvt Ltd.";
   if (upper.includes("POLYTECHNIC") && (upper.includes("RAMNAGAR") || upper.includes("RAMANAGAR"))) return "Government Polytechnic for Women Ramanagar";
   if ((upper.includes("SCIENCE") || upper.includes("SCI")) && upper.includes("HASSAN")) return "Government Science College (Autonomous) - Hassan";
@@ -831,6 +930,7 @@ export function normalizeCollegeName(rawName?: string | null): string {
   if (upper.includes("NEWEXPERT")) return "New expert college , Ramanagar";
   if (upper.includes("BYRAPUR") || upper.includes("BAIRAPUR")) return "GFGC Byrapur , Mysore";
   if (upper.includes("OXFORD") && !upper.includes("PU")) return "Oxford college Banglore";
+  if ((upper.includes("GFGC") || upper.includes("GOVTFIRSTGRADE") || upper.includes("FIRSTGRADE") || upper.includes("GOVT")) && (upper.includes("RAMNAGAR") || upper.includes("RAMNAGARA")) && upper.includes("TOWN")) return "GFGC- Ramanagar Town";
   if ((upper.includes("GFGC") || upper.includes("GOVTFIRSTGRADE") || upper.includes("FIRSTGRADE")) && (upper.includes("RAMNAGAR") || upper.includes("RAMNAGARA"))) return "Government first grade College Ramnagar";
   if (upper.includes("GANDHADAKOTI")) return "Government First Grade College for Women's, Gandhadakoti, Hassan";
   if (upper.includes("AVK") || upper.includes("KANTHAMMA")) return "AVK COLLEGE HASSAN";
@@ -911,7 +1011,6 @@ export const HIDDEN_APPLICANT_COLLEGES: readonly string[] = [
   "KSAWU - S.J.M.V's Business Administration College for Women, J.C. Nagar, Hubli",
   "KSAWU - Smt. K.S. Jiglur Arts & Dr. (Smt.) S.M. Sheshgiri Commerce College for Women, Dharwad",
   "KSAWU - Sri Shivalingeshwar Degree College for Women, Haveri",
-  "Maratha Mandal College of Engineering",
   "Royal Degree College, Mathikere, Bangalore",
   "Shanti Vardhak Education Society Akkaamahadevi Mahila Mahavidya Bidar, Udgir Road BIDAR",
   "Shridevi Degree College and P.G. Center Tumkur",

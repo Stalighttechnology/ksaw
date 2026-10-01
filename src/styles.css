@@ -321,6 +321,12 @@
   font-size: 14px;
 }
 select.form-ctrl { appearance: auto; }
+select.form-ctrl.appearance-none,
+select.appearance-none {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+}
 .form-ctrl::placeholder { color: oklch(0.72 0.01 260); }
 .form-ctrl:focus { outline: none; border-color: var(--kk-blue); box-shadow: 0 0 0 2px oklch(0.42 0.09 250 / 0.15); }
 .form-ctrl.is-invalid { border-color: var(--kk-red); }
