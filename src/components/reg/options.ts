@@ -63,9 +63,22 @@ export const COLLEGES = [
   "Kukke Sri Subramanya College, Subramanya, Kadaba DK",
   "Government first grade college Zalaki taluk Indi",
   "Sharada vivek womens degree college kalburgi",
+  "DMS Mandal BK College Belgaum",
 ];
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
+  "DMS Mandal BK College Belgaum": [
+    "DMS Mandal BK College Belgaum",
+    "DMS mandal BK college belgaum",
+    "DMS Mandal's BK College, Belgaum",
+    "D.M.S. Mandal's B.K. College, Belgaum",
+    "D.M.S. Mandal's B.K. College Belgaum",
+    "D.M.S. Mandal's B.K. Arts, Science and Commerce College, Belgaum",
+    "DMS Mandal BK College Belagavi",
+    "DMS Mandal B K College Belgaum",
+    "BK College Belgaum",
+    "B.K. College Belgaum",
+  ],
   "Sharada vivek womens degree college kalburgi": [
     "Sharada vivek womens degree college kalburgi",
     "Sharada Vivek Women's Degree College, Kalaburagi",
