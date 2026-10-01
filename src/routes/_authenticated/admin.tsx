@@ -21,6 +21,7 @@ import {
 import { NIGAMAS, CASTES, CASTE_NAMES, CASTE_CATEGORIES, normalizeNigamaName, getNigamaAliases, getCasteCertificateType } from "@/components/reg/castes";
 import { supabase } from "@/integrations/supabase/client";
 import { useColleges } from "@/lib/useColleges";
+import { useBatches } from "@/lib/useBatches";
 import { useMaintenance } from "@/lib/useMaintenance";
 import { read, utils } from "xlsx";
 
@@ -119,6 +120,7 @@ function normalizeCourseName(raw?: string | null): string {
 
 interface RegistrationFilters {
   search?: string;
+  searchBatchIds?: string[];
   status?: string;
   course?: string;
   category?: string;
@@ -126,6 +128,9 @@ interface RegistrationFilters {
   nigama?: string;
   partner?: string;
   safStatus?: string;
+  batch?: string;
+  batchApplicantIds?: string[];
+  allBatchApplicantIds?: string[];
   gender?: string;
   dateFilter?: "today" | "week" | "";
   allowedInstitutionsForApproved?: string[];
@@ -150,6 +155,19 @@ function applyRegistrationFilters<T extends any>(baseQuery: T, filters: Registra
       } else if (filters.allowedInstitutionsForApproved && filters.allowedInstitutionsForApproved.length === 0) {
         q = q.eq("id", "00000000-0000-0000-0000-000000000000");
       }
+    }
+  }
+
+  if (filters.batch) {
+    if (filters.batch === "Unassigned / No Batch") {
+      if (filters.allBatchApplicantIds && filters.allBatchApplicantIds.length > 0) {
+        // Show applicants NOT assigned to any batch
+        q = q.not("id", "in", `(${filters.allBatchApplicantIds.join(",")})`);
+      }
+    } else if (filters.batchApplicantIds && filters.batchApplicantIds.length > 0) {
+      q = q.in("id", filters.batchApplicantIds);
+    } else {
+      q = q.eq("id", "00000000-0000-0000-0000-000000000000");
     }
   }
 
@@ -190,10 +208,13 @@ function applyRegistrationFilters<T extends any>(baseQuery: T, filters: Registra
     q = q.gte("created_at", startOfWeek);
   }
   if (filters.search) {
-    const s = filters.search.replace(/[%,()]/g, "");
-    q = q.or(
-      `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,caste_sub_category.ilike.%${s}%,nigama.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`,
-    );
+    const s = filters.search.replace(/[%,()]/g, "").trim();
+    let orTerms = `reference_number.ilike.%${s}%,saf_number.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%,aadhaar_number.ilike.%${s}%,rd_number.ilike.%${s}%,caste.ilike.%${s}%,caste_sub_category.ilike.%${s}%,nigama.ilike.%${s}%,institution_name.ilike.%${s}%,center_location.ilike.%${s}%,skill_sought.ilike.%${s}%,cur_city.ilike.%${s}%,cur_district.ilike.%${s}%,cur_taluk.ilike.%${s}%,per_city.ilike.%${s}%,per_district.ilike.%${s}%,education.ilike.%${s}%,stream.ilike.%${s}%,subject.ilike.%${s}%`;
+    if (filters.searchBatchIds && filters.searchBatchIds.length > 0) {
+      const idChunk = filters.searchBatchIds.slice(0, 35).map(id => `id.eq.${id}`).join(",");
+      orTerms += `,${idChunk}`;
+    }
+    q = q.or(orTerms);
   }
   return q;
 }
@@ -204,6 +225,7 @@ function AdminPage() {
 
   const { isMaintenance, toggleMaintenance, isUpdating: isTogglingMaintenance } = useMaintenance();
   const { colleges, addCollege, editCollege, removeCollege, isAdding, isEditing, isRemoving } = useColleges();
+  const { batches, manifest: batchesManifest, getApplicantBatch, getBatchApplicantIds, allBatchApplicantIds } = useBatches();
   const [collegeModalOpen, setCollegeModalOpen] = useState(false);
   const [collegeAuthModalOpen, setCollegeAuthModalOpen] = useState(false);
   const [collegeAuthPassword, setCollegeAuthPassword] = useState("");
@@ -218,6 +240,7 @@ function AdminPage() {
   const [nigama, setNigama] = useState("");
   const [partner, setPartner] = useState("");
   const [safStatus, setSafStatus] = useState("");
+  const [batch, setBatch] = useState("");
   const [gender, setGender] = useState("");
   const [dateFilter, setDateFilter] = useState<"today" | "week" | "">("");
   const [sortColumn, setSortColumn] = useState<string>("created_at");
@@ -267,6 +290,7 @@ function AdminPage() {
   }, [search]);
 
   interface CompactRegistration {
+    id: string;
     status: string;
     course: string;
     partner: string;
@@ -277,6 +301,7 @@ function AdminPage() {
     religion: string;
     created_at?: string;
     safStatus: "Empty / Missing" | "Filled / Present";
+    batch?: string;
   }
 
   // Fast parallel facet index loaded once and cached for real-time interdependent faceting (strictly Female + OBC + Hindu)
@@ -299,7 +324,7 @@ function AdminPage() {
       const pagePromises = Array.from({ length: numPages }, (_, i) =>
         supabase
           .from("registrations")
-          .select("status, skill_sought, category, center_location, cur_district, nigama, institution_name, saf_number, created_at, gender, religion")
+          .select("id, status, skill_sought, category, center_location, cur_district, nigama, institution_name, saf_number, reference_number, aadhaar_number, created_at, gender, religion")
           .ilike("category", "OBC")
           .ilike("gender", "Female")
           .ilike("religion", "Hindu")
@@ -312,7 +337,9 @@ function AdminPage() {
       return rawRows.map((r) => {
         const rawSaf = (r["saf_number"] as string) || "";
         const isFilled = rawSaf.toUpperCase().includes("SAF");
+        const studentBatch = getApplicantBatch(r as unknown as Row) || "";
         return {
+          id: (r["id"] as string) || "",
           status: ((r["status"] as string) || "Pending").trim(),
           course: normalizeCourseName(r["skill_sought"] as string),
           partner: normalizeCollegeName(r["institution_name"] as string) || ((r["institution_name"] as string) || "").trim(),
@@ -323,6 +350,7 @@ function AdminPage() {
           created_at: r["created_at"] as string,
           center: (((r["center_location"] as string) || (r["cur_district"] as string)) || "").trim().toUpperCase(),
           safStatus: isFilled ? "Filled / Present" : "Empty / Missing",
+          batch: studentBatch,
         };
       });
     },
@@ -369,8 +397,25 @@ function AdminPage() {
     return Array.from(result).filter(Boolean);
   }, [partnerPipelineCounts]);
 
+  const searchBatchIds = useMemo(() => {
+    const s = debouncedSearch.trim().toLowerCase();
+    if (!s) return [];
+    const matched: string[] = [];
+    batches.forEach((bName) => {
+      if (bName.toLowerCase().includes(s)) {
+        matched.push(...getBatchApplicantIds(bName));
+      }
+    });
+    return Array.from(new Set(matched));
+  }, [debouncedSearch, batches, getBatchApplicantIds]);
+
+  const batchApplicantIds = useMemo(() => {
+    return getBatchApplicantIds(batch);
+  }, [batch, getBatchApplicantIds]);
+
   const filters: RegistrationFilters = {
     search: debouncedSearch.trim(),
+    searchBatchIds,
     status,
     course,
     category,
@@ -378,6 +423,9 @@ function AdminPage() {
     nigama,
     partner,
     safStatus,
+    batch,
+    batchApplicantIds,
+    allBatchApplicantIds,
     gender,
     dateFilter,
     allowedInstitutionsForApproved,
@@ -387,7 +435,7 @@ function AdminPage() {
   const listQuery = useQuery({
     queryKey: ["registrations", filters, page, pageSize, sortColumn, sortOrder],
     queryFn: async () => {
-      const selectCols = ["id", ...COLUMNS.map((c) => c.key)].join(",");
+      const selectCols = ["id", ...COLUMNS.filter(c => c.key !== "batch_name").map((c) => c.key)].join(",");
       let q = supabase.from("registrations").select(selectCols, { count: "exact" });
       q = applyRegistrationFilters(q, filters);
 
@@ -411,6 +459,7 @@ function AdminPage() {
 
       const normalizedRows = ((data ?? []) as Row[]).map((r) => ({
         ...r,
+        batch_name: getApplicantBatch(r) || (r.batch_name as string) || "—",
         institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
         nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
         caste_cert_type: (r.caste_cert_type as string) || getCasteCertificateType(r.category as string, r.caste_sub_category as string, r.caste as string) || r.caste_cert_type,
@@ -490,6 +539,7 @@ function AdminPage() {
       const dbCenters = Object.keys(stats.byCenter);
 
       return {
+        batches: ["Unassigned / No Batch", ...batches],
         nigamas: sortAlpha(new Set([...NIGAMAS, ...dbNigamas, ...(nigama ? [nigama] : [])])),
         statuses: Array.from(STATUS_OPTIONS),
         partners: sortAlpha(
@@ -519,6 +569,7 @@ function AdminPage() {
     const nigamaNorm = nigama ? (normalizeNigamaName(nigama) || nigama).toLowerCase() : "";
     const centerNorm = centerLocation ? centerLocation.toLowerCase() : "";
     const safNorm = safStatus;
+    const batchNorm = batch ? batch.trim() : "";
 
     for (let i = 0; i < records.length; i++) {
       const r = records[i];
@@ -529,6 +580,7 @@ function AdminPage() {
       const rNigama = r.nigama.toLowerCase();
       const rCenter = r.center.toLowerCase();
       const rSaf = r.safStatus;
+      const rBatch = r.batch || "";
 
       // If Approved, only consider records whose partner meets >= 15 threshold
       const isApprovedQualifying = r.status !== "Approved" || (partnerPipelineCounts[r.partner] || 0) >= 15;
@@ -541,9 +593,10 @@ function AdminPage() {
       const mNigama = !nigamaNorm || rNigama === nigamaNorm;
       const mCenter = !centerNorm || rCenter.includes(centerNorm);
       const mSaf = !safNorm || rSaf === safNorm;
+      const mBatch = !batchNorm || (batchNorm === "Unassigned / No Batch" ? !rBatch : rBatch === batchNorm);
 
-      if (mPartner && mCourse && mCat && mNigama && mCenter && mSaf && r.status) statusSet.add(r.status);
-      if (mStatus && mCourse && mCat && mNigama && mCenter && mSaf && r.partner && !isCollegeHiddenForApplicant(r.partner)) {
+      if (mPartner && mCourse && mCat && mNigama && mCenter && mSaf && mBatch && r.status) statusSet.add(r.status);
+      if (mStatus && mCourse && mCat && mNigama && mCenter && mSaf && mBatch && r.partner && !isCollegeHiddenForApplicant(r.partner)) {
         if (statusNorm === "approved") {
           if ((partnerPipelineCounts[r.partner] || 0) >= 15) {
             partnerSet.add(r.partner);
@@ -552,10 +605,10 @@ function AdminPage() {
           partnerSet.add(r.partner);
         }
       }
-      if (mStatus && mPartner && mCat && mNigama && mCenter && mSaf && r.course) courseSet.add(r.course);
-      if (mStatus && mPartner && mCourse && mNigama && mCenter && mSaf && r.category) categorySet.add(r.category);
-      if (mStatus && mPartner && mCourse && mCat && mCenter && mSaf && r.nigama) nigamaSet.add(r.nigama);
-      if (mStatus && mPartner && mCourse && mCat && mNigama && mSaf && r.center) centerSet.add(r.center);
+      if (mStatus && mPartner && mCat && mNigama && mCenter && mSaf && mBatch && r.course) courseSet.add(r.course);
+      if (mStatus && mPartner && mCourse && mNigama && mCenter && mSaf && mBatch && r.category) categorySet.add(r.category);
+      if (mStatus && mPartner && mCourse && mCat && mCenter && mSaf && mBatch && r.nigama) nigamaSet.add(r.nigama);
+      if (mStatus && mPartner && mCourse && mCat && mNigama && mSaf && mBatch && r.center) centerSet.add(r.center);
     }
 
     if (status) statusSet.add(status);
@@ -566,6 +619,7 @@ function AdminPage() {
     if (centerLocation) centerSet.add(centerLocation);
 
     return {
+      batches: ["Unassigned / No Batch", ...batches],
       nigamas: sortAlpha(nigamaSet),
       statuses: sortAlpha(statusSet),
       partners: sortAlpha(partnerSet).filter((p) => !isCollegeHiddenForApplicant(p)),
@@ -573,7 +627,7 @@ function AdminPage() {
       categories: ["OBC"],
       centers: sortAlpha(centerSet),
     };
-  }, [facetIndexQuery.data, stats, colleges, status, partner, course, category, nigama, centerLocation, safStatus]);
+  }, [facetIndexQuery.data, stats, colleges, batches, batch, status, partner, course, category, nigama, centerLocation, safStatus]);
 
   const total = listQuery.data?.count ?? 0;
   const pageCount = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
@@ -683,7 +737,7 @@ function AdminPage() {
   const exportCsv = async () => {
     try {
       setIsExporting(true);
-      const selectCols = ["id", ...COLUMNS.map((c) => c.key)].join(",");
+      const selectCols = ["id", ...COLUMNS.filter(c => c.key !== "batch_name").map((c) => c.key)].join(",");
       const allExportRows: Row[] = [];
       const CHUNK_SIZE = 1000;
       let from = 0;
@@ -709,6 +763,7 @@ function AdminPage() {
 
       let rows = allExportRows.map((r) => ({
         ...r,
+        batch_name: getApplicantBatch(r) || (r.batch_name as string) || "—",
         institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
         nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
         caste_cert_type: (r.caste_cert_type as string) || getCasteCertificateType(r.category as string, r.caste_sub_category as string, r.caste as string) || r.caste_cert_type,
@@ -1001,6 +1056,7 @@ function AdminPage() {
     nigama,
     partner,
     safStatus,
+    batch,
     gender,
     dateFilter,
   ].filter(Boolean).length;
@@ -1014,6 +1070,7 @@ function AdminPage() {
     setNigama("");
     setPartner("");
     setSafStatus("");
+    setBatch("");
     setGender("");
     setDateFilter("");
     setPage(0);
@@ -1238,28 +1295,28 @@ function AdminPage() {
           style={{ scrollMarginTop: "5.5rem" }}
           className="rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-xs scroll-mt-24"
         >
-          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
-            <div className="sm:col-span-2 xl:col-span-2 flex flex-col gap-1">
-              <label className="text-[11px] font-semibold text-muted-foreground flex items-center justify-between" htmlFor="q">
+          <div className="grid gap-3 sm:gap-3.5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="sm:col-span-2 lg:col-span-2 xl:col-span-2 flex flex-col gap-1.5 min-w-0">
+              <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 tracking-wide flex items-center justify-between" htmlFor="q">
                 <span>Search Applicants</span>
                 {search && (
                   <button
                     type="button"
                     onClick={() => resetPage(setSearch)("")}
-                    className="text-[10px] text-primary hover:underline cursor-pointer"
+                    className="text-[10px] text-primary hover:underline cursor-pointer font-medium"
                   >
-                    Clear
+                    Clear Search
                   </button>
                 )}
               </label>
-              <div className="relative flex items-center">
-                <span className="pointer-events-none absolute left-3 text-muted-foreground text-xs select-none z-10">
+              <div className="relative flex items-center min-w-0">
+                <span className="pointer-events-none absolute left-3.5 text-muted-foreground/70 text-xs select-none z-10">
                   🔍
                 </span>
                 <input
                   id="q"
-                  className="w-full form-ctrl text-xs sm:text-sm h-9.5 rounded-xl border border-border/80 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                  style={{ paddingLeft: "2.3rem", paddingRight: "2rem" }}
+                  className="w-full form-ctrl text-xs sm:text-[13px] h-10 rounded-xl border border-border/80 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-2xs"
+                  style={{ paddingLeft: "2.4rem", paddingRight: "2.2rem" }}
                   placeholder="Search Name, Ref ID, SAF No, Aadhaar, Phone..."
                   value={search}
                   onChange={(e) => resetPage(setSearch)(e.target.value)}
@@ -1269,6 +1326,7 @@ function AdminPage() {
                     type="button"
                     onClick={() => resetPage(setSearch)("")}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs cursor-pointer p-1"
+                    title="Clear search"
                   >
                     ✕
                   </button>
@@ -1276,15 +1334,11 @@ function AdminPage() {
               </div>
             </div>
 
-            <FilterSelect label="Nigama" value={nigama} onChange={resetPage(setNigama)} options={dynamicFilterOptions.nigamas} />
+            <FilterSelect label="Batch" value={batch} onChange={resetPage(setBatch)} options={dynamicFilterOptions.batches} />
             <FilterSelect label="Status" value={status} onChange={resetPage(setStatus)} options={dynamicFilterOptions.statuses} />
-            <FilterSelect
-              label="Partner"
-              value={partner}
-              onChange={resetPage(setPartner)}
-              options={dynamicFilterOptions.partners}
-            />
+            <FilterSelect label="Partner" value={partner} onChange={resetPage(setPartner)} options={dynamicFilterOptions.partners} />
             <FilterSelect label="Course" value={course} onChange={resetPage(setCourse)} options={dynamicFilterOptions.courses} />
+            <FilterSelect label="Nigama" value={nigama} onChange={resetPage(setNigama)} options={dynamicFilterOptions.nigamas} />
             <FilterSelect label="Category" value={category} onChange={resetPage(setCategory)} options={dynamicFilterOptions.categories} />
             <FilterSelect label="Center Location" value={centerLocation} onChange={resetPage(setCenterLocation)} options={dynamicFilterOptions.centers} />
             <FilterSelect
@@ -1320,6 +1374,12 @@ function AdminPage() {
                     <span>✕ Reset All ({activeFilterCount})</span>
                   </button>
 
+                  {batch && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-700 border border-indigo-500/20 max-w-[240px] truncate">
+                      Batch: {batch}
+                      <button type="button" onClick={() => resetPage(setBatch)("")} className="cursor-pointer hover:text-indigo-900 ml-0.5">✕</button>
+                    </span>
+                  )}
                   {dateFilter && (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-700 border border-amber-500/20">
                       Date: {dateFilter === "today" ? "Today" : "Last 7 Days"}
@@ -1661,6 +1721,20 @@ function AdminPage() {
                           // Show status in Admin Notes when notes are empty
                           if (c.key === "admin_notes" && (cellVal === null || cellVal === undefined || cellVal === "")) {
                             cellVal = r["status"] || "Pending";
+                          }
+                          if (c.key === "batch_name") {
+                            const batchName = (cellVal as string) || getApplicantBatch(r);
+                            return (
+                              <td key={c.key} className="whitespace-nowrap px-3 py-2.5 text-foreground max-w-[280px]">
+                                {batchName && batchName !== "—" && batchName !== "N/A" ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-700 border border-indigo-500/20 shadow-2xs">
+                                    📦 {batchName}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground/60">—</span>
+                                )}
+                              </td>
+                            );
                           }
                           const isUrl = typeof cellVal === "string" && cellVal.startsWith("http");
                           return (
@@ -3031,34 +3105,59 @@ function FilterSelect({
   value,
   onChange,
   options,
+  className = "",
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: readonly string[];
+  className?: string;
 }) {
   const isSelected = !!value;
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-[11px] font-semibold text-muted-foreground tracking-tight flex items-center justify-between">
-        <span>{label}</span>
-        {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+    <div className={`flex flex-col gap-1.5 min-w-0 ${className}`}>
+      <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 tracking-wide flex items-center justify-between truncate">
+        <span className="truncate">{label}</span>
+        {isSelected && (
+          <span className="flex items-center gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange("");
+              }}
+              className="text-[10px] text-muted-foreground hover:text-foreground cursor-pointer"
+              title={`Clear ${label}`}
+            >
+              ✕
+            </button>
+          </span>
+        )}
       </label>
-      <select
-        className={`form-ctrl text-xs h-9.5 rounded-xl border transition-all ${isSelected
-            ? "border-primary ring-1 ring-primary/20 bg-primary/[0.02] font-semibold text-foreground"
-            : "border-border/80 bg-background text-foreground hover:border-border"
+      <div className="relative flex items-center min-w-0">
+        <select
+          className={`w-full form-ctrl text-xs sm:text-[13px] h-10 rounded-xl border appearance-none pr-8 pl-3 truncate transition-all duration-150 cursor-pointer shadow-2xs ${
+            isSelected
+              ? "border-indigo-500 ring-2 ring-indigo-500/15 bg-indigo-50/40 dark:bg-indigo-950/20 font-semibold text-indigo-950 dark:text-indigo-200"
+              : "border-border/80 bg-background text-foreground hover:border-border/90 hover:bg-muted/20"
           }`}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        <option value="">All {label}</option>
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="">All {label}</option>
+          {options.map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
+        </select>
+        <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/70">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
     </div>
   );
 }
