@@ -44,6 +44,7 @@ export const COLLEGES = [
   "Government Science College (Autonomous) - Hassan",
   "Shanikethan College - Ramnagara",
   "Government first grade College Ramnagar",
+  "GFGC- Ramanagar Town",
   "New expert college , Ramanagar",
   "GT Ramanagara",
   "VISHWA GANGA COMPUTER TRAINING CENTRE YADGIR",
@@ -571,6 +572,24 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "GOVT FIRST GRADE COLLEGE RAMNAGAR",
     "Govt First Grade College Ramnagar",
   ],
+  "GFGC- Ramanagar Town": [
+    "GFGC- Ramanagar Town",
+    "GFGC - Ramanagar Town",
+    "GFGC Ramanagar Town",
+    "GFGC Ramanagara Town",
+    "GFGC Ramnagar Town",
+    "GFGC Ramnagara Town",
+    "GFGC- Ramanagara Town",
+    "GFGC - Ramanagara Town",
+    "Government First Grade College Ramanagar Town",
+    "Government First Grade College Ramanagara Town",
+    "Government First Grade College, Ramanagar Town",
+    "Government First Grade College, Ramanagara Town",
+    "GFGC Town Ramanagar",
+    "GFGC Town Ramanagara",
+    "GFGC TOWN RAMANAGAR",
+    "GFGC TOWN RAMANAGARA",
+  ],
   "New expert college , Ramanagar": [
     "New expert college , Ramanagar",
     "New Expert College, Ramanagar",
@@ -876,6 +895,7 @@ export function normalizeCollegeName(rawName?: string | null): string {
   if (upper.includes("NEWEXPERT")) return "New expert college , Ramanagar";
   if (upper.includes("BYRAPUR") || upper.includes("BAIRAPUR")) return "GFGC Byrapur , Mysore";
   if (upper.includes("OXFORD") && !upper.includes("PU")) return "Oxford college Banglore";
+  if ((upper.includes("GFGC") || upper.includes("GOVTFIRSTGRADE") || upper.includes("FIRSTGRADE") || upper.includes("GOVT")) && (upper.includes("RAMNAGAR") || upper.includes("RAMNAGARA")) && upper.includes("TOWN")) return "GFGC- Ramanagar Town";
   if ((upper.includes("GFGC") || upper.includes("GOVTFIRSTGRADE") || upper.includes("FIRSTGRADE")) && (upper.includes("RAMNAGAR") || upper.includes("RAMNAGARA"))) return "Government first grade College Ramnagar";
   if (upper.includes("GANDHADAKOTI")) return "Government First Grade College for Women's, Gandhadakoti, Hassan";
   if (upper.includes("AVK") || upper.includes("KANTHAMMA")) return "AVK COLLEGE HASSAN";
