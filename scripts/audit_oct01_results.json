@@ -1,0 +1,2286 @@
+[
+  {
+    "file": "batch/Central college approval list ( 01-10-26).xlsx",
+    "sheets": [
+      {
+        "sheetName": "candidates list",
+        "batchName": "KSAWU/HSN/CPG/0926-33",
+        "totalRows": 3,
+        "matchedCount": 3,
+        "uniqueMatchedIds": 3,
+        "unmatchedCount": 0,
+        "unmatchedList": [],
+        "matchedDetails": [
+          {
+            "row": 2,
+            "excelRef": "KSAW 1774",
+            "excelSaf": "SAF1482607",
+            "excelAadhaar": "516528043542",
+            "excelName": "Aishwarya",
+            "dbId": "0e3b1361-c48f-46a3-9645-696036df83b2",
+            "dbRef": "KSAW 1774",
+            "dbName": "Aishwarya  J N",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 3,
+            "excelRef": "KSAW 1783",
+            "excelSaf": "SAF1482608",
+            "excelAadhaar": "799832055987",
+            "excelName": "Swarna",
+            "dbId": "67f13cc9-396d-4df0-9d5a-59dac2ac1744",
+            "dbRef": "KSAW 1783",
+            "dbName": "Swarna D",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 4,
+            "excelRef": "KSAW 1788",
+            "excelSaf": "SAF1482609",
+            "excelAadhaar": "744579771353",
+            "excelName": "Rakshitha",
+            "dbId": "f7e416dd-36d5-4138-a0aa-3a7b12f78977",
+            "dbRef": "KSAW 1788",
+            "dbName": "Rakshitha  B M",
+            "matchMethod": "Aadhaar"
+          }
+        ]
+      },
+      {
+        "sheetName": "batch id",
+        "batchName": "KSAWU/HSN/CPG/0926-33",
+        "totalRows": 1,
+        "matchedCount": 0,
+        "uniqueMatchedIds": 0,
+        "unmatchedCount": 1,
+        "unmatchedList": [
+          {
+            "row": 2,
+            "ref": "",
+            "saf": "",
+            "aadhaar": "",
+            "name": "",
+            "phone": ""
+          }
+        ],
+        "matchedDetails": []
+      }
+    ]
+  },
+  {
+    "file": "batch/KSAWU - B.V.V. Sangha's Mudhol approval list ( 01-10-26).xlsx",
+    "sheets": [
+      {
+        "sheetName": "candidates list ",
+        "batchName": "candidates list",
+        "totalRows": 19,
+        "matchedCount": 19,
+        "uniqueMatchedIds": 19,
+        "unmatchedCount": 0,
+        "unmatchedList": [],
+        "matchedDetails": [
+          {
+            "row": 2,
+            "excelRef": "KSAW 3850",
+            "excelSaf": "SAF1484049",
+            "excelAadhaar": "709701313222",
+            "excelName": "Vijaylaxmi",
+            "dbId": "a725d4b1-b530-4d15-a832-bfa544a86d13",
+            "dbRef": "KSAW 3850",
+            "dbName": "Vijaylaxmi  Chavhan",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 3,
+            "excelRef": "KSAW 3249",
+            "excelSaf": "SAF1483627",
+            "excelAadhaar": "651920702560",
+            "excelName": "Sahana",
+            "dbId": "da895e98-d9ff-4f9f-8ae8-878c17db9f90",
+            "dbRef": "KSAW 3249",
+            "dbName": "Sahana  Tippimath",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 4,
+            "excelRef": "KSAW 3498",
+            "excelSaf": "SAF1483392",
+            "excelAadhaar": "777485441319",
+            "excelName": "Sushmita",
+            "dbId": "ba61dcc8-9561-4f81-a3f6-266a34d13059",
+            "dbRef": "KSAW 3498",
+            "dbName": "Sushmita Nagannavar",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 5,
+            "excelRef": "KSAW 3565",
+            "excelSaf": "SAF1483373",
+            "excelAadhaar": "611025206175",
+            "excelName": "Laxmi",
+            "dbId": "d9da55b1-2747-4cba-afd2-c7ab1dc7e61c",
+            "dbRef": "KSAW 3565",
+            "dbName": "Laxmi Saraganachari",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 6,
+            "excelRef": "KSAW 3662",
+            "excelSaf": "SAF1483730",
+            "excelAadhaar": "671818031948",
+            "excelName": "Sahana",
+            "dbId": "8f9cda6c-9661-4151-a441-cb7d537634ec",
+            "dbRef": "KSAW 3662",
+            "dbName": "Sahana  Choudhari",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 7,
+            "excelRef": "KSAW 3682",
+            "excelSaf": "SAF1483724",
+            "excelAadhaar": "344324355244",
+            "excelName": "Ashwini",
+            "dbId": "d9f40ddb-862f-4962-8044-dc56ce7c4289",
+            "dbRef": "KSAW 3682",
+            "dbName": "Ashwini  Hiremath",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 8,
+            "excelRef": "KSAW 3684",
+            "excelSaf": "SAF1483691",
+            "excelAadhaar": "665706906301",
+            "excelName": "Bhagya",
+            "dbId": "fc24f482-a06e-472e-86c9-0449528e6f28",
+            "dbRef": "KSAW 3684",
+            "dbName": "Bhagya Gurusatatayya kallimath",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 9,
+            "excelRef": "KSAW 3692",
+            "excelSaf": "SAF1483689",
+            "excelAadhaar": "443187954587",
+            "excelName": "Laxmi",
+            "dbId": "27b0b04f-663d-4db5-a599-a18f1231fa7f",
+            "dbRef": "KSAW 3692",
+            "dbName": "Laxmi  Badaradinni",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 10,
+            "excelRef": "KSAW 3825",
+            "excelSaf": "SAF1484479",
+            "excelAadhaar": "336100325007",
+            "excelName": "Sanjana",
+            "dbId": "18f598b5-e548-4078-b843-a594965938ae",
+            "dbRef": "KSAW 3825",
+            "dbName": "Sanjana Maranur",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 11,
+            "excelRef": "KSAW 3334",
+            "excelSaf": "SAF1484274",
+            "excelAadhaar": "494394042054",
+            "excelName": "Keerti",
+            "dbId": "934e68f9-40d7-4f64-b756-3c0ed1f95a44",
+            "dbRef": "KSAW 3334",
+            "dbName": "Keerti Badiger",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 12,
+            "excelRef": "KSAW 3548",
+            "excelSaf": "SAF1484251",
+            "excelAadhaar": "810870229384",
+            "excelName": "Manohari Kadappa",
+            "dbId": "10434355-6e6c-4572-ae0f-de76808b697d",
+            "dbRef": "KSAW 3548",
+            "dbName": "Manohari Kadappa Kambar",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 13,
+            "excelRef": "KSAW 3781",
+            "excelSaf": "SAF1484053",
+            "excelAadhaar": "449436545786",
+            "excelName": "Pooja",
+            "dbId": "2f0bf0b3-90fd-4f54-8eb3-13437730259e",
+            "dbRef": "KSAW 3781",
+            "dbName": "Pooja  Kambar",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 14,
+            "excelRef": "KSAW 3784",
+            "excelSaf": "SAF1484231",
+            "excelAadhaar": "766636665611",
+            "excelName": "Gouramma",
+            "dbId": "350a91de-d297-460c-802b-421156512e3f",
+            "dbRef": "KSAW 3784",
+            "dbName": "Gouramma  Kambar",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 15,
+            "excelRef": "KSAW 3489",
+            "excelSaf": "SAF1483773",
+            "excelAadhaar": "886924141352",
+            "excelName": "Sanjana",
+            "dbId": "3fe1042d-9321-4295-b6c5-a40b188e48ba",
+            "dbRef": "KSAW 3489",
+            "dbName": "Sanjana Pujar",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 16,
+            "excelRef": "KSAW 3595",
+            "excelSaf": "SAF1484093",
+            "excelAadhaar": "767235693800",
+            "excelName": "Bhagyashree",
+            "dbId": "dcc3e087-5918-45e8-bb4e-cf52321cca9c",
+            "dbRef": "KSAW 3595",
+            "dbName": "Bhagyashree Batakurki",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 17,
+            "excelRef": "KSAW 3664",
+            "excelSaf": "SAF1483998",
+            "excelAadhaar": "459266631138",
+            "excelName": "Ruchita",
+            "dbId": "f5f1d604-6393-4ced-938c-52e7b84ed3a4",
+            "dbRef": "KSAW 3664",
+            "dbName": "Ruchita Jeeragal",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 18,
+            "excelRef": "KSAW 3669",
+            "excelSaf": "SAF1483997",
+            "excelAadhaar": "950768147547",
+            "excelName": "Sunita",
+            "dbId": "53ea8700-3a7a-4b65-8fe9-39c6ef4dafbd",
+            "dbRef": "KSAW 3669",
+            "dbName": "Sunita Patil",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 19,
+            "excelRef": "KSAW 3674",
+            "excelSaf": "SAF1483995",
+            "excelAadhaar": "495412721472",
+            "excelName": "Laxmi",
+            "dbId": "68f5cbbc-1736-46ba-b5cd-48fc13631543",
+            "dbRef": "KSAW 3674",
+            "dbName": "Laxmi  Hulageri",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 20,
+            "excelRef": "KSAW 3688",
+            "excelSaf": "SAF1483990",
+            "excelAadhaar": "225034724418",
+            "excelName": "Srushti Ravi",
+            "dbId": "756cde08-1aa9-4055-80b9-15e679dec8c7",
+            "dbRef": "KSAW 3688",
+            "dbName": "Srushti Ravi Sonnad",
+            "matchMethod": "Aadhaar"
+          }
+        ]
+      },
+      {
+        "sheetName": "batch id",
+        "batchName": "KSAWU/BKT/CPG/0926-80",
+        "totalRows": 1,
+        "matchedCount": 0,
+        "uniqueMatchedIds": 0,
+        "unmatchedCount": 1,
+        "unmatchedList": [
+          {
+            "row": 2,
+            "ref": "",
+            "saf": "",
+            "aadhaar": "",
+            "name": "",
+            "phone": ""
+          }
+        ],
+        "matchedDetails": []
+      }
+    ]
+  },
+  {
+    "file": "batch/KSAWU - Raj Rajeshwari, Rannebenur Approval list ( 01-10-26).xlsx",
+    "sheets": [
+      {
+        "sheetName": "Candidates list",
+        "batchName": "KSAWU/HVR/CPG/0926-86",
+        "totalRows": 26,
+        "matchedCount": 26,
+        "uniqueMatchedIds": 26,
+        "unmatchedCount": 0,
+        "unmatchedList": [],
+        "matchedDetails": [
+          {
+            "row": 2,
+            "excelRef": "KSAW 3174",
+            "excelSaf": "SAF1483872",
+            "excelAadhaar": "557645566345",
+            "excelName": "Gouramma manjappa hubballi",
+            "dbId": "f502e0ee-248a-4b96-a894-97b2f407190a",
+            "dbRef": "KSAW 3174",
+            "dbName": "Gouramma manjappa hubballi  Hubballi",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 3,
+            "excelRef": "KSAW 3175",
+            "excelSaf": "SAF1484391",
+            "excelAadhaar": "757802117792",
+            "excelName": "Laxmi",
+            "dbId": "71e9050d-41b1-4b68-8dff-4c7bc5ecb93f",
+            "dbRef": "KSAW 3175",
+            "dbName": "Laxmi  Chandrappnavar",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 4,
+            "excelRef": "KSAW 3182",
+            "excelSaf": "SAF1483861",
+            "excelAadhaar": "209154768315",
+            "excelName": "Savita",
+            "dbId": "97ade6d9-86c7-4fb2-a476-05f2a590f2fb",
+            "dbRef": "KSAW 3182",
+            "dbName": "Savita Yalavatti",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 5,
+            "excelRef": "KSAW 3183",
+            "excelSaf": "SAF1483842",
+            "excelAadhaar": "734847029085",
+            "excelName": "Lakshmi",
+            "dbId": "6b564869-45d6-4ea3-aaf4-02ffdccaef38",
+            "dbRef": "KSAW 3183",
+            "dbName": "Lakshmi Gyanagoudra",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 6,
+            "excelRef": "KSAW 3188",
+            "excelSaf": "SAF1483800",
+            "excelAadhaar": "782491062644",
+            "excelName": "Lata",
+            "dbId": "6ae781df-9fd8-476f-a146-45331b871ee7",
+            "dbRef": "KSAW 3188",
+            "dbName": "Lata Surapuramath",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 7,
+            "excelRef": "KSAW 3194",
+            "excelSaf": "SAF1483780",
+            "excelAadhaar": "596205485778",
+            "excelName": "Pallavi Lakkappa",
+            "dbId": "3196480d-059b-45cb-811d-6674f9c1afbd",
+            "dbRef": "KSAW 3194",
+            "dbName": "Pallavi Lakkappa  Halumuddi",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 8,
+            "excelRef": "KSAW 3215",
+            "excelSaf": "SAF1483652",
+            "excelAadhaar": "999372732001",
+            "excelName": "Ranjita",
+            "dbId": "11473aa7-6df4-402e-af52-b95315672c32",
+            "dbRef": "KSAW 3215",
+            "dbName": "Ranjita Arasanala",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 9,
+            "excelRef": "KSAW 3236",
+            "excelSaf": "SAF1483639",
+            "excelAadhaar": "530503138496",
+            "excelName": "Girijamma  hosamani",
+            "dbId": "5e736d85-27be-402b-9af2-693ce163c600",
+            "dbRef": "KSAW 3236",
+            "dbName": "Girijamma  hosamani  Hosamani",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 10,
+            "excelRef": "KSAW 3263",
+            "excelSaf": "SAF1484549",
+            "excelAadhaar": "959326048571",
+            "excelName": "Pavani",
+            "dbId": "6097ea50-9e8d-4a69-bd08-bf17ab7d59fc",
+            "dbRef": "KSAW 3263",
+            "dbName": "Pavani Shettar",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 11,
+            "excelRef": "KSAW 3279",
+            "excelSaf": "SAF1484573",
+            "excelAadhaar": "606441737592",
+            "excelName": "Kavita",
+            "dbId": "a1d74841-9307-4852-b985-cdbb38c95241",
+            "dbRef": "KSAW 3279",
+            "dbName": "Kavita Hamvashi",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 12,
+            "excelRef": "KSAW 3337",
+            "excelSaf": "SAF1458123",
+            "excelAadhaar": "260159860683",
+            "excelName": "Vijayalakshmi shivayogi hugara",
+            "dbId": "6310fa75-f8c1-4e21-81b8-d9f4789b6084",
+            "dbRef": "KSAW 3337",
+            "dbName": "Vijayalakshmi shivayogi hugara  Hugara",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 13,
+            "excelRef": "KSAW 3382",
+            "excelSaf": "SAF1483629",
+            "excelAadhaar": "979714280739",
+            "excelName": "Roopa Jagadeesh",
+            "dbId": "45350db2-fcc6-426e-b71d-b8ddf0e532be",
+            "dbRef": "KSAW 3382",
+            "dbName": "Roopa Jagadeesh Hanchanal",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 14,
+            "excelRef": "KSAW 3448",
+            "excelSaf": "SAF1483411",
+            "excelAadhaar": "244542733131",
+            "excelName": "SUMA RAMESH",
+            "dbId": "514d59c1-95f9-41ad-bf0c-e5edbfca88fa",
+            "dbRef": "KSAW 3448",
+            "dbName": "SUMA RAMESH  KASHI",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 15,
+            "excelRef": "KSAW 3510",
+            "excelSaf": "SAF1483388",
+            "excelAadhaar": "352914784194",
+            "excelName": "Suprita",
+            "dbId": "ae46a39f-a947-4b95-aaa5-47e1d8284c70",
+            "dbRef": "KSAW 3510",
+            "dbName": "Suprita  B T",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 16,
+            "excelRef": "KSAW 3550",
+            "excelSaf": "SAF1483377",
+            "excelAadhaar": "235704057585",
+            "excelName": "Spoorti",
+            "dbId": "3c2b96c3-8b55-467e-a554-616b7b894a73",
+            "dbRef": "KSAW 3550",
+            "dbName": "Spoorti  Hiremath",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 17,
+            "excelRef": "KSAW 3557",
+            "excelSaf": "SAF1483376",
+            "excelAadhaar": "832575513454",
+            "excelName": "Kanchana",
+            "dbId": "8b18f0fd-36db-4b7b-81fd-1d2a4a117af0",
+            "dbRef": "KSAW 3557",
+            "dbName": "Kanchana  Dambal",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 18,
+            "excelRef": "KSAW 3598",
+            "excelSaf": "SAF1483358",
+            "excelAadhaar": "512776908140",
+            "excelName": "NAGAMMA",
+            "dbId": "5f2e0d31-f49f-4827-94ce-bc50098615db",
+            "dbRef": "KSAW 3598",
+            "dbName": "NAGAMMA  DEVARAMANI",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 19,
+            "excelRef": "KSAW 3633",
+            "excelSaf": "SAF1483340",
+            "excelAadhaar": "857166391936",
+            "excelName": "Aishwarya",
+            "dbId": "592649f0-5019-4b82-a1af-1ba957c15309",
+            "dbRef": "KSAW 3633",
+            "dbName": "Aishwarya  Aishwarya",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 20,
+            "excelRef": "KSAW 3680",
+            "excelSaf": "SAF1483725",
+            "excelAadhaar": "895287351506",
+            "excelName": "Soumya",
+            "dbId": "796c4ed3-dc1b-4a7b-a544-ef29cd089204",
+            "dbRef": "KSAW 3680",
+            "dbName": "Soumya  Hottilakkappanavara",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 21,
+            "excelRef": "KSAW 3754",
+            "excelSaf": "SAF1483619",
+            "excelAadhaar": "458801870232",
+            "excelName": "Pavitra",
+            "dbId": "6e6cb770-86ce-45c1-8c97-425a52c8e0ee",
+            "dbRef": "KSAW 3754",
+            "dbName": "Pavitra Basappa Hallali",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 22,
+            "excelRef": "KSAW 3778",
+            "excelSaf": "SAF1484412",
+            "excelAadhaar": "569846736037",
+            "excelName": "Harshita",
+            "dbId": "e360321b-a1d3-4705-b2b6-849b065f5ddc",
+            "dbRef": "KSAW 3778",
+            "dbName": "Harshita  Bharamagouda patil",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 23,
+            "excelRef": "KSAW 3787",
+            "excelSaf": "SAF1484409",
+            "excelAadhaar": "616087091656",
+            "excelName": "Roopa Devendrappa Gangammanavar",
+            "dbId": "572bfb5b-9ca9-44df-a5ee-7e39036bdc17",
+            "dbRef": "KSAW 3787",
+            "dbName": "Roopa Devendrappa Gangammanavar  Gangammanavar",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 24,
+            "excelRef": "KSAW 3792",
+            "excelSaf": "SAF1484406",
+            "excelAadhaar": "437584627751",
+            "excelName": "Nirmala",
+            "dbId": "0ce80a70-3f51-4eb6-a4b9-4a9206a3392e",
+            "dbRef": "KSAW 3792",
+            "dbName": "Nirmala  Kolur",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 25,
+            "excelRef": "KSAW 3807",
+            "excelSaf": "SAF1484399",
+            "excelAadhaar": "335270228581",
+            "excelName": "Tejashwini kuruvatteppa",
+            "dbId": "6dab9b52-444d-46f6-8dad-ac6509b298c3",
+            "dbRef": "KSAW 3807",
+            "dbName": "Tejashwini kuruvatteppa  Daddi",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 26,
+            "excelRef": "KSAW 3879",
+            "excelSaf": "SAF1484394",
+            "excelAadhaar": "549519625271",
+            "excelName": "Chaitra",
+            "dbId": "3af9a87b-f547-4955-9279-7d77dbde6d56",
+            "dbRef": "KSAW 3879",
+            "dbName": "Chaitra Kadur",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 27,
+            "excelRef": "KSAW 3783",
+            "excelSaf": "SAF1484056",
+            "excelAadhaar": "684149245541",
+            "excelName": "Nivedita Sureshreddi",
+            "dbId": "3d9c0c9f-8f6e-45ae-aab0-0a3fef1791fa",
+            "dbRef": "KSAW 3783",
+            "dbName": "Nivedita Sureshreddi Giraddi",
+            "matchMethod": "Aadhaar"
+          }
+        ]
+      },
+      {
+        "sheetName": "batch id ",
+        "batchName": "KSAWU/HVR/CPG/0926-86",
+        "totalRows": 1,
+        "matchedCount": 0,
+        "uniqueMatchedIds": 0,
+        "unmatchedCount": 1,
+        "unmatchedList": [
+          {
+            "row": 2,
+            "ref": "",
+            "saf": "",
+            "aadhaar": "",
+            "name": "",
+            "phone": ""
+          }
+        ],
+        "matchedDetails": []
+      }
+    ]
+  },
+  {
+    "file": "batch/KSAWU BVVS Akkamahadevi, Bagalokot approval list ( 01-10-26).xlsx",
+    "sheets": [
+      {
+        "sheetName": "candidates list",
+        "batchName": "KSAWU/BKT/CPG/0926-81",
+        "totalRows": 33,
+        "matchedCount": 33,
+        "uniqueMatchedIds": 33,
+        "unmatchedCount": 0,
+        "unmatchedList": [],
+        "matchedDetails": [
+          {
+            "row": 2,
+            "excelRef": "KSAW 3506",
+            "excelSaf": "SAF1484448",
+            "excelAadhaar": "915502333764",
+            "excelName": "Neha",
+            "dbId": "28dac78c-5d3b-4e72-a6c2-2b3dafa726e2",
+            "dbRef": "KSAW 3506",
+            "dbName": "Neha  Achalakar",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 3,
+            "excelRef": "KSAW 3424",
+            "excelSaf": "SAF1483768",
+            "excelAadhaar": "735574244722",
+            "excelName": "Channamma",
+            "dbId": "11dee4b7-7d48-494a-bfcb-f4bced7461c3",
+            "dbRef": "KSAW 3424",
+            "dbName": "Channamma Shivanagutti",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 4,
+            "excelRef": "KSAW 3434",
+            "excelSaf": "SAF1483415",
+            "excelAadhaar": "553864688526",
+            "excelName": "Boramma",
+            "dbId": "5b64df6d-9725-49da-9f5c-9c36799acbb7",
+            "dbRef": "KSAW 3434",
+            "dbName": "Boramma  Mukartihal",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 5,
+            "excelRef": "KSAW 3436",
+            "excelSaf": "SAF1483414",
+            "excelAadhaar": "844094127772",
+            "excelName": "Bhagyashree",
+            "dbId": "aa0e4c64-adbf-4257-b6c7-434f59bcf18b",
+            "dbRef": "KSAW 3436",
+            "dbName": "Bhagyashree  Hiremath",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 6,
+            "excelRef": "KSAW 3474",
+            "excelSaf": "SAF1483399",
+            "excelAadhaar": "625026439014",
+            "excelName": "Pooja",
+            "dbId": "d49c8374-bb3e-40e2-ab79-22ff86fc198a",
+            "dbRef": "KSAW 3474",
+            "dbName": "Pooja Hiremath",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 7,
+            "excelRef": "KSAW 3482",
+            "excelSaf": "SAF1483395",
+            "excelAadhaar": "835416631982",
+            "excelName": "Anusha",
+            "dbId": "15bddc97-463d-4ce2-b487-28d2c7f3cd02",
+            "dbRef": "KSAW 3482",
+            "dbName": "Anusha Baradol",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 8,
+            "excelRef": "KSAW 3511",
+            "excelSaf": "SAF1483386",
+            "excelAadhaar": "684910397102",
+            "excelName": "Vandana",
+            "dbId": "abd7c5f6-1856-4f3b-aaa0-a41759ba29fa",
+            "dbRef": "KSAW 3511",
+            "dbName": "Vandana  Yadavalli",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 9,
+            "excelRef": "KSAW 3626",
+            "excelSaf": "SAF1483343",
+            "excelAadhaar": "890556870243",
+            "excelName": "Srushti",
+            "dbId": "0fe54c25-2248-47d2-96b1-3574ae94b1dd",
+            "dbRef": "KSAW 3626",
+            "dbName": "Srushti Kakhandaki",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 10,
+            "excelRef": "KSAW 3746",
+            "excelSaf": "SAF1483608",
+            "excelAadhaar": "706024563424",
+            "excelName": "Shraddha",
+            "dbId": "792561fb-7d89-4b47-9f5f-9b4719c618c4",
+            "dbRef": "KSAW 3746",
+            "dbName": "Shraddha Koti",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 11,
+            "excelRef": "KSAW 3747",
+            "excelSaf": "SAF1483605",
+            "excelAadhaar": "222070948003",
+            "excelName": "Sushma",
+            "dbId": "e54b5d9b-e384-4342-a8ad-144883a9cbf5",
+            "dbRef": "KSAW 3747",
+            "dbName": "Sushma Awati",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 12,
+            "excelRef": "KSAW 3750",
+            "excelSaf": "SAF1483602",
+            "excelAadhaar": "352663174877",
+            "excelName": "Keertana",
+            "dbId": "90dd996b-dd99-486e-b4d6-b369f4afd008",
+            "dbRef": "KSAW 3750",
+            "dbName": "Keertana  Ballari",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 13,
+            "excelRef": "KSAW 3758",
+            "excelSaf": "SAF1483653",
+            "excelAadhaar": "493508270773",
+            "excelName": "Kaveri s",
+            "dbId": "f7ff3395-46a2-4734-8262-1990f95fb6cc",
+            "dbRef": "KSAW 3758",
+            "dbName": "Kaveri s Roodagi",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 14,
+            "excelRef": "KSAW 3770",
+            "excelSaf": "SAF1484418",
+            "excelAadhaar": "577308075792",
+            "excelName": "Tanushree",
+            "dbId": "85aa729c-3dd3-4df5-8db8-7165fb00d16f",
+            "dbRef": "KSAW 3770",
+            "dbName": "Tanushree Hiremath",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 15,
+            "excelRef": "KSAW 3831",
+            "excelSaf": "SAF1484491",
+            "excelAadhaar": "236737930440",
+            "excelName": "Bharati",
+            "dbId": "d77aed00-0565-43b7-a412-d96245076fdd",
+            "dbRef": "KSAW 3831",
+            "dbName": "Bharati Irapannavar",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 16,
+            "excelRef": "KSAW 3890",
+            "excelSaf": "SAF1484371",
+            "excelAadhaar": "780241855488",
+            "excelName": "Sushma",
+            "dbId": "8031b555-6998-4d41-a0fa-d4dd8ba787ae",
+            "dbRef": "KSAW 3890",
+            "dbName": "Sushma Pattanad",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 17,
+            "excelRef": "KSAW 3920",
+            "excelSaf": "SAF1484347",
+            "excelAadhaar": "677695060803",
+            "excelName": "Netravati",
+            "dbId": "98da7eb9-0216-4768-8f2c-b1990c46b1c3",
+            "dbRef": "KSAW 3920",
+            "dbName": "Netravati  Kalagi",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 18,
+            "excelRef": "KSAW 3935",
+            "excelSaf": "SAF1484332",
+            "excelAadhaar": "439097627519",
+            "excelName": "Bharati",
+            "dbId": "e0d14ce9-c054-4fb8-a1ca-e5385dc302ba",
+            "dbRef": "KSAW 3935",
+            "dbName": "Bharati  Hiremath",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 19,
+            "excelRef": "KSAW 3956",
+            "excelSaf": "SAF1484312",
+            "excelAadhaar": "368634624733",
+            "excelName": "Shilpa",
+            "dbId": "e1f5e8d7-574a-499b-bbe6-5adc10991767",
+            "dbRef": "KSAW 3956",
+            "dbName": "Shilpa  Hurakadli",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 20,
+            "excelRef": "KSAW 3972",
+            "excelSaf": "SAF1484298",
+            "excelAadhaar": "909716010911",
+            "excelName": "Danamma",
+            "dbId": "f94b98c2-238e-477c-8e3e-335ad1db509e",
+            "dbRef": "KSAW 3972",
+            "dbName": "Danamma Mangalur",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 21,
+            "excelRef": "KSAW 3312",
+            "excelSaf": "SAF1484273",
+            "excelAadhaar": "517149578673",
+            "excelName": "Pavitra",
+            "dbId": "fe2810e1-a8d0-4250-942b-0c388828aa1f",
+            "dbRef": "KSAW 3312",
+            "dbName": "Pavitra Badiger",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 22,
+            "excelRef": "KSAW 3466",
+            "excelSaf": "SAF1484261",
+            "excelAadhaar": "989509236875",
+            "excelName": "Ashwini",
+            "dbId": "3af68eae-7cf3-4a45-af6a-a47ad80277a0",
+            "dbRef": "KSAW 3466",
+            "dbName": "Ashwini Badiger",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 23,
+            "excelRef": "KSAW 3710",
+            "excelSaf": "SAF1484235",
+            "excelAadhaar": "860132194945",
+            "excelName": "Gayatri",
+            "dbId": "dc9e0fab-f411-4430-9fb0-231b607fe52d",
+            "dbRef": "KSAW 3710",
+            "dbName": "Gayatri  Badiger",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 24,
+            "excelRef": "KSAW 3752",
+            "excelSaf": "SAF1483598",
+            "excelAadhaar": "217101537213",
+            "excelName": "Srushti",
+            "dbId": "b1632c95-f7dd-4aa9-a2c4-eead83623e08",
+            "dbRef": "KSAW 3752",
+            "dbName": "Srushti  Pattar",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 25,
+            "excelRef": "KSAW 4002",
+            "excelSaf": "SAF1484223",
+            "excelAadhaar": "907556373248",
+            "excelName": "Ankita",
+            "dbId": "40e51dce-e153-444c-9bc1-6bd6a660066b",
+            "dbRef": "KSAW 4002",
+            "dbName": "Ankita Kambar",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 26,
+            "excelRef": "KSAW 3429",
+            "excelSaf": "SAF1483901",
+            "excelAadhaar": "362286856494",
+            "excelName": "Jyoti",
+            "dbId": "ae690a24-fa7a-4a27-b87a-73ff757fb252",
+            "dbRef": "KSAW 3429",
+            "dbName": "Jyoti Amalyal",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 27,
+            "excelRef": "KSAW 3435",
+            "excelSaf": "SAF1483892",
+            "excelAadhaar": "264560772609",
+            "excelName": "Laxmavva",
+            "dbId": "9b2bbaba-5add-4794-b094-e57e37cbcff5",
+            "dbRef": "KSAW 3435",
+            "dbName": "Laxmavva  Patil",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 28,
+            "excelRef": "KSAW 4056",
+            "excelSaf": "SAF1484446",
+            "excelAadhaar": "470955169540",
+            "excelName": "Gangubai",
+            "dbId": "3215ff50-9fd6-4866-a4f6-8712813d1d78",
+            "dbRef": "KSAW 4056",
+            "dbName": "Gangubai  Dasanagoudra",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 29,
+            "excelRef": "KSAW 3575",
+            "excelSaf": "SAF1484012",
+            "excelAadhaar": "213502107230",
+            "excelName": "Sandhya",
+            "dbId": "c23ae86f-e8f6-4d0a-b79f-19ea8c9b4f07",
+            "dbRef": "KSAW 3575",
+            "dbName": "Sandhya  Patil",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 30,
+            "excelRef": "KSAW 3619",
+            "excelSaf": "SAF1484092",
+            "excelAadhaar": "285392278026",
+            "excelName": "Srushti",
+            "dbId": "6a3c310a-6cea-43b1-8636-57fba157410c",
+            "dbRef": "KSAW 3619",
+            "dbName": "Srushti  Hosakoti",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 31,
+            "excelRef": "KSAW 3623",
+            "excelSaf": "SAF1484091",
+            "excelAadhaar": "778651742278",
+            "excelName": "shridevi",
+            "dbId": "3f659bd4-788c-48c1-99fc-138b2cdfc5dc",
+            "dbRef": "KSAW 3623",
+            "dbName": "shridevi somanakatti",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 32,
+            "excelRef": "KSAW 3886",
+            "excelSaf": "SAF1484079",
+            "excelAadhaar": "553482209368",
+            "excelName": "Shrushti",
+            "dbId": "4e096e18-90f5-4a86-9b1f-f6327f952fe1",
+            "dbRef": "KSAW 3886",
+            "dbName": "Shrushti Meti",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 33,
+            "excelRef": "KSAW 3902",
+            "excelSaf": "SAF1484077",
+            "excelAadhaar": "938582165700",
+            "excelName": "Savita",
+            "dbId": "852ba05d-f00f-4288-832b-4adeca63fee4",
+            "dbRef": "KSAW 3902",
+            "dbName": "Savita C",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 34,
+            "excelRef": "KSAW 4000",
+            "excelSaf": "SAF1484075",
+            "excelAadhaar": "598579148783",
+            "excelName": "Anuradha",
+            "dbId": "e500c6d8-11cd-429e-aa56-5ef1447b8160",
+            "dbRef": "KSAW 4000",
+            "dbName": "Anuradha Naduvinamani",
+            "matchMethod": "Aadhaar"
+          }
+        ]
+      },
+      {
+        "sheetName": "Batch id",
+        "batchName": "KSAWU/BKT/CPG/0926-81",
+        "totalRows": 1,
+        "matchedCount": 0,
+        "uniqueMatchedIds": 0,
+        "unmatchedCount": 1,
+        "unmatchedList": [
+          {
+            "row": 2,
+            "ref": "",
+            "saf": "",
+            "aadhaar": "",
+            "name": "",
+            "phone": ""
+          }
+        ],
+        "matchedDetails": []
+      }
+    ]
+  },
+  {
+    "file": "batch/Mandavya approval list ( 01-10-26).xlsx",
+    "sheets": [
+      {
+        "sheetName": "candidates list",
+        "batchName": "KSAWU/MDY/CPG/0926-96",
+        "totalRows": 27,
+        "matchedCount": 27,
+        "uniqueMatchedIds": 27,
+        "unmatchedCount": 0,
+        "unmatchedList": [],
+        "matchedDetails": [
+          {
+            "row": 2,
+            "excelRef": "KSAW 3176",
+            "excelSaf": "SAF1483869",
+            "excelAadhaar": "687329124565",
+            "excelName": "Sona",
+            "dbId": "12be1862-24fa-418e-9fdb-36a50fc8c205",
+            "dbRef": "KSAW 3176",
+            "dbName": "Sona Sona",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 3,
+            "excelRef": "KSAW 2446",
+            "excelSaf": "SAF1484270",
+            "excelAadhaar": "277608518438",
+            "excelName": "Thanushree",
+            "dbId": "0f0970d0-0163-41fe-a3c4-c17666970ded",
+            "dbRef": "KSAW 2446",
+            "dbName": "Thanushree N",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 4,
+            "excelRef": "KSAW 2958",
+            "excelSaf": "SAF1482836",
+            "excelAadhaar": "718451025331",
+            "excelName": "Lakshmi",
+            "dbId": "3d8d1312-ac01-4e71-b043-fb00dd786054",
+            "dbRef": "KSAW 2958",
+            "dbName": "Lakshmi  H.V",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 5,
+            "excelRef": "KSAW 2295",
+            "excelSaf": "SAF1484149",
+            "excelAadhaar": "758382368278",
+            "excelName": "Apeksha M R",
+            "dbId": "fbf469fb-2614-48df-9955-890bdf715ef3",
+            "dbRef": "KSAW 2295",
+            "dbName": "Apeksha M R  Apeksha M R",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 6,
+            "excelRef": "KSAW 2341",
+            "excelSaf": "SAF1484150",
+            "excelAadhaar": "771655869298",
+            "excelName": "Meghana",
+            "dbId": "d3a7dd7f-8bed-4f02-b50c-d1ed81666b2f",
+            "dbRef": "KSAW 2341",
+            "dbName": "Meghana B A",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 7,
+            "excelRef": "KSAW 2352",
+            "excelSaf": "SAF1484151",
+            "excelAadhaar": "513960946323",
+            "excelName": "Thanushree",
+            "dbId": "df2cf4d8-0a98-4202-be4b-cb838c60dd87",
+            "dbRef": "KSAW 2352",
+            "dbName": "Thanushree  HB",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 8,
+            "excelRef": "KSAW 2356",
+            "excelSaf": "SAF1484152",
+            "excelAadhaar": "817876580067",
+            "excelName": "Vismitha B S",
+            "dbId": "7477e8c0-8e75-4891-a4b6-ba3ff9f8f2ad",
+            "dbRef": "KSAW 2356",
+            "dbName": "Vismitha B S  Vismitha B S",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 9,
+            "excelRef": "KSAW 2361",
+            "excelSaf": "SAF1484153",
+            "excelAadhaar": "212931416410",
+            "excelName": "Nagashree",
+            "dbId": "e53fbcaf-f101-4cab-95d3-1206b88bc08f",
+            "dbRef": "KSAW 2361",
+            "dbName": "Nagashree  Mahesh",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 10,
+            "excelRef": "KSAW 2400",
+            "excelSaf": "SAF1484154",
+            "excelAadhaar": "306561189507",
+            "excelName": "Ganashree",
+            "dbId": "e49feddc-8283-4a0a-b0e3-f09b1af8b905",
+            "dbRef": "KSAW 2400",
+            "dbName": "Ganashree  K.G",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 11,
+            "excelRef": "KSAW 2637",
+            "excelSaf": "SAF1481790",
+            "excelAadhaar": "486617873380",
+            "excelName": "Lakshmi",
+            "dbId": "a054e926-ec02-4e77-a9e6-7a5463a739a8",
+            "dbRef": "KSAW 2637",
+            "dbName": "Lakshmi H. S",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 12,
+            "excelRef": "KSAW 2764",
+            "excelSaf": "SAF1484156",
+            "excelAadhaar": "706627534534",
+            "excelName": "Swapna",
+            "dbId": "acb3d27d-d828-4650-83f3-8ac95fdfa0f6",
+            "dbRef": "KSAW 2764",
+            "dbName": "Swapna  R",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 13,
+            "excelRef": "KSAW 2869",
+            "excelSaf": "SAF1482593",
+            "excelAadhaar": "595007578304",
+            "excelName": "Nischitha",
+            "dbId": "00426950-e2ff-4162-a380-f9c1958f5a2e",
+            "dbRef": "KSAW 2869",
+            "dbName": "Nischitha  S",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 14,
+            "excelRef": "KSAW 2941",
+            "excelSaf": "SAF1482844",
+            "excelAadhaar": "634721448472",
+            "excelName": "Sinchana D",
+            "dbId": "7c3f7e53-2fd2-4733-8116-81b38711a3be",
+            "dbRef": "KSAW 2941",
+            "dbName": "Sinchana D  Sinchana D",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 15,
+            "excelRef": "KSAW 2944",
+            "excelSaf": "SAF1482843",
+            "excelAadhaar": "717242039795",
+            "excelName": "Suma",
+            "dbId": "1bf80bfe-f915-4032-829d-d84c886c2405",
+            "dbRef": "KSAW 2944",
+            "dbName": "Suma M U",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 16,
+            "excelRef": "KSAW 2945",
+            "excelSaf": "SAF1482842",
+            "excelAadhaar": "823393827373",
+            "excelName": "Pooja G M",
+            "dbId": "4a0dba71-9062-4024-a62f-bbe914a1c854",
+            "dbRef": "KSAW 2945",
+            "dbName": "Pooja G M Pooja G M",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 17,
+            "excelRef": "KSAW 2951",
+            "excelSaf": "SAF1484169",
+            "excelAadhaar": "220033880056",
+            "excelName": "Madhushree Gowda",
+            "dbId": "f3d01b0f-4501-483a-b3f0-46ddf77178b6",
+            "dbRef": "KSAW 2951",
+            "dbName": "Madhushree Gowda  CC",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 18,
+            "excelRef": "KSAW 2955",
+            "excelSaf": "SAF1482838",
+            "excelAadhaar": "989193508285",
+            "excelName": "VidyaShree",
+            "dbId": "30822899-d26c-4b16-b9d0-bda54eaace06",
+            "dbRef": "KSAW 2955",
+            "dbName": "VidyaShree A.N",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 19,
+            "excelRef": "KSAW 2960",
+            "excelSaf": "SAF1482833",
+            "excelAadhaar": "741511274833",
+            "excelName": "Bindu",
+            "dbId": "c4db8914-b2da-4665-aac9-3f5cf22403f8",
+            "dbRef": "KSAW 2960",
+            "dbName": "Bindu S",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 20,
+            "excelRef": "KSAW 2962",
+            "excelSaf": "SAF1482829",
+            "excelAadhaar": "202353862038",
+            "excelName": "Sinchana",
+            "dbId": "5ce2b7de-1134-4875-b767-57413ad231e2",
+            "dbRef": "KSAW 2962",
+            "dbName": "Sinchana E",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 21,
+            "excelRef": "KSAW 2974",
+            "excelSaf": "SAF1482824",
+            "excelAadhaar": "629769847637",
+            "excelName": "Preethi G J",
+            "dbId": "92e9d795-9244-43db-b0ef-14a6f5ad0971",
+            "dbRef": "KSAW 2974",
+            "dbName": "Preethi G J  Preethi G J",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 22,
+            "excelRef": "KSAW 2977",
+            "excelSaf": "SAF1482822",
+            "excelAadhaar": "917750493247",
+            "excelName": "Monisha",
+            "dbId": "13e6c861-1f4a-4f4f-b2e2-1c98c2928253",
+            "dbRef": "KSAW 2977",
+            "dbName": "Monisha KR",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 23,
+            "excelRef": "KSAW 2978",
+            "excelSaf": "SAF1482821",
+            "excelAadhaar": "326325528141",
+            "excelName": "Punyashree",
+            "dbId": "ea539400-d1fb-4a47-b0e7-383af4b16258",
+            "dbRef": "KSAW 2978",
+            "dbName": "Punyashree  R",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 24,
+            "excelRef": "KSAW 2979",
+            "excelSaf": "SAF1482817",
+            "excelAadhaar": "226238408848",
+            "excelName": "Pallavi",
+            "dbId": "e541bfd7-777f-4bb0-aa3f-a9d8f97d509f",
+            "dbRef": "KSAW 2979",
+            "dbName": "Pallavi  H. S",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 25,
+            "excelRef": "KSAW 3042",
+            "excelSaf": "SAF1483064",
+            "excelAadhaar": "317489088694",
+            "excelName": "Bhuvana",
+            "dbId": "730d727a-b4ce-433b-ae70-83749850d285",
+            "dbRef": "KSAW 3042",
+            "dbName": "Bhuvana N",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 26,
+            "excelRef": "KSAW 3043",
+            "excelSaf": "SAF1483063",
+            "excelAadhaar": "677870435990",
+            "excelName": "Punya",
+            "dbId": "1b127c1c-a1b0-4a09-8217-bb1779d8693d",
+            "dbRef": "KSAW 3043",
+            "dbName": "Punya  SH",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 27,
+            "excelRef": "KSAW 3110",
+            "excelSaf": "SAF1483059",
+            "excelAadhaar": "811150226962",
+            "excelName": "Monika MN",
+            "dbId": "2c50a2e4-d46a-464e-84eb-af97f8b93f2e",
+            "dbRef": "KSAW 3110",
+            "dbName": "Monika MN Monika MN",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 28,
+            "excelRef": "KSAW 3306",
+            "excelSaf": "SAF1484126",
+            "excelAadhaar": "650192172943",
+            "excelName": "Jeevitha km",
+            "dbId": "5651501f-77a3-4df2-b89d-90b149670a88",
+            "dbRef": "KSAW 3306",
+            "dbName": "Jeevitha km Jeevitha",
+            "matchMethod": "Aadhaar"
+          }
+        ]
+      },
+      {
+        "sheetName": "batch id ",
+        "batchName": "KSAWU/MDY/CPG/0926-96",
+        "totalRows": 1,
+        "matchedCount": 0,
+        "uniqueMatchedIds": 0,
+        "unmatchedCount": 1,
+        "unmatchedList": [
+          {
+            "row": 2,
+            "ref": "",
+            "saf": "",
+            "aadhaar": "",
+            "name": "",
+            "phone": ""
+          }
+        ],
+        "matchedDetails": []
+      }
+    ]
+  },
+  {
+    "file": "batch/Minerva approval list ( 01-10-26).xlsx",
+    "sheets": [
+      {
+        "sheetName": "candidates list",
+        "batchName": "KSAWU/CMR/CPG/0926-97",
+        "totalRows": 18,
+        "matchedCount": 18,
+        "uniqueMatchedIds": 18,
+        "unmatchedCount": 0,
+        "unmatchedList": [],
+        "matchedDetails": [
+          {
+            "row": 2,
+            "excelRef": "KSAW 2327",
+            "excelSaf": "SAF1482848",
+            "excelAadhaar": "286141017782",
+            "excelName": "SHWETHA",
+            "dbId": "d13c22f6-d65e-4c28-86bc-4ce9f1418e33",
+            "dbRef": "KSAW 2327",
+            "dbName": "SHWETHA  V",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 3,
+            "excelRef": "KSAW 2886",
+            "excelSaf": "SAF1482581",
+            "excelAadhaar": "583932524971",
+            "excelName": "SINCHANA",
+            "dbId": "35d4031a-8a93-4fa5-8aab-e7b71c99fe86",
+            "dbRef": "KSAW 2886",
+            "dbName": "SINCHANA  S",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 4,
+            "excelRef": "KSAW 2973",
+            "excelSaf": "SAF1467254",
+            "excelAadhaar": "781439981888",
+            "excelName": "SINCHANA",
+            "dbId": "5f8d2ff1-251a-4c22-bef2-f30e5f952a6d",
+            "dbRef": "KSAW 2973",
+            "dbName": "SINCHANA  D",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 5,
+            "excelRef": "KSAW 2975",
+            "excelSaf": "SAF1482823",
+            "excelAadhaar": "275831804253",
+            "excelName": "KAVYA",
+            "dbId": "95fbb909-f997-46f0-99b1-837396854672",
+            "dbRef": "KSAW 2975",
+            "dbName": "KAVYA *",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 6,
+            "excelRef": "KSAW 3005",
+            "excelSaf": "SAF1482794",
+            "excelAadhaar": "950163046238",
+            "excelName": "sneha",
+            "dbId": "51be0104-ad05-4785-a6ce-181b1707abe7",
+            "dbRef": "KSAW 3005",
+            "dbName": "sneha *",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 7,
+            "excelRef": "KSAW 3007",
+            "excelSaf": "SAF1482792",
+            "excelAadhaar": "332649373719",
+            "excelName": "SINDHU",
+            "dbId": "f553b9cf-86da-45db-b257-0fb1b7c762be",
+            "dbRef": "KSAW 3007",
+            "dbName": "SINDHU  R",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 8,
+            "excelRef": "KSAW 3008",
+            "excelSaf": "SAF1482790",
+            "excelAadhaar": "937832394223",
+            "excelName": "N",
+            "dbId": "ed981ff6-fd6b-42d8-9284-abfd567eb422",
+            "dbRef": "KSAW 3008",
+            "dbName": "N  PUSHPA",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 9,
+            "excelRef": "KSAW 3012",
+            "excelSaf": "SAF1482787",
+            "excelAadhaar": "779204208517",
+            "excelName": "DODDAMMA",
+            "dbId": "15dd4db7-421d-4fc8-815f-f9071703260f",
+            "dbRef": "KSAW 3012",
+            "dbName": "DODDAMMA  B",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 10,
+            "excelRef": "KSAW 3014",
+            "excelSaf": "SAF1482785",
+            "excelAadhaar": "434625081586",
+            "excelName": "DIVYA",
+            "dbId": "f1a20abb-1c8f-4c91-bf08-d831e1c0625b",
+            "dbRef": "KSAW 3014",
+            "dbName": "DIVYA  S",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 11,
+            "excelRef": "KSAW 3015",
+            "excelSaf": "SAF1482784",
+            "excelAadhaar": "551417633135",
+            "excelName": "DEVIRAMMA",
+            "dbId": "8d967b73-3bf3-40ac-952b-4b191b94746b",
+            "dbRef": "KSAW 3015",
+            "dbName": "DEVIRAMMA *",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 12,
+            "excelRef": "KSAW 3017",
+            "excelSaf": "SAF1482782",
+            "excelAadhaar": "740925605068",
+            "excelName": "CHANDANA",
+            "dbId": "a157eb82-d720-4de6-89ba-2471e0cb38c8",
+            "dbRef": "KSAW 3017",
+            "dbName": "CHANDANA K M",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 13,
+            "excelRef": "KSAW 3020",
+            "excelSaf": "SAF1482780",
+            "excelAadhaar": "940261367654",
+            "excelName": "Aishwarya",
+            "dbId": "e93f4a54-e5f8-4314-a678-d3b55c844c68",
+            "dbRef": "KSAW 3020",
+            "dbName": "AISHWARYA *",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 14,
+            "excelRef": "KSAW 3023",
+            "excelSaf": "SAF1483136",
+            "excelAadhaar": "915904730893",
+            "excelName": "NANDINI",
+            "dbId": "5e05c8f1-ada9-4c1b-b0cc-5a74d27c3a88",
+            "dbRef": "KSAW 3023",
+            "dbName": "NANDINI  N",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 15,
+            "excelRef": "KSAW 3026",
+            "excelSaf": "SAF1483135",
+            "excelAadhaar": "600196664337",
+            "excelName": "THANUSHREE",
+            "dbId": "afb3395c-96f3-4ab0-9776-44fe3aa7a402",
+            "dbRef": "KSAW 3026",
+            "dbName": "THANUSHREE R",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 16,
+            "excelRef": "KSAW 2907",
+            "excelSaf": "SAF1482564",
+            "excelAadhaar": "461207847789",
+            "excelName": "ANKITHA",
+            "dbId": "fcc56103-60a5-433c-824e-f3d4bbdead36",
+            "dbRef": "KSAW 2907",
+            "dbName": "ANKITHA *",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 17,
+            "excelRef": "KSAW 2908",
+            "excelSaf": "SAF1482847",
+            "excelAadhaar": "308801108276",
+            "excelName": "ANUSUYA",
+            "dbId": "f87a265f-bb1b-4cb7-a1d1-be31c1d4dde7",
+            "dbRef": "KSAW 2908",
+            "dbName": "ANUSUYA *",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 18,
+            "excelRef": "KSAW 2883",
+            "excelSaf": "SAF1482584",
+            "excelAadhaar": "643087816706",
+            "excelName": "VARSHINI",
+            "dbId": "99455de2-66f4-49f9-a3f1-87e4b38f64b1",
+            "dbRef": "KSAW 2883",
+            "dbName": "VARSHINI  K V",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 19,
+            "excelRef": "KSAW 2910",
+            "excelSaf": "SAF1465071",
+            "excelAadhaar": "436271691893",
+            "excelName": "AMRUTHA",
+            "dbId": "96c5219b-293f-468e-a805-6842add58b35",
+            "dbRef": "KSAW 2910",
+            "dbName": "AMRUTHA *",
+            "matchMethod": "Aadhaar"
+          }
+        ]
+      },
+      {
+        "sheetName": "batch id ",
+        "batchName": "KSAWU/CMR/CPG/0926-97",
+        "totalRows": 1,
+        "matchedCount": 0,
+        "uniqueMatchedIds": 0,
+        "unmatchedCount": 1,
+        "unmatchedList": [
+          {
+            "row": 2,
+            "ref": "",
+            "saf": "",
+            "aadhaar": "",
+            "name": "",
+            "phone": ""
+          }
+        ],
+        "matchedDetails": []
+      }
+    ]
+  },
+  {
+    "file": "batch/PES mandya approval list ( 01-10-26).xlsx",
+    "sheets": [
+      {
+        "sheetName": "candidates list",
+        "batchName": "KSAWU/MDY/CPG/0926-98",
+        "totalRows": 15,
+        "matchedCount": 15,
+        "uniqueMatchedIds": 15,
+        "unmatchedCount": 0,
+        "unmatchedList": [],
+        "matchedDetails": [
+          {
+            "row": 2,
+            "excelRef": "KSAW 1214",
+            "excelSaf": "SAF1482604",
+            "excelAadhaar": "631384510778",
+            "excelName": "Jayashree",
+            "dbId": "ff42473f-e795-4639-a87a-bbb659f09b35",
+            "dbRef": "KSAW 1214",
+            "dbName": "Jayashree  s",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 3,
+            "excelRef": "KSAW 1259",
+            "excelSaf": "SAF1482845",
+            "excelAadhaar": "577920511640",
+            "excelName": "Navya",
+            "dbId": "d60f1286-aa40-4b21-bc71-b474dd7e64c8",
+            "dbRef": "KSAW 1259",
+            "dbName": "Navya Navya",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 4,
+            "excelRef": "KSAW 1260",
+            "excelSaf": "SAF1482834",
+            "excelAadhaar": "352398060374",
+            "excelName": "JAHNAVI",
+            "dbId": "9d9de921-6a51-4e76-a5c0-1028412223d5",
+            "dbRef": "KSAW 1260",
+            "dbName": "JAHNAVI  G J",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 5,
+            "excelRef": "KSAW 1275",
+            "excelSaf": "SAF1482834",
+            "excelAadhaar": "999567018758",
+            "excelName": "Chandana",
+            "dbId": "5a5bf4a9-a931-4420-8484-5e7af8e9322d",
+            "dbRef": "KSAW 1275",
+            "dbName": "Chandana Chandana",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 6,
+            "excelRef": "KSAW 1292",
+            "excelSaf": "SAF1482837",
+            "excelAadhaar": "623443223128",
+            "excelName": "Radhika",
+            "dbId": "0cbb7b08-d58b-418e-9fc3-81137b7f394a",
+            "dbRef": "KSAW 1292",
+            "dbName": "Radhika   V S",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 7,
+            "excelRef": "KSAW 1301",
+            "excelSaf": "SAF1482845",
+            "excelAadhaar": "466198727626",
+            "excelName": "Hemashree T.K",
+            "dbId": "d39e61d9-1bd9-4146-b56f-93b3fac8ff78",
+            "dbRef": "KSAW 1301",
+            "dbName": "Hemashree T.K  Hemashree T.K",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 8,
+            "excelRef": "KSAW 1306",
+            "excelSaf": "SAF1482605",
+            "excelAadhaar": "655813204206",
+            "excelName": "Bindu shree",
+            "dbId": "32cbac3a-dc3b-42d3-bf28-e1f510b1f241",
+            "dbRef": "KSAW 1306",
+            "dbName": "Bindu shree B.p",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 9,
+            "excelRef": "KSAW 1345",
+            "excelSaf": "SAF1482849",
+            "excelAadhaar": "566407181407",
+            "excelName": "Shreya",
+            "dbId": "36b9055d-6cc4-49c0-8458-127dfdb86379",
+            "dbRef": "KSAW 1345",
+            "dbName": "Shreya s",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 10,
+            "excelRef": "KSAW 1362",
+            "excelSaf": "SAF1483067",
+            "excelAadhaar": "239084223590",
+            "excelName": "Aswitha N. M",
+            "dbId": "2c2a7d0c-914c-4313-9f07-1a7cea916029",
+            "dbRef": "KSAW 1362",
+            "dbName": "Aswitha N. M N . M",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 11,
+            "excelRef": "KSAW 1681",
+            "excelSaf": "SAF1327168",
+            "excelAadhaar": "247792693351",
+            "excelName": "Sanjana",
+            "dbId": "f4dec41d-a89c-4297-88dd-01b652031116",
+            "dbRef": "KSAW 1681",
+            "dbName": "Sanjana Sanjana",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 12,
+            "excelRef": "KSAW 1806",
+            "excelSaf": "SAF1482610",
+            "excelAadhaar": "999226202990",
+            "excelName": "Shalini v k",
+            "dbId": "76d652b7-2bc3-4d72-9f8d-2c9705bfe34c",
+            "dbRef": "KSAW 1806",
+            "dbName": "Shalini v k Shalini v k",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 13,
+            "excelRef": "KSAW 1826",
+            "excelSaf": "SAF1482853",
+            "excelAadhaar": "809487567158",
+            "excelName": "Aishwarya",
+            "dbId": "e865bc7d-f0bd-48a7-8d68-8e07330010fe",
+            "dbRef": "KSAW 1826",
+            "dbName": "Aishwarya A",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 14,
+            "excelRef": "KSAW 1870",
+            "excelSaf": "SAF1482611",
+            "excelAadhaar": "381671573777",
+            "excelName": "Sushmitha",
+            "dbId": "13f34d11-bfc5-44f5-9935-c13e5f453657",
+            "dbRef": "KSAW 1870",
+            "dbName": "Sushmitha  T S",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 15,
+            "excelRef": "KSAW 1881",
+            "excelSaf": "SAF1482603",
+            "excelAadhaar": "489426781046",
+            "excelName": "Punyashree N A",
+            "dbId": "04f3f09a-3f8b-4492-b249-b18dc3f36483",
+            "dbRef": "KSAW 1881",
+            "dbName": "Punyashree N A Shree",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 16,
+            "excelRef": "KSAW 2219",
+            "excelSaf": "SAF1484147",
+            "excelAadhaar": "319360766151",
+            "excelName": "Meghana r",
+            "dbId": "6437e9f6-317e-43bd-8a28-4f72e9753e40",
+            "dbRef": "KSAW 2219",
+            "dbName": "Meghana r Meghana r",
+            "matchMethod": "Aadhaar"
+          }
+        ]
+      },
+      {
+        "sheetName": "batch id",
+        "batchName": "KSAWU/MDY/CPG/0926-98",
+        "totalRows": 1,
+        "matchedCount": 0,
+        "uniqueMatchedIds": 0,
+        "unmatchedCount": 1,
+        "unmatchedList": [
+          {
+            "row": 2,
+            "ref": "",
+            "saf": "",
+            "aadhaar": "",
+            "name": "",
+            "phone": ""
+          }
+        ],
+        "matchedDetails": []
+      }
+    ]
+  },
+  {
+    "file": "batch/Polytechnic Ramnagra-GT Approval list ( 01-10-26).xlsx",
+    "sheets": [
+      {
+        "sheetName": "Candidates list ",
+        "batchName": "KSAWU/RMG/CPG/0926-79",
+        "totalRows": 28,
+        "matchedCount": 28,
+        "uniqueMatchedIds": 28,
+        "unmatchedCount": 0,
+        "unmatchedList": [],
+        "matchedDetails": [
+          {
+            "row": 2,
+            "excelRef": "KSAW 3374",
+            "excelSaf": "SAF1483634",
+            "excelAadhaar": "509993812055",
+            "excelName": "Paavana",
+            "dbId": "d244a79d-e321-43ec-9991-03c64d598243",
+            "dbRef": "KSAW 3374",
+            "dbName": "Paavana BM",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 3,
+            "excelRef": "KSAW 3416",
+            "excelSaf": "SAF1483774",
+            "excelAadhaar": "269078617014",
+            "excelName": "Jeevitha",
+            "dbId": "b0f42bd3-07d1-4936-ab5c-9bb8adde05da",
+            "dbRef": "KSAW 3416",
+            "dbName": "Jeevitha S",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 4,
+            "excelRef": "KSAW 3476",
+            "excelSaf": "SAF1483398",
+            "excelAadhaar": "324961709030",
+            "excelName": "Poornima",
+            "dbId": "20b207c3-53e8-4bf2-9cce-4e10acf5b51d",
+            "dbRef": "KSAW 3476",
+            "dbName": "Poornima  Poornima",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 5,
+            "excelRef": "KSAW 3816",
+            "excelSaf": "SAF1484469",
+            "excelAadhaar": "274584892275",
+            "excelName": "Priyanka",
+            "dbId": "ffd3599a-eef6-4c13-9340-4010fa994bae",
+            "dbRef": "KSAW 3816",
+            "dbName": "Priyanka  L.k",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 6,
+            "excelRef": "KSAW 3371",
+            "excelSaf": "SAF1484105",
+            "excelAadhaar": "501533309016",
+            "excelName": "Chandana",
+            "dbId": "1ed1d991-5e1e-418a-8e11-e49a2ddddc0a",
+            "dbRef": "KSAW 3371",
+            "dbName": "Chandana  B R",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 7,
+            "excelRef": "KSAW 3372",
+            "excelSaf": "SAF1484104",
+            "excelAadhaar": "456357097610",
+            "excelName": "Lavanya",
+            "dbId": "f7771090-6e67-428c-a1f7-24cc222716de",
+            "dbRef": "KSAW 3372",
+            "dbName": "Lavanya  .",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 8,
+            "excelRef": "KSAW 3373",
+            "excelSaf": "SAF1484103",
+            "excelAadhaar": "956262128359",
+            "excelName": "MB",
+            "dbId": "67f85439-67c7-4fcc-88e2-86d3dbaaa8fd",
+            "dbRef": "KSAW 3373",
+            "dbName": "MB Manya",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 9,
+            "excelRef": "KSAW 3376",
+            "excelSaf": "SAF1484101",
+            "excelAadhaar": "577019057011",
+            "excelName": "Chaithanya",
+            "dbId": "1cfc345a-3f46-49b5-a10d-a1880d6476ec",
+            "dbRef": "KSAW 3376",
+            "dbName": "Chaithanya K",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 10,
+            "excelRef": "KSAW 3377",
+            "excelSaf": "SAF1483871",
+            "excelAadhaar": "832654327697",
+            "excelName": "Raksha",
+            "dbId": "fc837260-ef9c-43b8-8dff-13b4f56f0d34",
+            "dbRef": "KSAW 3377",
+            "dbName": "Raksha M S",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 11,
+            "excelRef": "KSAW 3378",
+            "excelSaf": "SAF1483868",
+            "excelAadhaar": "962449726876",
+            "excelName": "Sinchana",
+            "dbId": "775c5cc8-b5af-470d-ae38-9f411ec86084",
+            "dbRef": "KSAW 3378",
+            "dbName": "Sinchana K.k",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 12,
+            "excelRef": "KSAW 3379",
+            "excelSaf": "SAF1483865",
+            "excelAadhaar": "335044557829",
+            "excelName": "Jeevitha",
+            "dbId": "08238a41-f2df-400a-8640-1fc9c83b2cb0",
+            "dbRef": "KSAW 3379",
+            "dbName": "Jeevitha  Jeevitha",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 13,
+            "excelRef": "KSAW 3380",
+            "excelSaf": "SAF1483967",
+            "excelAadhaar": "867746564263",
+            "excelName": "Vidya shree",
+            "dbId": "0ba420cb-0438-48a9-9325-d4796acad0e5",
+            "dbRef": "KSAW 3380",
+            "dbName": "Vidya shree  BM",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 14,
+            "excelRef": "KSAW 3383",
+            "excelSaf": "SAF1483976",
+            "excelAadhaar": "718727939953",
+            "excelName": "Dhikshitha",
+            "dbId": "f1454e3c-af8b-487c-a880-0bfc441a32e9",
+            "dbRef": "KSAW 3383",
+            "dbName": "Dhikshitha  C J",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 15,
+            "excelRef": "KSAW 3388",
+            "excelSaf": "SAF1483984",
+            "excelAadhaar": "459888840940",
+            "excelName": "Priyanka",
+            "dbId": "7e067db9-475e-4d99-8b63-02ca40d98b53",
+            "dbRef": "KSAW 3388",
+            "dbName": "Priyanka  .",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 16,
+            "excelRef": "KSAW 3392",
+            "excelSaf": "SAF1483982",
+            "excelAadhaar": "743121823696",
+            "excelName": "Lakshmidevi",
+            "dbId": "0fa01118-efa7-4283-98eb-ecd6cafda678",
+            "dbRef": "KSAW 3392",
+            "dbName": "Lakshmidevi  V",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 17,
+            "excelRef": "KSAW 3400",
+            "excelSaf": "SAF1483978",
+            "excelAadhaar": "550998272692",
+            "excelName": "Aishwarya",
+            "dbId": "3a2e4771-0767-466e-b031-b77d717ed76c",
+            "dbRef": "KSAW 3400",
+            "dbName": "Aishwarya  G S",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 18,
+            "excelRef": "KSAW 3404",
+            "excelSaf": "SAF1483974",
+            "excelAadhaar": "478960247738",
+            "excelName": "Lanchana",
+            "dbId": "3948868f-4d29-4eca-955a-3d41f4161653",
+            "dbRef": "KSAW 3404",
+            "dbName": "Lanchana  M",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 19,
+            "excelRef": "KSAW 3413",
+            "excelSaf": "SAF1483968",
+            "excelAadhaar": "776825557263",
+            "excelName": "Lokeshwari",
+            "dbId": "06732af8-8e21-4426-aedd-8c06da6e7f6a",
+            "dbRef": "KSAW 3413",
+            "dbName": "Lokeshwari  V L",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 20,
+            "excelRef": "KSAW 3414",
+            "excelSaf": "SAF1483968",
+            "excelAadhaar": "418825915164",
+            "excelName": "C H Prathibhavathi",
+            "dbId": "036ca656-1754-4a7b-b3d3-3ce6f6f51eb8",
+            "dbRef": "KSAW 3414",
+            "dbName": "C H Prathibhavathi  Prathibhavathi",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 21,
+            "excelRef": "KSAW 3415",
+            "excelSaf": "SAF1483968",
+            "excelAadhaar": "392568320421",
+            "excelName": "Gowramma",
+            "dbId": "d07b9298-8ffe-4aaa-bcf7-8cdcdf6180e7",
+            "dbRef": "KSAW 3415",
+            "dbName": "Gowramma Gowramma",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 22,
+            "excelRef": "KSAW 3475",
+            "excelSaf": "SAF1484026",
+            "excelAadhaar": "751139825825",
+            "excelName": "Anushree",
+            "dbId": "8be079bc-e639-4a0c-b86d-5745a91432b0",
+            "dbRef": "KSAW 3475",
+            "dbName": "Anushree  K N",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 23,
+            "excelRef": "KSAW 3477",
+            "excelSaf": "SAF1483808",
+            "excelAadhaar": "426487067500",
+            "excelName": "Varsha",
+            "dbId": "9990a45e-f11b-4844-8578-ddef2646f555",
+            "dbRef": "KSAW 3477",
+            "dbName": "Varsha S",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 24,
+            "excelRef": "KSAW 3479",
+            "excelSaf": "SAF1483778",
+            "excelAadhaar": "923771560220",
+            "excelName": "Divyashree",
+            "dbId": "654e3a70-7f4d-476a-a86a-0ecbe3670ad0",
+            "dbRef": "KSAW 3479",
+            "dbName": "Divyashree  .",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 25,
+            "excelRef": "KSAW 3495",
+            "excelSaf": "SAF1483761",
+            "excelAadhaar": "465945021431",
+            "excelName": "Rukmini",
+            "dbId": "f0a268d0-dbdf-4427-8311-443917c5279a",
+            "dbRef": "KSAW 3495",
+            "dbName": "Rukmini  .",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 26,
+            "excelRef": "KSAW 3509",
+            "excelSaf": "SAF1483612",
+            "excelAadhaar": "375851153574",
+            "excelName": "Niveditha",
+            "dbId": "fd86d5d9-f824-4b99-98a8-f0dd38a1e0c3",
+            "dbRef": "KSAW 3509",
+            "dbName": "Niveditha Niveditha",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 27,
+            "excelRef": "KSAW 3512",
+            "excelSaf": "SAF1483609",
+            "excelAadhaar": "287750926857",
+            "excelName": "Tejaswini",
+            "dbId": "7a5a8117-d411-4aab-9e14-d9cea83f6dec",
+            "dbRef": "KSAW 3512",
+            "dbName": "Tejaswini  M",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 28,
+            "excelRef": "KSAW 3514",
+            "excelSaf": "SAF1483607",
+            "excelAadhaar": "796992790649",
+            "excelName": "Sowjanya",
+            "dbId": "4d3f9d19-1365-4c90-a058-3418321081c7",
+            "dbRef": "KSAW 3514",
+            "dbName": "Sowjanya  .",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 29,
+            "excelRef": "KSAW 3601",
+            "excelSaf": "SAF1484006",
+            "excelAadhaar": "554056304917",
+            "excelName": "Pruthvi",
+            "dbId": "56540a1f-4f49-4750-9086-ac690f4cdb9c",
+            "dbRef": "KSAW 3601",
+            "dbName": "Pruthvi  M G",
+            "matchMethod": "Aadhaar"
+          }
+        ]
+      },
+      {
+        "sheetName": "Batch id ",
+        "batchName": "KSAWU/RMG/CPG/0926-79",
+        "totalRows": 1,
+        "matchedCount": 0,
+        "uniqueMatchedIds": 0,
+        "unmatchedCount": 1,
+        "unmatchedList": [
+          {
+            "row": 2,
+            "ref": "",
+            "saf": "",
+            "aadhaar": "",
+            "name": "",
+            "phone": ""
+          }
+        ],
+        "matchedDetails": []
+      }
+    ]
+  },
+  {
+    "file": "batch/Vittal college approval data ( 01-10-26).xlsx",
+    "sheets": [
+      {
+        "sheetName": "candidates list",
+        "batchName": "candidates list",
+        "totalRows": 10,
+        "matchedCount": 10,
+        "uniqueMatchedIds": 10,
+        "unmatchedCount": 0,
+        "unmatchedList": [],
+        "matchedDetails": [
+          {
+            "row": 2,
+            "excelRef": "KSAW 3523",
+            "excelSaf": "SAF1484443",
+            "excelAadhaar": "884830868027",
+            "excelName": "Anjali",
+            "dbId": "07977c1c-00a4-4fb4-9224-f217b6431fc7",
+            "dbRef": "KSAW 3523",
+            "dbName": "Anjali  Tingre",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 3,
+            "excelRef": "KSAW 3742",
+            "excelSaf": "SAF1483613",
+            "excelAadhaar": "975787922854",
+            "excelName": "Pooja",
+            "dbId": "092b8c53-0f12-4c4d-8076-63a1ce1e52ae",
+            "dbRef": "KSAW 3742",
+            "dbName": "Pooja K c",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 4,
+            "excelRef": "KSAW 3538",
+            "excelSaf": "SAF1484020",
+            "excelAadhaar": "545059127881",
+            "excelName": "Chandana",
+            "dbId": "2d4a7390-fd38-40a8-b31c-49538fb1842a",
+            "dbRef": "KSAW 3538",
+            "dbName": "Chandana  K R",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 5,
+            "excelRef": "KSAW 3615",
+            "excelSaf": "SAF1484001",
+            "excelAadhaar": "781681070945",
+            "excelName": "Nishitha",
+            "dbId": "23aa5b9a-f9cf-4cae-8bca-c8695370cfc3",
+            "dbRef": "KSAW 3615",
+            "dbName": "Nishitha  Y J",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 6,
+            "excelRef": "KSAW 3655",
+            "excelSaf": "SAF1483599",
+            "excelAadhaar": "718787786591",
+            "excelName": "Sindhu.s",
+            "dbId": "ce2f163c-93fa-4f60-839e-7dba7658cc60",
+            "dbRef": "KSAW 3655",
+            "dbName": "Sindhu.s  Sindhu.s",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 7,
+            "excelRef": "KSAW 3729",
+            "excelSaf": "SAF1483988",
+            "excelAadhaar": "481736055411",
+            "excelName": "Dhanushree",
+            "dbId": "872df749-abc0-4a44-b74c-633dbd4ec63d",
+            "dbRef": "KSAW 3729",
+            "dbName": "Dhanushree A",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 8,
+            "excelRef": "KSAW 3761",
+            "excelSaf": "SAF1484088",
+            "excelAadhaar": "426612704578",
+            "excelName": "Gowthami",
+            "dbId": "96b5e717-e231-45a1-bab8-c53a34f404bf",
+            "dbRef": "KSAW 3761",
+            "dbName": "Gowthami GM",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 9,
+            "excelRef": "KSAW 3800",
+            "excelSaf": "SAF1484083",
+            "excelAadhaar": "696558219809",
+            "excelName": "Vidyashree",
+            "dbId": "808c555a-e164-4cf6-a0d9-be274769d39f",
+            "dbRef": "KSAW 3800",
+            "dbName": "Vidyashree N",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 10,
+            "excelRef": "KSAW 3808",
+            "excelSaf": "SAF1484082",
+            "excelAadhaar": "899145089251",
+            "excelName": "thrupthi",
+            "dbId": "ee47c15f-4a0d-4e1e-b881-fc5f9adc0f50",
+            "dbRef": "KSAW 3808",
+            "dbName": "thrupthi  S",
+            "matchMethod": "Aadhaar"
+          },
+          {
+            "row": 11,
+            "excelRef": "KSAW 3810",
+            "excelSaf": "SAF1484081",
+            "excelAadhaar": "744662077243",
+            "excelName": "Yoga",
+            "dbId": "37b6f884-37a0-4499-b11c-0106beed98cc",
+            "dbRef": "KSAW 3810",
+            "dbName": "Yoga Chinemy",
+            "matchMethod": "Aadhaar"
+          }
+        ]
+      },
+      {
+        "sheetName": "batch id",
+        "batchName": "KSAWU/BGU/CPG/0926-106",
+        "totalRows": 1,
+        "matchedCount": 0,
+        "uniqueMatchedIds": 0,
+        "unmatchedCount": 1,
+        "unmatchedList": [
+          {
+            "row": 2,
+            "ref": "",
+            "saf": "",
+            "aadhaar": "",
+            "name": "",
+            "phone": ""
+          }
+        ],
+        "matchedDetails": []
+      }
+    ]
+  }
+]

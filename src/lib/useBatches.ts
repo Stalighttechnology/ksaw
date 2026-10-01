@@ -903,6 +903,73 @@ export const BUILTIN_BATCH_7: BatchItem = {
 };
 
 export const BUILTIN_BATCH_8: BatchItem = {
+  id: "KSAWU/HSN/CPG/0926-33",
+  name: "KSAWU/HSN/CPG/0926-33",
+  sheetName: "candidates list",
+  totalCount: 13,
+  applicantIds: [
+      "0e3b1361-c48f-46a3-9645-696036df83b2",
+      "67f13cc9-396d-4df0-9d5a-59dac2ac1744",
+      "f7e416dd-36d5-4138-a0aa-3a7b12f78977",
+      "f12b96a8-fe11-4aaf-b291-70371a485ac3",
+      "a1ca6812-abdf-4683-9415-5e867d733b76",
+      "cafa0993-6eb8-4ee3-a80f-c852dbb8e420",
+      "0ab21609-7572-4f47-bd31-43ad6e1b120c",
+      "362321a8-7bcd-4aa1-8828-e5065a03691b",
+      "b289d28c-6272-46b6-b40c-dad621ff9e6f",
+      "acd6abd5-3cf4-4411-a297-16d9a37caaa0",
+      "debae87a-b16d-4a20-b47a-0b70b9ac0e8b",
+      "003b9b45-18f0-41fe-8c25-6a4da8686db4",
+      "fdf493cd-59f6-4415-bcc4-5ceb4fe6b336"
+  ],
+  safNumbers: [
+      "SAF1482607",
+      "SAF1482608",
+      "SAF1482609",
+      "SAF1479940",
+      "SAF1479934",
+      "SAF1479928",
+      "SAF1479923",
+      "SAF1479912",
+      "SAF1480010",
+      "SAF1480031",
+      "SAF1480154",
+      "SAF1479439",
+      "SAF1478707"
+  ],
+  referenceNumbers: [
+      "KSAW 1774",
+      "KSAW 1783",
+      "KSAW 1788",
+      "KSAW 1453",
+      "KSAW 1454",
+      "KSAW 1458",
+      "KSAW 1459",
+      "KSAW 1462",
+      "KSAW 523",
+      "KSAW 1456",
+      "KSAW 1777",
+      "KSAW 108",
+      "KSAW 542"
+  ],
+  aadhaarNumbers: [
+      "516528043542",
+      "799832055987",
+      "744579771353",
+      "973356794828",
+      "613338440603",
+      "756626810442",
+      "834095876837",
+      "369785111000",
+      "430694345069",
+      "892827358399",
+      "564287907719",
+      "366438794575",
+      "231038346930"
+  ]
+};
+
+export const BUILTIN_BATCH_9: BatchItem = {
   id: "KSAWU/HSN/CPG/0926-6",
   name: "KSAWU/HSN/CPG/0926-6",
   sheetName: "KSAWU HSN CPG 0926-6",
@@ -1030,61 +1097,6 @@ export const BUILTIN_BATCH_8: BatchItem = {
       "451566120146",
       "918762702324",
       "558441584183"
-  ]
-};
-
-export const BUILTIN_BATCH_9: BatchItem = {
-  id: "KSAWU/HSN/CPG/0926-33",
-  name: "KSAWU/HSN/CPG/0926-33",
-  sheetName: "KSAWU HSN CPG 0926-33",
-  totalCount: 10,
-  applicantIds: [
-      "f12b96a8-fe11-4aaf-b291-70371a485ac3",
-      "a1ca6812-abdf-4683-9415-5e867d733b76",
-      "cafa0993-6eb8-4ee3-a80f-c852dbb8e420",
-      "0ab21609-7572-4f47-bd31-43ad6e1b120c",
-      "362321a8-7bcd-4aa1-8828-e5065a03691b",
-      "b289d28c-6272-46b6-b40c-dad621ff9e6f",
-      "acd6abd5-3cf4-4411-a297-16d9a37caaa0",
-      "debae87a-b16d-4a20-b47a-0b70b9ac0e8b",
-      "003b9b45-18f0-41fe-8c25-6a4da8686db4",
-      "fdf493cd-59f6-4415-bcc4-5ceb4fe6b336"
-  ],
-  safNumbers: [
-      "SAF1479940",
-      "SAF1479934",
-      "SAF1479928",
-      "SAF1479923",
-      "SAF1479912",
-      "SAF1480010",
-      "SAF1480031",
-      "SAF1480154",
-      "SAF1479439",
-      "SAF1478707"
-  ],
-  referenceNumbers: [
-      "KSAW 1453",
-      "KSAW 1454",
-      "KSAW 1458",
-      "KSAW 1459",
-      "KSAW 1462",
-      "KSAW 523",
-      "KSAW 1456",
-      "KSAW 1777",
-      "KSAW 108",
-      "KSAW 542"
-  ],
-  aadhaarNumbers: [
-      "973356794828",
-      "613338440603",
-      "756626810442",
-      "834095876837",
-      "369785111000",
-      "430694345069",
-      "892827358399",
-      "564287907719",
-      "366438794575",
-      "231038346930"
   ]
 };
 
@@ -2163,6 +2175,216 @@ export const BUILTIN_BATCH_18: BatchItem = {
 };
 
 export const BUILTIN_BATCH_19: BatchItem = {
+  id: "KSAWU/BKT/CPG/0926-80",
+  name: "KSAWU/BKT/CPG/0926-80",
+  sheetName: "candidates list",
+  totalCount: 19,
+  applicantIds: [
+      "a725d4b1-b530-4d15-a832-bfa544a86d13",
+      "da895e98-d9ff-4f9f-8ae8-878c17db9f90",
+      "ba61dcc8-9561-4f81-a3f6-266a34d13059",
+      "d9da55b1-2747-4cba-afd2-c7ab1dc7e61c",
+      "8f9cda6c-9661-4151-a441-cb7d537634ec",
+      "d9f40ddb-862f-4962-8044-dc56ce7c4289",
+      "fc24f482-a06e-472e-86c9-0449528e6f28",
+      "27b0b04f-663d-4db5-a599-a18f1231fa7f",
+      "18f598b5-e548-4078-b843-a594965938ae",
+      "934e68f9-40d7-4f64-b756-3c0ed1f95a44",
+      "10434355-6e6c-4572-ae0f-de76808b697d",
+      "2f0bf0b3-90fd-4f54-8eb3-13437730259e",
+      "350a91de-d297-460c-802b-421156512e3f",
+      "3fe1042d-9321-4295-b6c5-a40b188e48ba",
+      "dcc3e087-5918-45e8-bb4e-cf52321cca9c",
+      "f5f1d604-6393-4ced-938c-52e7b84ed3a4",
+      "53ea8700-3a7a-4b65-8fe9-39c6ef4dafbd",
+      "68f5cbbc-1736-46ba-b5cd-48fc13631543",
+      "756cde08-1aa9-4055-80b9-15e679dec8c7"
+  ],
+  safNumbers: [
+      "SAF1484049",
+      "SAF1483627",
+      "SAF1483392",
+      "SAF1483373",
+      "SAF1483730",
+      "SAF1483724",
+      "SAF1483691",
+      "SAF1483689",
+      "SAF1484479",
+      "SAF1484274",
+      "SAF1484251",
+      "SAF1484053",
+      "SAF1484231",
+      "SAF1483773",
+      "SAF1484093",
+      "SAF1483998",
+      "SAF1483997",
+      "SAF1483995",
+      "SAF1483990"
+  ],
+  referenceNumbers: [
+      "KSAW 3850",
+      "KSAW 3249",
+      "KSAW 3498",
+      "KSAW 3565",
+      "KSAW 3662",
+      "KSAW 3682",
+      "KSAW 3684",
+      "KSAW 3692",
+      "KSAW 3825",
+      "KSAW 3334",
+      "KSAW 3548",
+      "KSAW 3781",
+      "KSAW 3784",
+      "KSAW 3489",
+      "KSAW 3595",
+      "KSAW 3664",
+      "KSAW 3669",
+      "KSAW 3674",
+      "KSAW 3688"
+  ],
+  aadhaarNumbers: [
+      "709701313222",
+      "651920702560",
+      "777485441319",
+      "611025206175",
+      "671818031948",
+      "344324355244",
+      "665706906301",
+      "443187954587",
+      "336100325007",
+      "494394042054",
+      "810870229384",
+      "449436545786",
+      "766636665611",
+      "886924141352",
+      "767235693800",
+      "459266631138",
+      "950768147547",
+      "495412721472",
+      "225034724418"
+  ]
+};
+
+export const BUILTIN_BATCH_20: BatchItem = {
+  id: "KSAWU/HVR/CPG/0926-86",
+  name: "KSAWU/HVR/CPG/0926-86",
+  sheetName: "Candidates list",
+  totalCount: 26,
+  applicantIds: [
+      "f502e0ee-248a-4b96-a894-97b2f407190a",
+      "71e9050d-41b1-4b68-8dff-4c7bc5ecb93f",
+      "97ade6d9-86c7-4fb2-a476-05f2a590f2fb",
+      "6b564869-45d6-4ea3-aaf4-02ffdccaef38",
+      "6ae781df-9fd8-476f-a146-45331b871ee7",
+      "3196480d-059b-45cb-811d-6674f9c1afbd",
+      "11473aa7-6df4-402e-af52-b95315672c32",
+      "5e736d85-27be-402b-9af2-693ce163c600",
+      "6097ea50-9e8d-4a69-bd08-bf17ab7d59fc",
+      "a1d74841-9307-4852-b985-cdbb38c95241",
+      "6310fa75-f8c1-4e21-81b8-d9f4789b6084",
+      "45350db2-fcc6-426e-b71d-b8ddf0e532be",
+      "514d59c1-95f9-41ad-bf0c-e5edbfca88fa",
+      "ae46a39f-a947-4b95-aaa5-47e1d8284c70",
+      "3c2b96c3-8b55-467e-a554-616b7b894a73",
+      "8b18f0fd-36db-4b7b-81fd-1d2a4a117af0",
+      "5f2e0d31-f49f-4827-94ce-bc50098615db",
+      "592649f0-5019-4b82-a1af-1ba957c15309",
+      "796c4ed3-dc1b-4a7b-a544-ef29cd089204",
+      "6e6cb770-86ce-45c1-8c97-425a52c8e0ee",
+      "e360321b-a1d3-4705-b2b6-849b065f5ddc",
+      "572bfb5b-9ca9-44df-a5ee-7e39036bdc17",
+      "0ce80a70-3f51-4eb6-a4b9-4a9206a3392e",
+      "6dab9b52-444d-46f6-8dad-ac6509b298c3",
+      "3af9a87b-f547-4955-9279-7d77dbde6d56",
+      "3d9c0c9f-8f6e-45ae-aab0-0a3fef1791fa"
+  ],
+  safNumbers: [
+      "SAF1483872",
+      "SAF1484391",
+      "SAF1483861",
+      "SAF1483842",
+      "SAF1483800",
+      "SAF1483780",
+      "SAF1483652",
+      "SAF1483639",
+      "SAF1484549",
+      "SAF1484573",
+      "SAF1458123",
+      "SAF1483629",
+      "SAF1483411",
+      "SAF1483388",
+      "SAF1483377",
+      "SAF1483376",
+      "SAF1483358",
+      "SAF1483340",
+      "SAF1483725",
+      "SAF1483619",
+      "SAF1484412",
+      "SAF1484409",
+      "SAF1484406",
+      "SAF1484399",
+      "SAF1484394",
+      "SAF1484056"
+  ],
+  referenceNumbers: [
+      "KSAW 3174",
+      "KSAW 3175",
+      "KSAW 3182",
+      "KSAW 3183",
+      "KSAW 3188",
+      "KSAW 3194",
+      "KSAW 3215",
+      "KSAW 3236",
+      "KSAW 3263",
+      "KSAW 3279",
+      "KSAW 3337",
+      "KSAW 3382",
+      "KSAW 3448",
+      "KSAW 3510",
+      "KSAW 3550",
+      "KSAW 3557",
+      "KSAW 3598",
+      "KSAW 3633",
+      "KSAW 3680",
+      "KSAW 3754",
+      "KSAW 3778",
+      "KSAW 3787",
+      "KSAW 3792",
+      "KSAW 3807",
+      "KSAW 3879",
+      "KSAW 3783"
+  ],
+  aadhaarNumbers: [
+      "557645566345",
+      "757802117792",
+      "209154768315",
+      "734847029085",
+      "782491062644",
+      "596205485778",
+      "999372732001",
+      "530503138496",
+      "959326048571",
+      "606441737592",
+      "260159860683",
+      "979714280739",
+      "244542733131",
+      "352914784194",
+      "235704057585",
+      "832575513454",
+      "512776908140",
+      "857166391936",
+      "895287351506",
+      "458801870232",
+      "569846736037",
+      "616087091656",
+      "437584627751",
+      "335270228581",
+      "549519625271",
+      "684149245541"
+  ]
+};
+
+export const BUILTIN_BATCH_21: BatchItem = {
   id: "KSAWU/VJP/CPG/0926-39",
   name: "KSAWU/VJP/CPG/0926-39",
   sheetName: "candidates list",
@@ -2321,7 +2543,7 @@ export const BUILTIN_BATCH_19: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_20: BatchItem = {
+export const BUILTIN_BATCH_22: BatchItem = {
   id: "KSAWU/VJP/CPG/0926-23",
   name: "KSAWU/VJP/CPG/0926-23",
   sheetName: "candidates list",
@@ -2476,7 +2698,7 @@ export const BUILTIN_BATCH_20: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_21: BatchItem = {
+export const BUILTIN_BATCH_23: BatchItem = {
   id: "KSAWU/VJP/CPG/0926-49",
   name: "KSAWU/VJP/CPG/0926-49",
   sheetName: "candidates list",
@@ -2619,7 +2841,7 @@ export const BUILTIN_BATCH_21: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_22: BatchItem = {
+export const BUILTIN_BATCH_24: BatchItem = {
   id: "KSAWU/VJP/CPG/0926-13",
   name: "KSAWU/VJP/CPG/0926-13",
   sheetName: "candidates list",
@@ -2762,7 +2984,7 @@ export const BUILTIN_BATCH_22: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_23: BatchItem = {
+export const BUILTIN_BATCH_25: BatchItem = {
   id: "KSAWU/VJP/CPG/0926-34",
   name: "KSAWU/VJP/CPG/0926-34",
   sheetName: "candidates list",
@@ -2937,7 +3159,7 @@ export const BUILTIN_BATCH_23: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_24: BatchItem = {
+export const BUILTIN_BATCH_26: BatchItem = {
   id: "KSAWU/VJP/CPG/0926-61",
   name: "KSAWU/VJP/CPG/0926-61",
   sheetName: "candidates list",
@@ -3072,7 +3294,7 @@ export const BUILTIN_BATCH_24: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_25: BatchItem = {
+export const BUILTIN_BATCH_27: BatchItem = {
   id: "KSAWU/VJP/CPG/0926-65",
   name: "KSAWU/VJP/CPG/0926-65",
   sheetName: "candidates list",
@@ -3171,7 +3393,7 @@ export const BUILTIN_BATCH_25: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_26: BatchItem = {
+export const BUILTIN_BATCH_28: BatchItem = {
   id: "KSAWU/VJP/CPG/0926-43",
   name: "KSAWU/VJP/CPG/0926-43",
   sheetName: "candidates list",
@@ -3330,7 +3552,7 @@ export const BUILTIN_BATCH_26: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_27: BatchItem = {
+export const BUILTIN_BATCH_29: BatchItem = {
   id: "KSAWU/VJP/CPG/0926-40",
   name: "KSAWU/VJP/CPG/0926-40",
   sheetName: "candidates list",
@@ -3493,7 +3715,7 @@ export const BUILTIN_BATCH_27: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_28: BatchItem = {
+export const BUILTIN_BATCH_30: BatchItem = {
   id: "KSAWU/VJP/CPG/0926-59",
   name: "KSAWU/VJP/CPG/0926-59",
   sheetName: "candidates list",
@@ -3636,7 +3858,7 @@ export const BUILTIN_BATCH_28: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_29: BatchItem = {
+export const BUILTIN_BATCH_31: BatchItem = {
   id: "KSAWU/VJP/CPG/0926-48",
   name: "KSAWU/VJP/CPG/0926-48",
   sheetName: "candidates list",
@@ -3775,7 +3997,7 @@ export const BUILTIN_BATCH_29: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_30: BatchItem = {
+export const BUILTIN_BATCH_32: BatchItem = {
   id: "KSAWU/VJP/CPG/0926-60",
   name: "KSAWU/VJP/CPG/0926-60",
   sheetName: "candidates list",
@@ -3918,7 +4140,7 @@ export const BUILTIN_BATCH_30: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_31: BatchItem = {
+export const BUILTIN_BATCH_33: BatchItem = {
   id: "KSAWU/VJP/CPG/0926-50",
   name: "KSAWU/VJP/CPG/0926-50",
   sheetName: "candidates list",
@@ -4053,7 +4275,7 @@ export const BUILTIN_BATCH_31: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_32: BatchItem = {
+export const BUILTIN_BATCH_34: BatchItem = {
   id: "KSAWU/VJP/CPG/0926-38",
   name: "KSAWU/VJP/CPG/0926-38",
   sheetName: "candidates list",
@@ -4212,7 +4434,154 @@ export const BUILTIN_BATCH_32: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_33: BatchItem = {
+export const BUILTIN_BATCH_35: BatchItem = {
+  id: "KSAWU/BKT/CPG/0926-81",
+  name: "KSAWU/BKT/CPG/0926-81",
+  sheetName: "candidates list",
+  totalCount: 33,
+  applicantIds: [
+      "28dac78c-5d3b-4e72-a6c2-2b3dafa726e2",
+      "11dee4b7-7d48-494a-bfcb-f4bced7461c3",
+      "5b64df6d-9725-49da-9f5c-9c36799acbb7",
+      "aa0e4c64-adbf-4257-b6c7-434f59bcf18b",
+      "d49c8374-bb3e-40e2-ab79-22ff86fc198a",
+      "15bddc97-463d-4ce2-b487-28d2c7f3cd02",
+      "abd7c5f6-1856-4f3b-aaa0-a41759ba29fa",
+      "0fe54c25-2248-47d2-96b1-3574ae94b1dd",
+      "792561fb-7d89-4b47-9f5f-9b4719c618c4",
+      "e54b5d9b-e384-4342-a8ad-144883a9cbf5",
+      "90dd996b-dd99-486e-b4d6-b369f4afd008",
+      "f7ff3395-46a2-4734-8262-1990f95fb6cc",
+      "85aa729c-3dd3-4df5-8db8-7165fb00d16f",
+      "d77aed00-0565-43b7-a412-d96245076fdd",
+      "8031b555-6998-4d41-a0fa-d4dd8ba787ae",
+      "98da7eb9-0216-4768-8f2c-b1990c46b1c3",
+      "e0d14ce9-c054-4fb8-a1ca-e5385dc302ba",
+      "e1f5e8d7-574a-499b-bbe6-5adc10991767",
+      "f94b98c2-238e-477c-8e3e-335ad1db509e",
+      "fe2810e1-a8d0-4250-942b-0c388828aa1f",
+      "3af68eae-7cf3-4a45-af6a-a47ad80277a0",
+      "dc9e0fab-f411-4430-9fb0-231b607fe52d",
+      "b1632c95-f7dd-4aa9-a2c4-eead83623e08",
+      "40e51dce-e153-444c-9bc1-6bd6a660066b",
+      "ae690a24-fa7a-4a27-b87a-73ff757fb252",
+      "9b2bbaba-5add-4794-b094-e57e37cbcff5",
+      "3215ff50-9fd6-4866-a4f6-8712813d1d78",
+      "c23ae86f-e8f6-4d0a-b79f-19ea8c9b4f07",
+      "6a3c310a-6cea-43b1-8636-57fba157410c",
+      "3f659bd4-788c-48c1-99fc-138b2cdfc5dc",
+      "4e096e18-90f5-4a86-9b1f-f6327f952fe1",
+      "852ba05d-f00f-4288-832b-4adeca63fee4",
+      "e500c6d8-11cd-429e-aa56-5ef1447b8160"
+  ],
+  safNumbers: [
+      "SAF1484448",
+      "SAF1483768",
+      "SAF1483415",
+      "SAF1483414",
+      "SAF1483399",
+      "SAF1483395",
+      "SAF1483386",
+      "SAF1483343",
+      "SAF1483608",
+      "SAF1483605",
+      "SAF1483602",
+      "SAF1483653",
+      "SAF1484418",
+      "SAF1484491",
+      "SAF1484371",
+      "SAF1484347",
+      "SAF1484332",
+      "SAF1484312",
+      "SAF1484298",
+      "SAF1484273",
+      "SAF1484261",
+      "SAF1484235",
+      "SAF1483598",
+      "SAF1484223",
+      "SAF1483901",
+      "SAF1483892",
+      "SAF1484446",
+      "SAF1484012",
+      "SAF1484092",
+      "SAF1484091",
+      "SAF1484079",
+      "SAF1484077",
+      "SAF1484075"
+  ],
+  referenceNumbers: [
+      "KSAW 3506",
+      "KSAW 3424",
+      "KSAW 3434",
+      "KSAW 3436",
+      "KSAW 3474",
+      "KSAW 3482",
+      "KSAW 3511",
+      "KSAW 3626",
+      "KSAW 3746",
+      "KSAW 3747",
+      "KSAW 3750",
+      "KSAW 3758",
+      "KSAW 3770",
+      "KSAW 3831",
+      "KSAW 3890",
+      "KSAW 3920",
+      "KSAW 3935",
+      "KSAW 3956",
+      "KSAW 3972",
+      "KSAW 3312",
+      "KSAW 3466",
+      "KSAW 3710",
+      "KSAW 3752",
+      "KSAW 4002",
+      "KSAW 3429",
+      "KSAW 3435",
+      "KSAW 4056",
+      "KSAW 3575",
+      "KSAW 3619",
+      "KSAW 3623",
+      "KSAW 3886",
+      "KSAW 3902",
+      "KSAW 4000"
+  ],
+  aadhaarNumbers: [
+      "915502333764",
+      "735574244722",
+      "553864688526",
+      "844094127772",
+      "625026439014",
+      "835416631982",
+      "684910397102",
+      "890556870243",
+      "706024563424",
+      "222070948003",
+      "352663174877",
+      "493508270773",
+      "577308075792",
+      "236737930440",
+      "780241855488",
+      "677695060803",
+      "439097627519",
+      "368634624733",
+      "909716010911",
+      "517149578673",
+      "989509236875",
+      "860132194945",
+      "217101537213",
+      "907556373248",
+      "362286856494",
+      "264560772609",
+      "470955169540",
+      "213502107230",
+      "285392278026",
+      "778651742278",
+      "553482209368",
+      "938582165700",
+      "598579148783"
+  ]
+};
+
+export const BUILTIN_BATCH_36: BatchItem = {
   id: "KSAWU/BGU/CPG/0926-73",
   name: "KSAWU/BGU/CPG/0926-73",
   sheetName: "candidates list",
@@ -4295,7 +4664,7 @@ export const BUILTIN_BATCH_33: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_34: BatchItem = {
+export const BUILTIN_BATCH_37: BatchItem = {
   id: "KSAWU/HSN/CPG/0926-7",
   name: "KSAWU/HSN/CPG/0926-7",
   sheetName: "KSAWU HSN CPG 0926-7",
@@ -4430,7 +4799,7 @@ export const BUILTIN_BATCH_34: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_35: BatchItem = {
+export const BUILTIN_BATCH_38: BatchItem = {
   id: "KSAWU/HSN/CPG/0926-8",
   name: "KSAWU/HSN/CPG/0926-8",
   sheetName: "KSAWU HSN CPG 0926-8",
@@ -4553,7 +4922,7 @@ export const BUILTIN_BATCH_35: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_36: BatchItem = {
+export const BUILTIN_BATCH_39: BatchItem = {
   id: "KSAWU/HSN/CPG/0926-37",
   name: "KSAWU/HSN/CPG/0926-37",
   sheetName: "KSAWU HSN CPG 0926-37",
@@ -4640,7 +5009,217 @@ export const BUILTIN_BATCH_36: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_37: BatchItem = {
+export const BUILTIN_BATCH_40: BatchItem = {
+  id: "KSAWU/MDY/CPG/0926-96",
+  name: "KSAWU/MDY/CPG/0926-96",
+  sheetName: "candidates list",
+  totalCount: 27,
+  applicantIds: [
+      "12be1862-24fa-418e-9fdb-36a50fc8c205",
+      "0f0970d0-0163-41fe-a3c4-c17666970ded",
+      "3d8d1312-ac01-4e71-b043-fb00dd786054",
+      "fbf469fb-2614-48df-9955-890bdf715ef3",
+      "d3a7dd7f-8bed-4f02-b50c-d1ed81666b2f",
+      "df2cf4d8-0a98-4202-be4b-cb838c60dd87",
+      "7477e8c0-8e75-4891-a4b6-ba3ff9f8f2ad",
+      "e53fbcaf-f101-4cab-95d3-1206b88bc08f",
+      "e49feddc-8283-4a0a-b0e3-f09b1af8b905",
+      "a054e926-ec02-4e77-a9e6-7a5463a739a8",
+      "acb3d27d-d828-4650-83f3-8ac95fdfa0f6",
+      "00426950-e2ff-4162-a380-f9c1958f5a2e",
+      "7c3f7e53-2fd2-4733-8116-81b38711a3be",
+      "1bf80bfe-f915-4032-829d-d84c886c2405",
+      "4a0dba71-9062-4024-a62f-bbe914a1c854",
+      "f3d01b0f-4501-483a-b3f0-46ddf77178b6",
+      "30822899-d26c-4b16-b9d0-bda54eaace06",
+      "c4db8914-b2da-4665-aac9-3f5cf22403f8",
+      "5ce2b7de-1134-4875-b767-57413ad231e2",
+      "92e9d795-9244-43db-b0ef-14a6f5ad0971",
+      "13e6c861-1f4a-4f4f-b2e2-1c98c2928253",
+      "ea539400-d1fb-4a47-b0e7-383af4b16258",
+      "e541bfd7-777f-4bb0-aa3f-a9d8f97d509f",
+      "730d727a-b4ce-433b-ae70-83749850d285",
+      "1b127c1c-a1b0-4a09-8217-bb1779d8693d",
+      "2c50a2e4-d46a-464e-84eb-af97f8b93f2e",
+      "5651501f-77a3-4df2-b89d-90b149670a88"
+  ],
+  safNumbers: [
+      "SAF1483869",
+      "SAF1484270",
+      "SAF1482836",
+      "SAF1484149",
+      "SAF1484150",
+      "SAF1484151",
+      "SAF1484152",
+      "SAF1484153",
+      "SAF1484154",
+      "SAF1481790",
+      "SAF1484156",
+      "SAF1482593",
+      "SAF1482844",
+      "SAF1482843",
+      "SAF1482842",
+      "SAF1484169",
+      "SAF1482838",
+      "SAF1482833",
+      "SAF1482829",
+      "SAF1482824",
+      "SAF1482822",
+      "SAF1482821",
+      "SAF1482817",
+      "SAF1483064",
+      "SAF1483063",
+      "SAF1483059",
+      "SAF1484126"
+  ],
+  referenceNumbers: [
+      "KSAW 3176",
+      "KSAW 2446",
+      "KSAW 2958",
+      "KSAW 2295",
+      "KSAW 2341",
+      "KSAW 2352",
+      "KSAW 2356",
+      "KSAW 2361",
+      "KSAW 2400",
+      "KSAW 2637",
+      "KSAW 2764",
+      "KSAW 2869",
+      "KSAW 2941",
+      "KSAW 2944",
+      "KSAW 2945",
+      "KSAW 2951",
+      "KSAW 2955",
+      "KSAW 2960",
+      "KSAW 2962",
+      "KSAW 2974",
+      "KSAW 2977",
+      "KSAW 2978",
+      "KSAW 2979",
+      "KSAW 3042",
+      "KSAW 3043",
+      "KSAW 3110",
+      "KSAW 3306"
+  ],
+  aadhaarNumbers: [
+      "687329124565",
+      "277608518438",
+      "718451025331",
+      "758382368278",
+      "771655869298",
+      "513960946323",
+      "817876580067",
+      "212931416410",
+      "306561189507",
+      "486617873380",
+      "706627534534",
+      "595007578304",
+      "634721448472",
+      "717242039795",
+      "823393827373",
+      "220033880056",
+      "989193508285",
+      "741511274833",
+      "202353862038",
+      "629769847637",
+      "917750493247",
+      "326325528141",
+      "226238408848",
+      "317489088694",
+      "677870435990",
+      "811150226962",
+      "650192172943"
+  ]
+};
+
+export const BUILTIN_BATCH_41: BatchItem = {
+  id: "KSAWU/CMR/CPG/0926-97",
+  name: "KSAWU/CMR/CPG/0926-97",
+  sheetName: "candidates list",
+  totalCount: 18,
+  applicantIds: [
+      "d13c22f6-d65e-4c28-86bc-4ce9f1418e33",
+      "35d4031a-8a93-4fa5-8aab-e7b71c99fe86",
+      "5f8d2ff1-251a-4c22-bef2-f30e5f952a6d",
+      "95fbb909-f997-46f0-99b1-837396854672",
+      "51be0104-ad05-4785-a6ce-181b1707abe7",
+      "f553b9cf-86da-45db-b257-0fb1b7c762be",
+      "ed981ff6-fd6b-42d8-9284-abfd567eb422",
+      "15dd4db7-421d-4fc8-815f-f9071703260f",
+      "f1a20abb-1c8f-4c91-bf08-d831e1c0625b",
+      "8d967b73-3bf3-40ac-952b-4b191b94746b",
+      "a157eb82-d720-4de6-89ba-2471e0cb38c8",
+      "e93f4a54-e5f8-4314-a678-d3b55c844c68",
+      "5e05c8f1-ada9-4c1b-b0cc-5a74d27c3a88",
+      "afb3395c-96f3-4ab0-9776-44fe3aa7a402",
+      "fcc56103-60a5-433c-824e-f3d4bbdead36",
+      "f87a265f-bb1b-4cb7-a1d1-be31c1d4dde7",
+      "99455de2-66f4-49f9-a3f1-87e4b38f64b1",
+      "96c5219b-293f-468e-a805-6842add58b35"
+  ],
+  safNumbers: [
+      "SAF1482848",
+      "SAF1482581",
+      "SAF1467254",
+      "SAF1482823",
+      "SAF1482794",
+      "SAF1482792",
+      "SAF1482790",
+      "SAF1482787",
+      "SAF1482785",
+      "SAF1482784",
+      "SAF1482782",
+      "SAF1482780",
+      "SAF1483136",
+      "SAF1483135",
+      "SAF1482564",
+      "SAF1482847",
+      "SAF1482584",
+      "SAF1465071"
+  ],
+  referenceNumbers: [
+      "KSAW 2327",
+      "KSAW 2886",
+      "KSAW 2973",
+      "KSAW 2975",
+      "KSAW 3005",
+      "KSAW 3007",
+      "KSAW 3008",
+      "KSAW 3012",
+      "KSAW 3014",
+      "KSAW 3015",
+      "KSAW 3017",
+      "KSAW 3020",
+      "KSAW 3023",
+      "KSAW 3026",
+      "KSAW 2907",
+      "KSAW 2908",
+      "KSAW 2883",
+      "KSAW 2910"
+  ],
+  aadhaarNumbers: [
+      "286141017782",
+      "583932524971",
+      "781439981888",
+      "275831804253",
+      "950163046238",
+      "332649373719",
+      "937832394223",
+      "779204208517",
+      "434625081586",
+      "551417633135",
+      "740925605068",
+      "940261367654",
+      "915904730893",
+      "600196664337",
+      "461207847789",
+      "308801108276",
+      "643087816706",
+      "436271691893"
+  ]
+};
+
+export const BUILTIN_BATCH_42: BatchItem = {
   id: "KSAWU/MDY/CPG/0926-9",
   name: "KSAWU/MDY/CPG/0926-9",
   sheetName: "KSAWU MDY CPG 0926-9",
@@ -4763,7 +5342,7 @@ export const BUILTIN_BATCH_37: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_38: BatchItem = {
+export const BUILTIN_BATCH_43: BatchItem = {
   id: "KSAWU/MDY/CPG/0926-10",
   name: "KSAWU/MDY/CPG/0926-10",
   sheetName: "KSAWU MDY CPG 0926-10",
@@ -4874,7 +5453,7 @@ export const BUILTIN_BATCH_38: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_39: BatchItem = {
+export const BUILTIN_BATCH_44: BatchItem = {
   id: "KSAWU/MDY/CPG/0926-11",
   name: "KSAWU/MDY/CPG/0926-11",
   sheetName: "KSAWU MDY CPG 0926-11",
@@ -4985,7 +5564,7 @@ export const BUILTIN_BATCH_39: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_40: BatchItem = {
+export const BUILTIN_BATCH_45: BatchItem = {
   id: "KSAWU/MDY/CPG/0926-28",
   name: "KSAWU/MDY/CPG/0926-28",
   sheetName: "KSAWU MDY CPG 0926-28",
@@ -5120,7 +5699,7 @@ export const BUILTIN_BATCH_40: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_41: BatchItem = {
+export const BUILTIN_BATCH_46: BatchItem = {
   id: "KSAWU/MDY/CPG/0926-29",
   name: "KSAWU/MDY/CPG/0926-29",
   sheetName: "KSAWU MDY CPG 0926-29",
@@ -5255,7 +5834,7 @@ export const BUILTIN_BATCH_41: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_42: BatchItem = {
+export const BUILTIN_BATCH_47: BatchItem = {
   id: "KSAWU/MDY/CPG/0926-30",
   name: "KSAWU/MDY/CPG/0926-30",
   sheetName: "KSAWU MDY CPG 0926-30",
@@ -5390,7 +5969,7 @@ export const BUILTIN_BATCH_42: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_43: BatchItem = {
+export const BUILTIN_BATCH_48: BatchItem = {
   id: "KSAWU/MDY/CPG/0926-31",
   name: "KSAWU/MDY/CPG/0926-31",
   sheetName: "KSAWU MDY CPG 0926-31",
@@ -5529,7 +6108,7 @@ export const BUILTIN_BATCH_43: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_44: BatchItem = {
+export const BUILTIN_BATCH_49: BatchItem = {
   id: "KSAWU/MDY/CPG/0926-32",
   name: "KSAWU/MDY/CPG/0926-32",
   sheetName: "KSAWU MDY CPG 0926-32",
@@ -5660,7 +6239,7 @@ export const BUILTIN_BATCH_44: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_45: BatchItem = {
+export const BUILTIN_BATCH_50: BatchItem = {
   id: "KSAWU/MDY/CPG/0926-36",
   name: "KSAWU/MDY/CPG/0926-36",
   sheetName: "KSAWU MDY CPG 0926-36",
@@ -5791,7 +6370,7 @@ export const BUILTIN_BATCH_45: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_46: BatchItem = {
+export const BUILTIN_BATCH_51: BatchItem = {
   id: "KSAWU/MDY/CPG/0926-44",
   name: "KSAWU/MDY/CPG/0926-44",
   sheetName: "KSAWU MDY CPG 0926-44",
@@ -5934,7 +6513,7 @@ export const BUILTIN_BATCH_46: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_47: BatchItem = {
+export const BUILTIN_BATCH_52: BatchItem = {
   id: "KSAWU/MDY/CPG/0926-58",
   name: "KSAWU/MDY/CPG/0926-58",
   sheetName: "KSAWU MDY CPG 0926-58",
@@ -6077,7 +6656,7 @@ export const BUILTIN_BATCH_47: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_48: BatchItem = {
+export const BUILTIN_BATCH_53: BatchItem = {
   id: "KSAWU/MDY/CPG/0926-76",
   name: "KSAWU/MDY/CPG/0926-76",
   sheetName: "KSAWU MDY CPG 0926-76",
@@ -6172,7 +6751,205 @@ export const BUILTIN_BATCH_48: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_49: BatchItem = {
+export const BUILTIN_BATCH_54: BatchItem = {
+  id: "KSAWU/MDY/CPG/0926-98",
+  name: "KSAWU/MDY/CPG/0926-98",
+  sheetName: "candidates list",
+  totalCount: 15,
+  applicantIds: [
+      "ff42473f-e795-4639-a87a-bbb659f09b35",
+      "d60f1286-aa40-4b21-bc71-b474dd7e64c8",
+      "9d9de921-6a51-4e76-a5c0-1028412223d5",
+      "5a5bf4a9-a931-4420-8484-5e7af8e9322d",
+      "0cbb7b08-d58b-418e-9fc3-81137b7f394a",
+      "d39e61d9-1bd9-4146-b56f-93b3fac8ff78",
+      "32cbac3a-dc3b-42d3-bf28-e1f510b1f241",
+      "36b9055d-6cc4-49c0-8458-127dfdb86379",
+      "2c2a7d0c-914c-4313-9f07-1a7cea916029",
+      "f4dec41d-a89c-4297-88dd-01b652031116",
+      "76d652b7-2bc3-4d72-9f8d-2c9705bfe34c",
+      "e865bc7d-f0bd-48a7-8d68-8e07330010fe",
+      "13f34d11-bfc5-44f5-9935-c13e5f453657",
+      "04f3f09a-3f8b-4492-b249-b18dc3f36483",
+      "6437e9f6-317e-43bd-8a28-4f72e9753e40"
+  ],
+  safNumbers: [
+      "SAF1482604",
+      "SAF1482845",
+      "SAF1482834",
+      "SAF1482837",
+      "SAF1482605",
+      "SAF1482849",
+      "SAF1483067",
+      "SAF1327168",
+      "SAF1482610",
+      "SAF1482853",
+      "SAF1482611",
+      "SAF1482603",
+      "SAF1484147"
+  ],
+  referenceNumbers: [
+      "KSAW 1214",
+      "KSAW 1259",
+      "KSAW 1260",
+      "KSAW 1275",
+      "KSAW 1292",
+      "KSAW 1301",
+      "KSAW 1306",
+      "KSAW 1345",
+      "KSAW 1362",
+      "KSAW 1681",
+      "KSAW 1806",
+      "KSAW 1826",
+      "KSAW 1870",
+      "KSAW 1881",
+      "KSAW 2219"
+  ],
+  aadhaarNumbers: [
+      "631384510778",
+      "577920511640",
+      "352398060374",
+      "999567018758",
+      "623443223128",
+      "466198727626",
+      "655813204206",
+      "566407181407",
+      "239084223590",
+      "247792693351",
+      "999226202990",
+      "809487567158",
+      "381671573777",
+      "489426781046",
+      "319360766151"
+  ]
+};
+
+export const BUILTIN_BATCH_55: BatchItem = {
+  id: "KSAWU/RMG/CPG/0926-79",
+  name: "KSAWU/RMG/CPG/0926-79",
+  sheetName: "Candidates list",
+  totalCount: 28,
+  applicantIds: [
+      "d244a79d-e321-43ec-9991-03c64d598243",
+      "b0f42bd3-07d1-4936-ab5c-9bb8adde05da",
+      "20b207c3-53e8-4bf2-9cce-4e10acf5b51d",
+      "ffd3599a-eef6-4c13-9340-4010fa994bae",
+      "1ed1d991-5e1e-418a-8e11-e49a2ddddc0a",
+      "f7771090-6e67-428c-a1f7-24cc222716de",
+      "67f85439-67c7-4fcc-88e2-86d3dbaaa8fd",
+      "1cfc345a-3f46-49b5-a10d-a1880d6476ec",
+      "fc837260-ef9c-43b8-8dff-13b4f56f0d34",
+      "775c5cc8-b5af-470d-ae38-9f411ec86084",
+      "08238a41-f2df-400a-8640-1fc9c83b2cb0",
+      "0ba420cb-0438-48a9-9325-d4796acad0e5",
+      "f1454e3c-af8b-487c-a880-0bfc441a32e9",
+      "7e067db9-475e-4d99-8b63-02ca40d98b53",
+      "0fa01118-efa7-4283-98eb-ecd6cafda678",
+      "3a2e4771-0767-466e-b031-b77d717ed76c",
+      "3948868f-4d29-4eca-955a-3d41f4161653",
+      "06732af8-8e21-4426-aedd-8c06da6e7f6a",
+      "036ca656-1754-4a7b-b3d3-3ce6f6f51eb8",
+      "d07b9298-8ffe-4aaa-bcf7-8cdcdf6180e7",
+      "8be079bc-e639-4a0c-b86d-5745a91432b0",
+      "9990a45e-f11b-4844-8578-ddef2646f555",
+      "654e3a70-7f4d-476a-a86a-0ecbe3670ad0",
+      "f0a268d0-dbdf-4427-8311-443917c5279a",
+      "fd86d5d9-f824-4b99-98a8-f0dd38a1e0c3",
+      "7a5a8117-d411-4aab-9e14-d9cea83f6dec",
+      "4d3f9d19-1365-4c90-a058-3418321081c7",
+      "56540a1f-4f49-4750-9086-ac690f4cdb9c"
+  ],
+  safNumbers: [
+      "SAF1483634",
+      "SAF1483774",
+      "SAF1483398",
+      "SAF1484469",
+      "SAF1484105",
+      "SAF1484104",
+      "SAF1484103",
+      "SAF1484101",
+      "SAF1483871",
+      "SAF1483868",
+      "SAF1483865",
+      "SAF1483967",
+      "SAF1483976",
+      "SAF1483984",
+      "SAF1483982",
+      "SAF1483978",
+      "SAF1483974",
+      "SAF1483968",
+      "SAF1484026",
+      "SAF1483808",
+      "SAF1483778",
+      "SAF1483761",
+      "SAF1483612",
+      "SAF1483609",
+      "SAF1483607",
+      "SAF1484006"
+  ],
+  referenceNumbers: [
+      "KSAW 3374",
+      "KSAW 3416",
+      "KSAW 3476",
+      "KSAW 3816",
+      "KSAW 3371",
+      "KSAW 3372",
+      "KSAW 3373",
+      "KSAW 3376",
+      "KSAW 3377",
+      "KSAW 3378",
+      "KSAW 3379",
+      "KSAW 3380",
+      "KSAW 3383",
+      "KSAW 3388",
+      "KSAW 3392",
+      "KSAW 3400",
+      "KSAW 3404",
+      "KSAW 3413",
+      "KSAW 3414",
+      "KSAW 3415",
+      "KSAW 3475",
+      "KSAW 3477",
+      "KSAW 3479",
+      "KSAW 3495",
+      "KSAW 3509",
+      "KSAW 3512",
+      "KSAW 3514",
+      "KSAW 3601"
+  ],
+  aadhaarNumbers: [
+      "509993812055",
+      "269078617014",
+      "324961709030",
+      "274584892275",
+      "501533309016",
+      "456357097610",
+      "956262128359",
+      "577019057011",
+      "832654327697",
+      "962449726876",
+      "335044557829",
+      "867746564263",
+      "718727939953",
+      "459888840940",
+      "743121823696",
+      "550998272692",
+      "478960247738",
+      "776825557263",
+      "418825915164",
+      "392568320421",
+      "751139825825",
+      "426487067500",
+      "923771560220",
+      "465945021431",
+      "375851153574",
+      "287750926857",
+      "796992790649",
+      "554056304917"
+  ]
+};
+
+export const BUILTIN_BATCH_56: BatchItem = {
   id: "KSAWU/VJP/CPG/0926-25",
   name: "KSAWU/VJP/CPG/0926-25",
   sheetName: "candidates list",
@@ -6271,7 +7048,7 @@ export const BUILTIN_BATCH_49: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_50: BatchItem = {
+export const BUILTIN_BATCH_57: BatchItem = {
   id: "KSAWU/VJP/CPG/0926-20",
   name: "KSAWU/VJP/CPG/0926-20",
   sheetName: "candidates list",
@@ -6362,7 +7139,150 @@ export const BUILTIN_BATCH_50: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_51: BatchItem = {
+export const BUILTIN_BATCH_58: BatchItem = {
+  id: "KSAWU/BLR/CPG/0926-99",
+  name: "KSAWU/BLR/CPG/0926-99",
+  sheetName: "candidates list",
+  totalCount: 32,
+  applicantIds: [
+      "7a8fdee9-cd2f-4953-8134-ef658218556e",
+      "2a9f3f9c-dc84-474e-a284-2c9daee94fda",
+      "388f4b1c-a183-48ff-8a2a-59b4edbae4a8",
+      "8e4a24c4-c869-4c2f-bf61-bc6b2171f49b",
+      "dca30e60-af6e-4fff-ad2e-0841c2333388",
+      "7ee6e905-a1bb-470f-8b47-c35781ee44ba",
+      "ce4e3809-b57f-4ded-adde-26fe7b3393ff",
+      "7243aa6e-75f3-4668-8fdf-3cbc71cfbb82",
+      "b8977766-b04f-4f41-ba85-47021afba583",
+      "3d673a42-e77e-434c-9f4e-5984435b2b2f",
+      "ceb6e809-71bb-42d0-ba69-7f066b6e8ff8",
+      "fcbc3655-410c-40e1-92ec-ada2b7d6a4a8",
+      "cdb9cea5-1a21-4f54-ae31-c507e3380dc0",
+      "6654f36c-b68d-4ca0-b26b-80643cdb6fbb",
+      "fb3c6e80-d3f7-4969-b7ec-388c3f320c03",
+      "01da2c77-5201-4ebe-9abf-74f07d325cab",
+      "6b01a29b-37ca-4e44-b16d-ac621ae5b808",
+      "2ecb7f99-43bd-4527-9a18-8112791654bb",
+      "3aa9cfd3-bfd4-4de6-9840-f9fc29962cea",
+      "af8f42d3-8b71-4770-a821-13c10736bfb3",
+      "cc2f142b-96e0-4bb4-ae13-5cdbe805dba8",
+      "455cc5e5-7965-4855-a495-674dca081889",
+      "98f57614-a54d-4bd0-ac26-f3c1eeda3b5b",
+      "bb23b56e-a381-4f43-a77d-0e72c3ff92d0",
+      "8ebb9a96-719d-4312-8a9f-953698d262dd",
+      "40500fac-6fc3-4faa-a5d6-4cb8d11002eb",
+      "92a7ac71-078a-4e08-bdc8-c915b024cc20",
+      "0322713a-2568-4583-a890-bf77976c1adb",
+      "5e80dc00-3b38-4fcd-9880-5c329875939a",
+      "e37d9787-da3a-4b04-9a32-cc2e23e17bc9",
+      "3bda81ca-6319-4c29-9f7c-7c7fcd871347",
+      "e042ccf8-ffc4-49f1-bba9-e7b914df555e"
+  ],
+  safNumbers: [
+      "SAF1482589",
+      "SAF1482590",
+      "SAF1482588",
+      "SAF1482587",
+      "SAF1482582",
+      "SAF1482575",
+      "SAF1482573",
+      "SAF1482571",
+      "SAF1482567",
+      "SAF1482565",
+      "SAF1482563",
+      "SAF1482561",
+      "SAF1482560",
+      "SAF1482556",
+      "SAF1482552",
+      "SAF1482598",
+      "SAF1482586",
+      "SAF1482574",
+      "SAF1482021",
+      "SAF1482600",
+      "SAF1482597",
+      "SAF1482591",
+      "SAF1482585",
+      "SAF1482580",
+      "SAF1482578",
+      "SAF1482576",
+      "SAF1482572",
+      "SAF1482570",
+      "SAF1482557",
+      "SAF1482555",
+      "SAF1482554",
+      "SAF1482550"
+  ],
+  referenceNumbers: [
+      "KSAW 2877",
+      "KSAW 2878",
+      "KSAW 2879",
+      "KSAW 2880",
+      "KSAW 2885",
+      "KSAW 2892",
+      "KSAW 2894",
+      "KSAW 2899",
+      "KSAW 2900",
+      "KSAW 2906",
+      "KSAW 2909",
+      "KSAW 2912",
+      "KSAW 2914",
+      "KSAW 2921",
+      "KSAW 2926",
+      "KSAW 2861",
+      "KSAW 2881",
+      "KSAW 2893",
+      "KSAW 2834",
+      "KSAW 2860",
+      "KSAW 2862",
+      "KSAW 2876",
+      "KSAW 2882",
+      "KSAW 2887",
+      "KSAW 2889",
+      "KSAW 2891",
+      "KSAW 2896",
+      "KSAW 2897",
+      "KSAW 2920",
+      "KSAW 2922",
+      "KSAW 2924",
+      "KSAW 2928"
+  ],
+  aadhaarNumbers: [
+      "538554051961",
+      "541218095507",
+      "848066541140",
+      "739400685851",
+      "931387599085",
+      "791705046647",
+      "591128616252",
+      "462360264890",
+      "744990992406",
+      "997091367111",
+      "499069469956",
+      "202275477089",
+      "221779950774",
+      "646141691197",
+      "990683151446",
+      "797404278472",
+      "743406157200",
+      "949450777603",
+      "546873660605",
+      "351063596315",
+      "937426797497",
+      "225022485683",
+      "844425462103",
+      "501911061167",
+      "654716614472",
+      "673834123411",
+      "341507038543",
+      "638594545473",
+      "415217538322",
+      "741784510167",
+      "900121935282",
+      "239917416679"
+  ]
+};
+
+export const BUILTIN_BATCH_59: BatchItem = {
   id: "KSAWU/BLR/CPG/0926-74",
   name: "KSAWU/BLR/CPG/0926-74",
   sheetName: "0926-74",
@@ -6493,7 +7413,7 @@ export const BUILTIN_BATCH_51: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_52: BatchItem = {
+export const BUILTIN_BATCH_60: BatchItem = {
   id: "KSAWU/MYR/CPG/0926-12",
   name: "KSAWU/MYR/CPG/0926-12",
   sheetName: "KSAWU MYR CPG 0926-12",
@@ -6640,7 +7560,7 @@ export const BUILTIN_BATCH_52: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_53: BatchItem = {
+export const BUILTIN_BATCH_61: BatchItem = {
   id: "KSAWU/MYR/CPG/0926-19",
   name: "KSAWU/MYR/CPG/0926-19",
   sheetName: "KSAWU MYR CPG 0926-19",
@@ -6775,7 +7695,7 @@ export const BUILTIN_BATCH_53: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_54: BatchItem = {
+export const BUILTIN_BATCH_62: BatchItem = {
   id: "KSAWU/MYR/CPG/0926-45",
   name: "KSAWU/MYR/CPG/0926-45",
   sheetName: "KSAWU MYR CPG 0926-45",
@@ -6930,7 +7850,7 @@ export const BUILTIN_BATCH_54: BatchItem = {
   ]
 };
 
-export const BUILTIN_BATCH_55: BatchItem = {
+export const BUILTIN_BATCH_63: BatchItem = {
   id: "KSAWU/UDP/CPG/0926-63",
   name: "KSAWU/UDP/CPG/0926-63",
   sheetName: "candidates list",
@@ -7057,6 +7977,80 @@ export const BUILTIN_BATCH_55: BatchItem = {
   ]
 };
 
+export const BUILTIN_BATCH_64: BatchItem = {
+  id: "KSAWU/BGU/CPG/0926-106",
+  name: "KSAWU/BGU/CPG/0926-106",
+  sheetName: "candidates list",
+  totalCount: 10,
+  applicantIds: [
+      "07977c1c-00a4-4fb4-9224-f217b6431fc7",
+      "092b8c53-0f12-4c4d-8076-63a1ce1e52ae",
+      "2d4a7390-fd38-40a8-b31c-49538fb1842a",
+      "23aa5b9a-f9cf-4cae-8bca-c8695370cfc3",
+      "ce2f163c-93fa-4f60-839e-7dba7658cc60",
+      "872df749-abc0-4a44-b74c-633dbd4ec63d",
+      "96b5e717-e231-45a1-bab8-c53a34f404bf",
+      "808c555a-e164-4cf6-a0d9-be274769d39f",
+      "ee47c15f-4a0d-4e1e-b881-fc5f9adc0f50",
+      "37b6f884-37a0-4499-b11c-0106beed98cc"
+  ],
+  safNumbers: [
+      "SAF1484443",
+      "SAF1483613",
+      "SAF1484020",
+      "SAF1484001",
+      "SAF1483599",
+      "SAF1483988",
+      "SAF1484088",
+      "SAF1484083",
+      "SAF1484082",
+      "SAF1484081"
+  ],
+  referenceNumbers: [
+      "KSAW 3523",
+      "KSAW 3742",
+      "KSAW 3538",
+      "KSAW 3615",
+      "KSAW 3655",
+      "KSAW 3729",
+      "KSAW 3761",
+      "KSAW 3800",
+      "KSAW 3808",
+      "KSAW 3810"
+  ],
+  aadhaarNumbers: [
+      "884830868027",
+      "975787922854",
+      "545059127881",
+      "781681070945",
+      "718787786591",
+      "481736055411",
+      "426612704578",
+      "696558219809",
+      "899145089251",
+      "744662077243"
+  ]
+};
+
+export const BUILTIN_BATCH_65: BatchItem = {
+  id: "KSAWU/BGM/CPG/0926-54",
+  name: "KSAWU/BGM/CPG/0926-54",
+  sheetName: "candidates",
+  totalCount: 1,
+  applicantIds: [
+      "f279ba0a-7a84-4d32-8026-43ff75eeeb91"
+  ],
+  safNumbers: [
+      "SAF1482854"
+  ],
+  referenceNumbers: [
+      "KSAW 1821"
+  ],
+  aadhaarNumbers: [
+      "450401596964"
+  ]
+};
+
 export const BUILTIN_BATCHES: BatchItem[] = [
   BUILTIN_BATCH_1,
   BUILTIN_BATCH_2,
@@ -7112,7 +8106,17 @@ export const BUILTIN_BATCHES: BatchItem[] = [
   BUILTIN_BATCH_52,
   BUILTIN_BATCH_53,
   BUILTIN_BATCH_54,
-  BUILTIN_BATCH_55
+  BUILTIN_BATCH_55,
+  BUILTIN_BATCH_56,
+  BUILTIN_BATCH_57,
+  BUILTIN_BATCH_58,
+  BUILTIN_BATCH_59,
+  BUILTIN_BATCH_60,
+  BUILTIN_BATCH_61,
+  BUILTIN_BATCH_62,
+  BUILTIN_BATCH_63,
+  BUILTIN_BATCH_64,
+  BUILTIN_BATCH_65
 ];
 
 function buildStaticMaps(batches: BatchItem[]) {
@@ -7143,19 +8147,12 @@ function buildStaticMaps(batches: BatchItem[]) {
 
 const STATIC_MAPS = buildStaticMaps(BUILTIN_BATCHES);
 
-export function extractBatchSerialNumber(name: string): number | null {
-  if (!name) return null;
-  // Match number after trailing dash e.g. "0926-47" -> 47, "0926-2" -> 2
-  const dashMatch = name.match(/-(\d+)\s*$/);
-  if (dashMatch) {
-    const n = parseInt(dashMatch[1], 10);
-    if (!Number.isNaN(n)) return n;
-  }
-  // Fallback: match any number at the end of the string
-  const numMatch = name.match(/(\d+)(?:\D*)$/);
-  if (numMatch) {
-    const n = parseInt(numMatch[1], 10);
-    if (!Number.isNaN(n)) return n;
+export function extractBatchSerialNumber(batchName: string | null | undefined): number | null {
+  if (!batchName) return null;
+  const match = batchName.match(/[-/](\d+)(?:[^0-9]*)$/);
+  if (match) {
+    const num = parseInt(match[1], 10);
+    if (!Number.isNaN(num)) return num;
   }
   return null;
 }
@@ -7186,8 +8183,8 @@ export const DEFAULT_BATCHES: readonly string[] = sortBatchNames([
   "KSAWU/HSN/CHN/0926-18",
   "KSAWU/HSN/CHN/0926-22",
   "KSAWU/HSN/CPG/0926-5",
-  "KSAWU/HSN/CPG/0926-6",
   "KSAWU/HSN/CPG/0926-33",
+  "KSAWU/HSN/CPG/0926-6",
   "KSAWU/UDP/CPG/0926-46",
   "KSAWU/UDP/CPG/0926-24",
   "KSAWU/UDP/CPG/0926-42",
@@ -7197,6 +8194,8 @@ export const DEFAULT_BATCHES: readonly string[] = sortBatchNames([
   "KSAWU/MYR/CPG/0926-69",
   "KSAWU/MYR/CPG/0926-70",
   "KSAWU/HSN/CPG/0926-71",
+  "KSAWU/BKT/CPG/0926-80",
+  "KSAWU/HVR/CPG/0926-86",
   "KSAWU/VJP/CPG/0926-39",
   "KSAWU/VJP/CPG/0926-23",
   "KSAWU/VJP/CPG/0926-49",
@@ -7211,10 +8210,13 @@ export const DEFAULT_BATCHES: readonly string[] = sortBatchNames([
   "KSAWU/VJP/CPG/0926-60",
   "KSAWU/VJP/CPG/0926-50",
   "KSAWU/VJP/CPG/0926-38",
+  "KSAWU/BKT/CPG/0926-81",
   "KSAWU/BGU/CPG/0926-73",
   "KSAWU/HSN/CPG/0926-7",
   "KSAWU/HSN/CPG/0926-8",
   "KSAWU/HSN/CPG/0926-37",
+  "KSAWU/MDY/CPG/0926-96",
+  "KSAWU/CMR/CPG/0926-97",
   "KSAWU/MDY/CPG/0926-9",
   "KSAWU/MDY/CPG/0926-10",
   "KSAWU/MDY/CPG/0926-11",
@@ -7227,17 +8229,22 @@ export const DEFAULT_BATCHES: readonly string[] = sortBatchNames([
   "KSAWU/MDY/CPG/0926-44",
   "KSAWU/MDY/CPG/0926-58",
   "KSAWU/MDY/CPG/0926-76",
+  "KSAWU/MDY/CPG/0926-98",
+  "KSAWU/RMG/CPG/0926-79",
   "KSAWU/VJP/CPG/0926-25",
   "KSAWU/VJP/CPG/0926-20",
+  "KSAWU/BLR/CPG/0926-99",
   "KSAWU/BLR/CPG/0926-74",
   "KSAWU/MYR/CPG/0926-12",
   "KSAWU/MYR/CPG/0926-19",
   "KSAWU/MYR/CPG/0926-45",
-  "KSAWU/UDP/CPG/0926-63"
+  "KSAWU/UDP/CPG/0926-63",
+  "KSAWU/BGU/CPG/0926-106",
+  "KSAWU/BGM/CPG/0926-54"
 ]);
 
 const INITIAL_MANIFEST: BatchesManifest = {
-  version: 5,
+  version: 6,
   lastUpdated: new Date().toISOString(),
   batches: BUILTIN_BATCHES,
   applicantBatchMap: STATIC_MAPS.applicantBatchMap,
@@ -7258,7 +8265,7 @@ async function fetchBatchesManifest(): Promise<BatchesManifest> {
 
     const text = await data.text();
     const parsed = JSON.parse(text) as BatchesManifest;
-    if (parsed && parsed.batches && parsed.batches.length >= BUILTIN_BATCHES.length && parsed.version >= 5) {
+    if (parsed && parsed.batches && parsed.batches.length >= BUILTIN_BATCHES.length && parsed.version >= 6) {
       return parsed;
     }
     return INITIAL_MANIFEST;
@@ -7271,7 +8278,7 @@ export function useBatches() {
   const queryClient = useQueryClient();
 
   const { data: manifest } = useQuery<BatchesManifest>({
-    queryKey: ["ksaw-batches-manifest-v5"],
+    queryKey: ["ksaw-batches-manifest-v6"],
     queryFn: fetchBatchesManifest,
     staleTime: 1000 * 60 * 10,
     initialData: INITIAL_MANIFEST,
@@ -7362,6 +8369,6 @@ export function useBatches() {
     getApplicantBatch,
     getBatchApplicantIds,
     allBatchApplicantIds,
-    refreshBatches: () => queryClient.invalidateQueries({ queryKey: ["ksaw-batches-manifest-v5"] }),
+    refreshBatches: () => queryClient.invalidateQueries({ queryKey: ["ksaw-batches-manifest-v6"] }),
   };
 }
