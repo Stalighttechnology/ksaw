@@ -93,6 +93,7 @@ const PAUSED_NIGAMAS = [
   "Uppara Avhivrudhi",
   "Madivala Machideva Abhvrudhi",
   "Alemari mathu Are Alemari Abhivrudhi",
+  "Veerashaiva Lingayat",
 ] as const;
 
 // Temporarily paused Castes in the registration form only (can be commented/emptied anytime to re-enable)
