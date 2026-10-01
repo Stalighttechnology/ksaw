@@ -3201,7 +3201,8 @@ function FilterSelect({
       </label>
       <div className="relative flex items-center min-w-0">
         <select
-          className={`w-full form-ctrl text-xs sm:text-[13px] h-10 rounded-xl border appearance-none pr-8 pl-3 truncate transition-all duration-150 cursor-pointer shadow-2xs ${
+          style={{ WebkitAppearance: "none", MozAppearance: "none", appearance: "none" }}
+          className={`w-full text-xs sm:text-[13px] h-10 rounded-xl border appearance-none pr-8 pl-3 truncate transition-all duration-150 cursor-pointer shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${
             isSelected
               ? "border-indigo-500 ring-2 ring-indigo-500/15 bg-indigo-50/40 dark:bg-indigo-950/20 font-semibold text-indigo-950 dark:text-indigo-200"
               : "border-border/80 bg-background text-foreground hover:border-border/90 hover:bg-muted/20"
@@ -3216,7 +3217,7 @@ function FilterSelect({
             </option>
           ))}
         </select>
-        <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/70">
+        <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/70 flex items-center justify-center">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
