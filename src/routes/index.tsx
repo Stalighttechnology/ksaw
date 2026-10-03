@@ -255,8 +255,9 @@ function RegistrationPage() {
       if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
         age--;
       }
-      if (age < 18) {
-        e["dob"] = "Applicant must be at least 18 years old";
+      const maxDobDate = new Date("2008-12-31T23:59:59");
+      if (birthDate > maxDobDate) {
+        e["dob"] = "Applicant must be born on or before 31-12-2008";
       } else if (age > 25) {
         e["dob"] = "Applicant must be 25 years old or younger";
       }
@@ -1156,7 +1157,7 @@ function RegistrationPage() {
                     />
                     {(() => {
                       const today = new Date();
-                      const maxDob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()).toISOString().split("T")[0];
+                      const maxDob = "2008-12-31";
                       const minDob = new Date(today.getFullYear() - 25, today.getMonth(), today.getDate() + 1).toISOString().split("T")[0];
                       return (
                         <DateField
