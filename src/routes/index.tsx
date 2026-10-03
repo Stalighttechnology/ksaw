@@ -93,6 +93,13 @@ const PAUSED_NIGAMAS = [
   "Uppara Avhivrudhi",
   "Madivala Machideva Abhvrudhi",
   "Alemari mathu Are Alemari Abhivrudhi",
+  "Veerashaiva Lingayat",
+] as const;
+
+// Temporarily paused Castes in the registration form only (can be commented/emptied anytime to re-enable)
+const PAUSED_CASTES = [
+  "Veerashaiva Lingayat - ವೀರಶೈವ ಲಿಂಗಾಯತ",
+  "Panchamasali Lingayat - ಪಂಚಮಸಾಲಿ ಲಿಂಗಾಯತ",
 ] as const;
 
 type Errors = Record<string, string>;
@@ -102,7 +109,11 @@ function RegistrationPage() {
   const { isMaintenance, message: maintenanceMessage } = useMaintenance();
 
   const activeCasteNames = useMemo(() => {
-    return CASTES.filter((c) => !(PAUSED_NIGAMAS as readonly string[]).includes(c.nigama)).map((c) => c.name);
+    return CASTES.filter(
+      (c) =>
+        !(PAUSED_NIGAMAS as readonly string[]).includes(c.nigama) &&
+        !(PAUSED_CASTES as readonly string[]).includes(c.name)
+    ).map((c) => c.name);
   }, []);
 
   // Center / Institution
@@ -274,8 +285,12 @@ function RegistrationPage() {
       if (category === "OBC") {
         if (!caste) {
           e["caste"] = "Caste is required";
-        } else if (casteInfo && (PAUSED_NIGAMAS as readonly string[]).includes(casteInfo.nigama)) {
-          e["caste"] = "Applications under this corporation are temporarily paused";
+        } else if (
+          casteInfo &&
+          ((PAUSED_NIGAMAS as readonly string[]).includes(casteInfo.nigama) ||
+            (PAUSED_CASTES as readonly string[]).includes(casteInfo.name))
+        ) {
+          e["caste"] = "Applications under this caste / corporation are temporarily paused";
         }
         if (!casteSubCategory) e["casteSubCategory"] = "Category is required";
       }
