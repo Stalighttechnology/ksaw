@@ -339,9 +339,9 @@ export function FileField({
   span,
   value,
   onChange,
-  accept = "application/pdf",
+  accept = "application/pdf,image/jpeg,image/png,image/jpg,image/*,.pdf,.jpg,.jpeg,.png",
   maxSizeMb = 1,
-  hint = "PDF only, max 1 MB",
+  hint = "PDF, JPEG or PNG (max 1 MB)",
 }: BaseInput & {
   value: string;
   onChange: (v: string) => void;
@@ -361,15 +361,17 @@ export function FileField({
       return;
     }
     const acceptList = accept.split(",").map((a) => a.trim().toLowerCase());
-    const ok = acceptList.some((a) =>
-      a.startsWith(".") ? file.name.toLowerCase().endsWith(a) : a.endsWith("/*") ? file.type.startsWith(a.slice(0, -1)) : file.type === a,
-    );
+    const ok = acceptList.some((a) => {
+      if (a.startsWith(".")) return file.name.toLowerCase().endsWith(a);
+      if (a.endsWith("/*")) return file.type.toLowerCase().startsWith(a.slice(0, -1));
+      return file.type.toLowerCase() === a;
+    });
     if (!ok) {
       const errorMsg =
-        accept === "application/pdf"
-          ? "Only PDF files are allowed"
-          : accept.includes("pdf") && (accept.includes("image") || accept.includes("jpg"))
-            ? "Only PDF or JPG/PNG files are allowed"
+        accept.includes("pdf") && (accept.includes("image") || accept.includes("jpg") || accept.includes("png"))
+          ? "Only PDF, JPEG or PNG files are allowed"
+          : accept === "application/pdf"
+            ? "Only PDF files are allowed"
             : "Invalid file type";
       setLocalError(errorMsg);
       onChange("");

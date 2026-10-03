@@ -1327,7 +1327,7 @@ function RegistrationPage() {
                       <FileField
                         label="Proof of Caste"
                         required
-                        hint="Upload your caste certificate"
+                        hint="PDF, JPEG or PNG (max 1 MB)"
                         value={casteProof}
                         onChange={setCasteProof}
                         error={errors["casteProof"]}
@@ -1655,6 +1655,7 @@ function RegistrationPage() {
                     <FileField
                       label="Proof of Education (Highest Qualification Marksheet Or Convocation Certificate)"
                       required
+                      hint="PDF, JPEG or PNG (max 1 MB)"
                       value={eduProof}
                       onChange={setEduProof}
                       error={errors["eduProof"]}
@@ -1662,8 +1663,8 @@ function RegistrationPage() {
                     <FileField
                       label="Proof of Age (Upload Aadhaar Photo)"
                       required
-                      hint="PDF only, max 1 MB"
-                      accept="application/pdf"
+                      hint="PDF, JPEG or PNG (max 1 MB)"
+                      accept="application/pdf,image/jpeg,image/png,image/jpg,image/*,.pdf,.jpg,.jpeg,.png"
                       maxSizeMb={1}
                       value={ageProof}
                       onChange={setAgeProof}
@@ -1673,7 +1674,7 @@ function RegistrationPage() {
                       label="Profile Image (Upload Latest Passport Image)"
                       required
                       accept="application/pdf,image/jpeg,image/png,image/jpg,image/*,.pdf,.jpg,.jpeg,.png"
-                      hint="PDF or JPG/PNG, max 1 MB"
+                      hint="PDF, JPEG or PNG (max 1 MB)"
                       value={profileImg}
                       onChange={setProfileImg}
                       error={errors["profileImg"]}
