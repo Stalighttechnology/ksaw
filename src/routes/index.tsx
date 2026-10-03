@@ -724,17 +724,19 @@ function RegistrationPage() {
     setSubmitted(false);
 
     try {
-      // Check for duplicate Aadhaar registration
       const cleanAadhaar = aadhaarNumber.trim();
-      let existingRecord: any = null;
+      const cleanPhone = phone.trim();
+      const cleanEmail = email.trim().toLowerCase();
 
+      // 1. Check duplicate Aadhaar registration
+      let existingAadhaar: any = null;
       const { data: dupCheckData, error: dupCheckErr } = await supabase.rpc("check_aadhaar_registered", {
         aadhaar_num: cleanAadhaar,
         exclude_ref: isEditing ? activeEditingRef : null,
       });
 
       if (!dupCheckErr && dupCheckData && dupCheckData.length > 0) {
-        existingRecord = dupCheckData[0];
+        existingAadhaar = dupCheckData[0];
       } else {
         let q = supabase
           .from("registrations")
@@ -745,11 +747,55 @@ function RegistrationPage() {
           q = q.neq("reference_number", activeEditingRef);
         }
         const { data: directDup } = await q.maybeSingle();
-        if (directDup) existingRecord = directDup;
+        if (directDup) existingAadhaar = directDup;
       }
 
-      if (existingRecord) {
-        setSubmitError("Already submitted this application.");
+      // 2. Check duplicate Phone Number
+      let existingPhone: any = null;
+      if (cleanPhone) {
+        let phoneQ = supabase
+          .from("registrations")
+          .select("reference_number, phone, first_name, last_name")
+          .eq("phone", cleanPhone);
+        if (isEditing && activeEditingRef) {
+          phoneQ = phoneQ.neq("reference_number", activeEditingRef);
+        }
+        const { data: phoneDup } = await phoneQ.limit(1);
+        if (phoneDup && phoneDup.length > 0) existingPhone = phoneDup[0];
+      }
+
+      // 3. Check duplicate Email Address
+      let existingEmail: any = null;
+      if (cleanEmail) {
+        let emailQ = supabase
+          .from("registrations")
+          .select("reference_number, email, first_name, last_name")
+          .ilike("email", cleanEmail);
+        if (isEditing && activeEditingRef) {
+          emailQ = emailQ.neq("reference_number", activeEditingRef);
+        }
+        const { data: emailDup } = await emailQ.limit(1);
+        if (emailDup && emailDup.length > 0) existingEmail = emailDup[0];
+      }
+
+      const dupErrors: Record<string, string> = {};
+      if (existingAadhaar) {
+        dupErrors["aadhaarNumber"] = "This Aadhaar number is already registered.";
+      }
+      if (existingPhone) {
+        dupErrors["phone"] = "This phone number is already registered.";
+      }
+      if (existingEmail) {
+        dupErrors["email"] = "This email address is already registered.";
+      }
+
+      if (Object.keys(dupErrors).length > 0) {
+        setErrors((prev) => ({ ...prev, ...dupErrors }));
+        const reasons: string[] = [];
+        if (existingPhone) reasons.push("Phone Number");
+        if (existingEmail) reasons.push("Email Address");
+        if (existingAadhaar) reasons.push("Aadhaar Number");
+        setSubmitError(`Already registered with this ${reasons.join(", ")}.`);
         window.scrollTo({ top: 0, behavior: "smooth" });
         setSubmitting(false);
         return;
@@ -1156,7 +1202,10 @@ function RegistrationPage() {
                       inputMode="numeric"
                       maxLength={10}
                       value={phone}
-                      onChange={(v) => setPhone(v.replace(/\D/g, ""))}
+                      onChange={(v) => {
+                        setPhone(v.replace(/\D/g, ""));
+                        if (errors["phone"]) setErrors((prev) => ({ ...prev, phone: "" }));
+                      }}
                       error={errors["phone"]}
                     />
                   </Row>
@@ -1167,7 +1216,10 @@ function RegistrationPage() {
                       type="email"
                       placeholder="email address"
                       value={email}
-                      onChange={setEmail}
+                      onChange={(v) => {
+                        setEmail(v);
+                        if (errors["email"]) setErrors((prev) => ({ ...prev, email: "" }));
+                      }}
                       error={errors["email"]}
                     />
                     {(() => {
@@ -1250,7 +1302,10 @@ function RegistrationPage() {
                       inputMode="numeric"
                       maxLength={12}
                       value={aadhaarNumber}
-                      onChange={(v) => setAadhaarNumber(v.replace(/\D/g, ""))}
+                      onChange={(v) => {
+                        setAadhaarNumber(v.replace(/\D/g, ""));
+                        if (errors["aadhaarNumber"]) setErrors((prev) => ({ ...prev, aadhaarNumber: "" }));
+                      }}
                       error={errors["aadhaarNumber"]}
                     />
                   </Row>
