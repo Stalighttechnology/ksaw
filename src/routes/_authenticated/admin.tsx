@@ -23,7 +23,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useColleges } from "@/lib/useColleges";
 import { useBatches } from "@/lib/useBatches";
 import { useMaintenance } from "@/lib/useMaintenance";
-import { SiteNotReachable } from "@/components/reg/SiteNotReachable";
 import { read, utils } from "xlsx";
 
 const title = "Registrations Dashboard | Admin";
@@ -218,7 +217,10 @@ function applyRegistrationFilters<T extends any>(baseQuery: T, filters: Registra
 }
 
 function AdminPage() {
-  return <SiteNotReachable />;
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+
+  const { isMaintenance, toggleMaintenance, isUpdating: isTogglingMaintenance } = useMaintenance();
   const { colleges, addCollege, editCollege, removeCollege, isAdding, isEditing, isRemoving } = useColleges();
   const { batches, manifest: batchesManifest, getApplicantBatch, getBatchApplicantIds, allBatchApplicantIds } = useBatches();
   const [collegeModalOpen, setCollegeModalOpen] = useState(false);
@@ -244,14 +246,8 @@ function AdminPage() {
   const [pageSize, setPageSize] = useState(25);
   const [editing, setEditing] = useState<Row | null>(null);
   const [viewing, setViewing] = useState<Row | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<{ ids: string[]; name: string } | null>(null);
-
-  const [isSiteNotReachable, setIsSiteNotReachable] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return sessionStorage.getItem("admin_unlocked") !== "true";
-    }
-    return true;
-  });
 
   const handleColumnHeaderClick = (colKey: string) => {
     if (sortColumn === colKey) {
@@ -1155,18 +1151,6 @@ function AdminPage() {
     return dateStr;
   }, []);
 
-  if (isSiteNotReachable) {
-    return (
-      <SiteNotReachable
-        onUnlock={() => {
-          sessionStorage.setItem("admin_unlocked", "true");
-          setIsSiteNotReachable(false);
-          toast.success("Admin Dashboard Unlocked");
-        }}
-      />
-    );
-  }
-
   return (
     <div className="kk-page min-h-screen bg-muted/20">
       <SiteHeader variant="admin" />
@@ -1204,18 +1188,6 @@ function AdminPage() {
               <span className="text-base font-bold">+</span>
               <span>New Registration</span>
             </a>
-
-            <button
-              type="button"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-border/80 bg-card hover:bg-muted text-foreground text-xs sm:text-sm font-semibold px-3.5 py-2 transition-all cursor-pointer shadow-2xs"
-              onClick={() => {
-                sessionStorage.removeItem("admin_unlocked");
-                setIsSiteNotReachable(true);
-              }}
-              title="Lock and display 'This site can’t be reached' screen"
-            >
-              <span>🔒 Lock</span>
-            </button>
 
             <button
               type="button"
