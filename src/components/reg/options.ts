@@ -64,9 +64,28 @@ export const COLLEGES = [
   "Government first grade college Zalaki taluk Indi",
   "Sharada vivek womens degree college kalburgi",
   "DMS Mandal BK College Belgaum",
+  "Sri H.D. Devegowda Government First Grade College Paduvalahippe Village",
 ];
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
+  "Sri H.D. Devegowda Government First Grade College Paduvalahippe Village": [
+    "Sri H.D. Devegowda Government First Grade College Paduvalahippe Village",
+    "Sri H.D. Devegowda Government First Grade College Paduvalahippe",
+    "Sri H.D. Devegowda Government First Grade College, Paduvalahippe Village",
+    "Sri H.D. Devegowda Government First Grade College, Paduvalahippe",
+    "Sri HD Devegowda Government First Grade College Paduvalahippe Village",
+    "Sri HD Devegowda Government First Grade College Paduvalahippe",
+    "Sri H.D. Devegowda Govt First Grade College Paduvalahippe Village",
+    "Sri H.D. Devegowda Govt First Grade College Paduvalahippe",
+    "Sri HD Devegowda Govt First Grade College Paduvalahippe",
+    "HD Devegowda Government First Grade College Paduvalahippe",
+    "H.D. Devegowda Government First Grade College Paduvalahippe",
+    "GFGC Paduvalahippe",
+    "GFGC Paduvalahippe Village",
+    "Govt First Grade College Paduvalahippe",
+    "Government First Grade College Paduvalahippe",
+    "Paduvalahippe Govt College",
+  ],
   "DMS Mandal BK College Belgaum": [
     "DMS Mandal BK College Belgaum",
     "DMS mandal BK college belgaum",
