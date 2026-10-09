@@ -84,7 +84,6 @@ const emptyAddress = (): Address => ({
 
 // Temporarily paused Nigamas in the registration form only (can be emptied anytime to re-enable)
 const PAUSED_NIGAMAS = [
-  "Devraj Urs",
   "Kumbara Abhivrudhi",
   "Kadugoulla",
   "Balija Samudaya Abhivrudhi Nigama",
