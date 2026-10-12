@@ -65,6 +65,7 @@ export const COLLEGES = [
   "Sharada vivek womens degree college kalburgi",
   "DMS Mandal BK College Belgaum",
   "Sri H.D. Devegowda Government First Grade College Paduvalahippe Village",
+  "Jain College of Engineering, T S Nagar, Hunchanhatti Cross, Machhe, Belagavi 590014",
 ];
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
@@ -894,6 +895,22 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "KUKKE SRI SUBRAMANYA COLLEGE SUBRAMANYA KADABA DK",
     "KUKKE SRI SUBRAMANYA COLLEGE",
   ],
+  "Jain College of Engineering, T S Nagar, Hunchanhatti Cross, Machhe, Belagavi 590014": [
+    "Jain College of Engineering, T S Nagar, Hunchanhatti Cross, Machhe, Belagavi 590014",
+    "Jain College of Engineering, T S Nagar, Hunchanhatti Cross, Machhe, Belagavi",
+    "Jain College of Engineering, Machhe, Belagavi 590014",
+    "Jain College of Engineering, Machhe, Belagavi",
+    "Jain College of Engineering, Machhe, Belgaum",
+    "Jain College of Engineering Belagavi",
+    "Jain College of Engineering, Belagavi",
+    "Jain College of Engineering Belgaum",
+    "Jain College of Engineering, Belgaum",
+    "Jain College of Engineering",
+    "JCE Belagavi",
+    "JCE Belgaum",
+    "JCE Machhe",
+    "Jain College of Engineering Machhe",
+  ],
 };
 
 const normCollegeNameCache = new Map<string, string>();
@@ -974,6 +991,15 @@ export function normalizeCollegeName(rawName?: string | null): string {
   if (upper.includes("SIDHARTHA") || upper.includes("SIDDHARTHA")) return "SIDHARTHA COLLEGE BIDAR";
   if (upper.includes("DADAPHEER")) return "Dadapheer Huballi";
   if (upper.includes("HUBBALLI") || upper.includes("HUBBALI")) return "Hubballi Center";
+  if (
+    (upper.includes("JAIN") && (upper.includes("ENGINEERING") || upper.includes("MACHHE") || upper.includes("HUNCH") || upper.includes("BELAGAVI") || upper.includes("BELGAUM"))) ||
+    upper === "JCE" ||
+    upper === "JCEBELAGAVI" ||
+    upper === "JCEBELGAUM" ||
+    upper === "JCEMACHHE"
+  ) {
+    return "Jain College of Engineering, T S Nagar, Hunchanhatti Cross, Machhe, Belagavi 590014";
+  }
   const result = (upper.includes("ANGADI") || upper.includes("AITM")) ? "Angadi Institute of Technology Belagavi" : trimmed;
   normCollegeNameCache.set(trimmed, result);
   return result;
