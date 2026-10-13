@@ -66,6 +66,7 @@ export const COLLEGES = [
   "DMS Mandal BK College Belgaum",
   "Sri H.D. Devegowda Government First Grade College Paduvalahippe Village",
   "Jain College of Engineering, T S Nagar, Hunchanhatti Cross, Machhe, Belagavi 590014",
+  "Govt First grade womens college putturu, Dakshin Kannada",
 ];
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
@@ -911,6 +912,27 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "JCE Machhe",
     "Jain College of Engineering Machhe",
   ],
+  "Govt First grade womens college putturu, Dakshin Kannada": [
+    "Govt First grade womens college putturu, Dakshin Kannada",
+    "Govt First Grade Womens College Putturu, Dakshin Kannada",
+    "Govt First Grade Women's College Putturu, Dakshin Kannada",
+    "Govt First Grade Women's College, Putturu, Dakshin Kannada",
+    "Govt First Grade Womens College Puttur, Dakshina Kannada",
+    "Govt First Grade Women's College Puttur, Dakshina Kannada",
+    "Govt First Grade Women's College, Puttur, Dakshina Kannada",
+    "Government First Grade Women's College, Puttur, Dakshina Kannada",
+    "Government First Grade Women's College Puttur",
+    "Government First Grade College for Women, Puttur",
+    "Government First Grade College for Women Puttur",
+    "Govt First Grade College for Women, Puttur",
+    "Govt First Grade College for Women Puttur",
+    "Govt First Grade Womens College Puttur",
+    "GFGC Women Puttur",
+    "GFGCW Puttur",
+    "GFGC Puttur",
+    "Govt First Grade College Puttur",
+    "Government First Grade College Puttur",
+  ],
 };
 
 const normCollegeNameCache = new Map<string, string>();
@@ -999,6 +1021,12 @@ export function normalizeCollegeName(rawName?: string | null): string {
     upper === "JCEMACHHE"
   ) {
     return "Jain College of Engineering, T S Nagar, Hunchanhatti Cross, Machhe, Belagavi 590014";
+  }
+  if (
+    upper.includes("PUTTUR") &&
+    (upper.includes("WOMEN") || upper.includes("WOMENS") || upper.includes("GFGC") || upper.includes("FIRSTGRADE") || upper.includes("GOVT") || upper.includes("DAKSHIN"))
+  ) {
+    return "Govt First grade womens college putturu, Dakshin Kannada";
   }
   const result = (upper.includes("ANGADI") || upper.includes("AITM")) ? "Angadi Institute of Technology Belagavi" : trimmed;
   normCollegeNameCache.set(trimmed, result);
