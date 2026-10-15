@@ -38,6 +38,7 @@ export const COLLEGES = [
   "Channarayapatna Govt College",
   "BGS College Channarayapatna",
   "KLE BCA College Athani",
+  "KLE Society's College of BCA Khanapur",
   // "Government Womens college - Ramanagara",
   "Government Girls PU college Channapatna - Ramnagara",
   "Government Polytechnic for Women Ramanagar",
@@ -70,6 +71,15 @@ export const COLLEGES = [
 ];
 
 export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
+  "KLE Society's College of BCA Khanapur": [
+    "KLE Society's College of BCA Khanapur",
+    "KLE Societys College of BCA Khanapur",
+    "K.L.E. Society's College of BCA Khanapur",
+    "KLE Society's College of BCA, Khanapur",
+    "KLE College of BCA Khanapur",
+    "KLE BCA College Khanapur",
+    "KLE Society College of BCA Khanapur",
+  ],
   "Sri H.D. Devegowda Government First Grade College Paduvalahippe Village": [
     "Sri H.D. Devegowda Government First Grade College Paduvalahippe Village",
     "Sri H.D. Devegowda Government First Grade College Paduvalahippe",
