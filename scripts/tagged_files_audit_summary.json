@@ -1,0 +1,54 @@
+{
+  "summary": {
+    "file1": {
+      "name": "L.-21.09.2026 (2).xlsx",
+      "total": 181,
+      "matchedByAadhaar": 181,
+      "notFound": 0,
+      "statusCounts": {
+        "Sent to Department": 164,
+        "Approved by Dept": 17
+      },
+      "adminNotesCounts": {
+        "Sent to Department": 165,
+        "Approved by Dept": 16
+      },
+      "safMismatches": [],
+      "duplicateRowsInFile": []
+    },
+    "file2": {
+      "name": "L.-28.09.2026 (2).xlsx",
+      "total": 524,
+      "matchedByAadhaar": 524,
+      "notFound": 0,
+      "statusCounts": {
+        "Sent to Department": 523,
+        "Pending Document": 1
+      },
+      "adminNotesCounts": {
+        "Sent to Department": 523,
+        "Caste doc not uploaded": 1
+      },
+      "safMismatches": [
+        {
+          "slNo": 515,
+          "aadhaar": "697053102976",
+          "excelSaf": "SAF1484548.",
+          "dbSaf": "SAF1484548",
+          "dbRef": "KSAW 3339",
+          "dbName": "Akshatha HD Akshatha HD"
+        },
+        {
+          "slNo": 516,
+          "aadhaar": "546098212880",
+          "excelSaf": "SAF1484555.",
+          "dbSaf": "SAF1484555",
+          "dbRef": "KSAW 3338",
+          "dbName": "Sindhu  Harakangi "
+        }
+      ],
+      "duplicateRowsInFile": []
+    },
+    "crossFileOverlapCount": 0
+  }
+}
