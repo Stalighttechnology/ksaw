@@ -8722,7 +8722,7 @@ export const DEFAULT_BATCHES: readonly string[] = sortBatchNames([
 ]);
 
 const INITIAL_MANIFEST: BatchesManifest = {
-  version: 8,
+  version: 9,
   lastUpdated: new Date().toISOString(),
   batches: BUILTIN_BATCHES,
   applicantBatchMap: STATIC_MAPS.applicantBatchMap,
@@ -8743,7 +8743,7 @@ async function fetchBatchesManifest(): Promise<BatchesManifest> {
 
     const text = await data.text();
     const parsed = JSON.parse(text) as BatchesManifest;
-    if (parsed && parsed.batches && parsed.batches.length >= BUILTIN_BATCHES.length && parsed.version >= 8) {
+    if (parsed && parsed.batches && parsed.batches.length >= BUILTIN_BATCHES.length && parsed.version >= 9) {
       return parsed;
     }
     return INITIAL_MANIFEST;
@@ -8756,7 +8756,7 @@ export function useBatches() {
   const queryClient = useQueryClient();
 
   const { data: manifest } = useQuery<BatchesManifest>({
-    queryKey: ["ksaw-batches-manifest-v8"],
+    queryKey: ["ksaw-batches-manifest-v9"],
     queryFn: fetchBatchesManifest,
     staleTime: 1000 * 60 * 10,
     initialData: INITIAL_MANIFEST,
@@ -8781,8 +8781,14 @@ export function useBatches() {
       saf_number?: string | null;
       reference_number?: string | null;
       aadhaar_number?: string | null;
+      status?: string | null;
     }): string | null => {
       if (!applicant) return null;
+
+      // Rejected applicants must NEVER have any batch assigned
+      if (applicant.status && applicant.status.trim().toLowerCase() === "rejected") {
+        return null;
+      }
 
       if (applicant.id && activeManifest.applicantBatchMap?.[applicant.id]) {
         return activeManifest.applicantBatchMap[applicant.id];
@@ -8860,6 +8866,6 @@ export function useBatches() {
     getApplicantBatch,
     getBatchApplicantIds,
     allBatchApplicantIds,
-    refreshBatches: () => queryClient.invalidateQueries({ queryKey: ["ksaw-batches-manifest-v8"] }),
+    refreshBatches: () => queryClient.invalidateQueries({ queryKey: ["ksaw-batches-manifest-v9"] }),
   };
 }

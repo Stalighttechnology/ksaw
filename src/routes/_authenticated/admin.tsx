@@ -334,7 +334,8 @@ function AdminPage() {
       return rawRows.map((r) => {
         const rawSaf = (r["saf_number"] as string) || "";
         const isFilled = rawSaf.toUpperCase().includes("SAF");
-        const studentBatch = getApplicantBatch(r as unknown as Row) || "";
+        const isRejected = ((r["status"] as string) || "").trim().toLowerCase() === "rejected";
+        const studentBatch = isRejected ? "" : (getApplicantBatch(r as unknown as Row) || "");
         return {
           id: (r["id"] as string) || "",
           status: ((r["status"] as string) || "Pending").trim(),
@@ -476,13 +477,16 @@ function AdminPage() {
         const rowMap = new Map((dbRows || []).map((r) => [r.id, r]));
         const orderedRows = pageIds.map((id) => rowMap.get(id)).filter(Boolean) as Row[];
 
-        const normalizedRows = orderedRows.map((r) => ({
-          ...r,
-          batch_name: getApplicantBatch(r) || (r.batch_name as string) || "—",
-          institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
-          nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
-          caste_cert_type: (r.caste_cert_type as string) || getCasteCertificateType(r.category as string, r.caste_sub_category as string, r.caste as string) || r.caste_cert_type,
-        }));
+        const normalizedRows = orderedRows.map((r) => {
+          const isRejected = (r.status || "").trim().toLowerCase() === "rejected";
+          return {
+            ...r,
+            batch_name: isRejected ? "—" : (getApplicantBatch(r) || (r.batch_name as string) || "—"),
+            institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
+            nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
+            caste_cert_type: (r.caste_cert_type as string) || getCasteCertificateType(r.category as string, r.caste_sub_category as string, r.caste as string) || r.caste_cert_type,
+          };
+        });
 
         return { rows: normalizedRows, count: totalUnassigned };
       }
@@ -508,13 +512,16 @@ function AdminPage() {
       data = (res.data ?? []) as Row[];
       count = res.count;
 
-      const normalizedRows = ((data ?? []) as Row[]).map((r) => ({
-        ...r,
-        batch_name: getApplicantBatch(r) || (r.batch_name as string) || "—",
-        institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
-        nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
-        caste_cert_type: (r.caste_cert_type as string) || getCasteCertificateType(r.category as string, r.caste_sub_category as string, r.caste as string) || r.caste_cert_type,
-      }));
+      const normalizedRows = ((data ?? []) as Row[]).map((r) => {
+        const isRejected = (r.status || "").trim().toLowerCase() === "rejected";
+        return {
+          ...r,
+          batch_name: isRejected ? "—" : (getApplicantBatch(r) || (r.batch_name as string) || "—"),
+          institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
+          nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
+          caste_cert_type: (r.caste_cert_type as string) || getCasteCertificateType(r.category as string, r.caste_sub_category as string, r.caste as string) || r.caste_cert_type,
+        };
+      });
 
       return { rows: normalizedRows, count: count ?? normalizedRows.length };
     },
@@ -825,13 +832,16 @@ function AdminPage() {
         }
       }
 
-      let rows = allExportRows.map((r) => ({
-        ...r,
-        batch_name: getApplicantBatch(r) || (r.batch_name as string) || "—",
-        institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
-        nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
-        caste_cert_type: (r.caste_cert_type as string) || getCasteCertificateType(r.category as string, r.caste_sub_category as string, r.caste as string) || r.caste_cert_type,
-      }));
+      let rows = allExportRows.map((r) => {
+        const isRejected = (r.status || "").trim().toLowerCase() === "rejected";
+        return {
+          ...r,
+          batch_name: isRejected ? "—" : (getApplicantBatch(r) || (r.batch_name as string) || "—"),
+          institution_name: normalizeCollegeName(r.institution_name as string) || r.institution_name,
+          nigama: normalizeNigamaName(r.nigama as string) || r.nigama,
+          caste_cert_type: (r.caste_cert_type as string) || getCasteCertificateType(r.category as string, r.caste_sub_category as string, r.caste as string) || r.caste_cert_type,
+        };
+      });
 
       // Apply current sort order to exported rows
       rows.sort((a, b) => compareRegistrationRows(a, b, sortColumn, sortOrder));
@@ -1787,7 +1797,8 @@ function AdminPage() {
                             cellVal = r["status"] || "Pending";
                           }
                           if (c.key === "batch_name") {
-                            const batchName = (cellVal as string) || getApplicantBatch(r);
+                            const isRejected = (r.status || "").trim().toLowerCase() === "rejected";
+                            const batchName = isRejected ? "—" : ((cellVal as string) || getApplicantBatch(r));
                             return (
                               <td key={c.key} className="whitespace-nowrap px-3 py-2.5 text-foreground max-w-[280px]">
                                 {batchName && batchName !== "—" && batchName !== "N/A" ? (
