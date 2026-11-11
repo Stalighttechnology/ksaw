@@ -125,3 +125,58 @@ export async function submitAssessmentResultToSupabase(
     };
   }
 }
+
+/**
+ * Generates a randomized per-question answers map matching exact target
+ * correct and attempted counts across the 25 questions.
+ */
+export function buildRandomizedAssessmentAnswers(
+  targetCorrect: number,
+  targetAttempted: number,
+): Record<string, Json> {
+  const total = SAMPLE_ASSESSMENT_QUESTIONS.length;
+  const safeCorrect = Math.min(Math.max(0, Math.round(targetCorrect)), total);
+  const safeAttempted = Math.min(Math.max(safeCorrect, Math.round(targetAttempted)), total);
+
+  // Fisher-Yates shuffle of question indices
+  const indices = Array.from({ length: total }, (_, i) => i);
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = indices[i]!;
+    indices[i] = indices[j]!;
+    indices[j] = tmp;
+  }
+
+  const correctSet = new Set(indices.slice(0, safeCorrect));
+  const wrongSet = new Set(indices.slice(safeCorrect, safeAttempted));
+
+  const detailedAnswers: Record<string, Json> = {};
+
+  for (let i = 0; i < total; i++) {
+    const q = SAMPLE_ASSESSMENT_QUESTIONS[i];
+    if (!q) continue;
+
+    if (correctSet.has(i)) {
+      detailedAnswers[q.id] = {
+        questionNumber: q.number,
+        section: q.section,
+        selectedIndex: q.correctIndex,
+        selectedOption: q.options[q.correctIndex] ?? null,
+        isCorrect: true,
+      };
+    } else if (wrongSet.has(i)) {
+      const wrongOptions = [0, 1, 2, 3].filter((optIdx) => optIdx !== q.correctIndex);
+      const chosenWrong =
+        wrongOptions[Math.floor(Math.random() * wrongOptions.length)] ?? (q.correctIndex + 1) % 4;
+      detailedAnswers[q.id] = {
+        questionNumber: q.number,
+        section: q.section,
+        selectedIndex: chosenWrong,
+        selectedOption: q.options[chosenWrong] ?? null,
+        isCorrect: false,
+      };
+    }
+  }
+
+  return detailedAnswers;
+}
