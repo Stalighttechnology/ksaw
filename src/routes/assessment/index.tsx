@@ -253,8 +253,8 @@ function AssessmentPage() {
     if (!candidateName.trim()) {
       nextErrors.candidateName = "Candidate Name is required";
     }
-    if (!/^\d{5}$/.test(safDigits)) {
-      nextErrors.safId = "Enter the 5-digit SAF ID number after SAF";
+    if (!/^\d{1,10}$/.test(safDigits)) {
+      nextErrors.safId = "Enter up to 10 digits after SAF";
     }
     if (!collegeName.trim()) {
       nextErrors.collegeName = "College / Center Name is required";
@@ -436,12 +436,12 @@ function AssessmentPage() {
                           id="assessment-saf-digits"
                           type="text"
                           inputMode="numeric"
-                          maxLength={5}
+                          maxLength={10}
                           className="h-full w-full bg-transparent px-3 font-mono text-sm font-semibold text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-400"
                           value={safDigits}
-                          placeholder="Enter 5 digits (e.g., 12345)"
+                          placeholder="Enter SAF digits (e.g., 21345)"
                           onChange={(e) => {
-                            const digits = e.target.value.replace(/\D/g, "").slice(0, 5);
+                            const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
                             setSafDigits(digits);
                             if (errors.safId) {
                               setErrors((prev) => ({ ...prev, safId: undefined }));
@@ -453,8 +453,7 @@ function AssessmentPage() {
                         Full SAF ID:{" "}
                         <strong className="font-mono text-slate-800">
                           SAF{safDigits || "XXXXX"}
-                        </strong>{" "}
-                        (enter 5 digits only)
+                        </strong>
                       </p>
                     </Field>
 
