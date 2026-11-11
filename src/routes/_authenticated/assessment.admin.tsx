@@ -444,6 +444,12 @@ function AssessmentAdminPage() {
         {/* Header Bar */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
+            <p className="text-xs font-bold text-[#123A6B] sm:text-sm">
+              ಸ್ವಾತಂತ್ರ್ಯ ಅಮೃತ ಮಹೋತ್ಸವದ ಮುನ್ನಡೆ (ಅಮೃತ ಮುನ್ನಡೆ) ಯೋಜನೆ
+            </p>
+            <p className="mb-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#EE5D1D] sm:text-xs">
+              Swatantrya Amrutha Mahotsava Munnade
+            </p>
             <div className="flex flex-wrap items-center gap-2.5">
               <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
                 Computer Programming Assessment — Admin

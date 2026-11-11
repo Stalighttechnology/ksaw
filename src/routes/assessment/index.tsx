@@ -374,7 +374,13 @@ function AssessmentPage() {
       <section className="kk-banner">
         <div className="kk-wrap">
           <div className="flex flex-col items-center justify-center px-4 py-3 text-center">
-            <h1 className="text-2xl font-extrabold tracking-wide text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.7)] sm:text-3xl lg:text-4xl">
+            <p className="text-sm font-bold text-amber-200 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] sm:text-base lg:text-lg">
+              ಸ್ವಾತಂತ್ರ್ಯ ಅಮೃತ ಮಹೋತ್ಸವದ ಮುನ್ನಡೆ (ಅಮೃತ ಮುನ್ನಡೆ) ಯೋಜನೆ
+            </p>
+            <p className="mt-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-white/95 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] sm:text-sm">
+              Swatantrya Amrutha Mahotsava Munnade
+            </p>
+            <h1 className="mt-2 text-2xl font-extrabold tracking-wide text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.7)] sm:text-3xl lg:text-4xl">
               Computer Programming Assessment
             </h1>
             <p className="mt-1.5 text-xs font-medium text-white/95 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)] sm:text-sm">
