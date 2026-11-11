@@ -151,7 +151,11 @@ function AssessmentAdminPage() {
     await qc.cancelQueries();
     qc.clear();
     await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
+    navigate({
+      to: "/auth",
+      search: { redirect: "/assessment/admin" },
+      replace: true,
+    });
   };
 
   const collegeCounts = useMemo(() => {
@@ -493,8 +497,8 @@ function AssessmentAdminPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
-            <div className="relative sm:col-span-2 lg:col-span-4">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <div className="flex h-[var(--kk-field-h)] items-center gap-2 rounded border border-[var(--kk-line)] bg-white px-3 focus-within:border-[var(--kk-blue)] focus-within:ring-2 focus-within:ring-[var(--kk-blue)]/15 sm:col-span-2 lg:col-span-4">
+              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
               <input
                 type="text"
                 value={search}
@@ -503,7 +507,7 @@ function AssessmentAdminPage() {
                   setPage(0);
                 }}
                 placeholder="Search Name, SAF ID, or College…"
-                className="form-ctrl pl-9"
+                className="h-full w-full bg-transparent text-sm text-[var(--kk-text)] outline-none placeholder:text-[oklch(0.72_0.01_260)]"
               />
             </div>
 
