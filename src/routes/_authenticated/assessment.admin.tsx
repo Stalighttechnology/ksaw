@@ -14,6 +14,7 @@ import {
   Filter,
   LogOut,
   Pencil,
+  Printer,
   RefreshCw,
   RotateCcw,
   Search,
@@ -43,6 +44,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { MARKS_PER_QUESTION, SAMPLE_ASSESSMENT_QUESTIONS } from "@/lib/assessmentQuestions";
+import { exportAssessmentAnswersPdf } from "@/lib/assessmentPdf";
 import { formatDuration } from "@/lib/assessmentStorage";
 import { buildRandomizedAssessmentAnswers } from "@/lib/assessmentSubmission";
 
@@ -1026,19 +1028,31 @@ function AssessmentAdminPage() {
         <DialogContent className="max-h-[85vh] w-[92%] max-w-[92%] overflow-y-auto rounded-xl sm:max-w-3xl">
           {selectedRow ? (
             <>
-              <DialogHeader>
-                <DialogTitle className="text-[#123A6B]">
-                  {selectedRow.candidate_name} ({selectedRow.saf_id})
-                </DialogTitle>
-                <DialogDescription>
-                  {selectedRow.college_name} • Score:{" "}
-                  <strong>
-                    {selectedRow.correct_count * MARKS_PER_QUESTION} /{" "}
-                    {selectedRow.total_questions * MARKS_PER_QUESTION} marks
-                  </strong>{" "}
-                  ({selectedRow.correct_count} / {selectedRow.total_questions} correct •{" "}
-                  {Number(selectedRow.score_percentage).toFixed(1)}%)
-                </DialogDescription>
+              <DialogHeader className="pr-8">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <DialogTitle className="text-[#123A6B]">
+                      {selectedRow.candidate_name} ({selectedRow.saf_id})
+                    </DialogTitle>
+                    <DialogDescription className="mt-1">
+                      {selectedRow.college_name} • Score:{" "}
+                      <strong>
+                        {selectedRow.correct_count * MARKS_PER_QUESTION} /{" "}
+                        {selectedRow.total_questions * MARKS_PER_QUESTION} marks
+                      </strong>{" "}
+                      ({selectedRow.correct_count} / {selectedRow.total_questions} correct •{" "}
+                      {Number(selectedRow.score_percentage).toFixed(1)}%)
+                    </DialogDescription>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => exportAssessmentAnswersPdf(selectedRow)}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[#123A6B] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#0f2f57]"
+                  >
+                    <Printer className="h-4 w-4" />
+                    Export PDF
+                  </button>
+                </div>
               </DialogHeader>
 
               <div className="mt-2 space-y-3">
