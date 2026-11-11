@@ -13,6 +13,7 @@ import {
   Eye,
   Filter,
   LogOut,
+  Pencil,
   RefreshCw,
   RotateCcw,
   Search,
@@ -43,6 +44,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { MARKS_PER_QUESTION, SAMPLE_ASSESSMENT_QUESTIONS } from "@/lib/assessmentQuestions";
 import { formatDuration } from "@/lib/assessmentStorage";
+import { buildRandomizedAssessmentAnswers } from "@/lib/assessmentSubmission";
 
 type AssessmentRow = Database["public"]["Tables"]["amrutha_munnade_assessment"]["Row"];
 
@@ -109,6 +111,13 @@ function AssessmentAdminPage() {
   const [pageSize, setPageSize] = useState<number>(25);
 
   const [selectedRow, setSelectedRow] = useState<AssessmentRow | null>(null);
+  const [editTarget, setEditTarget] = useState<AssessmentRow | null>(null);
+  const [editMarks, setEditMarks] = useState<string>("0");
+  const [editAttempted, setEditAttempted] = useState<string>("0");
+  const [editScorePercent, setEditScorePercent] = useState<string>("0");
+  const [editHours, setEditHours] = useState<string>("0");
+  const [editMinutes, setEditMinutes] = useState<string>("0");
+  const [editSeconds, setEditSeconds] = useState<string>("0");
   const [deleteTarget, setDeleteTarget] = useState<AssessmentRow | null>(null);
 
   const {
@@ -146,6 +155,122 @@ function AssessmentAdminPage() {
       toast.error(err.message || "Failed to delete record.");
     },
   });
+
+  const updateMutation = useMutation({
+    mutationFn: async (payload: {
+      id: string;
+      correctCount: number;
+      attemptedCount: number;
+      scorePercentage: number;
+      timeTakenSeconds: number;
+    }) => {
+      const randomizedAnswers = buildRandomizedAssessmentAnswers(
+        payload.correctCount,
+        payload.attemptedCount,
+      );
+      const { data, error: updError } = await supabase
+        .from("amrutha_munnade_assessment")
+        .update({
+          correct_count: payload.correctCount,
+          attempted_count: payload.attemptedCount,
+          score_percentage: payload.scorePercentage,
+          time_taken_seconds: payload.timeTakenSeconds,
+          answers: randomizedAnswers,
+        })
+        .eq("id", payload.id)
+        .select("*")
+        .single();
+
+      if (updError) throw updError;
+      return data;
+    },
+    onSuccess: (updated) => {
+      toast.success("Assessment marks and answers updated.");
+      setEditTarget(null);
+      if (selectedRow && updated && selectedRow.id === updated.id) {
+        setSelectedRow(updated);
+      }
+      void qc.invalidateQueries({ queryKey: ["amrutha_munnade_assessment"] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to update record. Check Supabase UPDATE policy.");
+    },
+  });
+
+  const openEditModal = (row: AssessmentRow) => {
+    const marks = row.correct_count * MARKS_PER_QUESTION;
+    const totalSecs = Math.max(0, row.time_taken_seconds);
+    const hrs = Math.floor(totalSecs / 3600);
+    const mins = Math.floor((totalSecs % 3600) / 60);
+    const secs = totalSecs % 60;
+
+    setEditTarget(row);
+    setEditMarks(String(marks));
+    setEditAttempted(String(row.attempted_count));
+    setEditScorePercent(Number(row.score_percentage).toFixed(1));
+    setEditHours(String(hrs));
+    setEditMinutes(String(mins));
+    setEditSeconds(String(secs));
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editTarget) return;
+
+    const totalQ = editTarget.total_questions || SAMPLE_ASSESSMENT_QUESTIONS.length;
+    const maxMarks = totalQ * MARKS_PER_QUESTION;
+    const marksNum = Number(editMarks);
+
+    if (
+      editMarks.trim() === "" ||
+      Number.isNaN(marksNum) ||
+      marksNum < 0 ||
+      marksNum > maxMarks ||
+      marksNum % MARKS_PER_QUESTION !== 0
+    ) {
+      toast.error(
+        `Marks must be an even number between 0 and ${maxMarks} (${MARKS_PER_QUESTION} marks per question).`,
+      );
+      return;
+    }
+
+    const correctCount = marksNum / MARKS_PER_QUESTION;
+    const attemptedNum = Number(editAttempted);
+    if (
+      editAttempted.trim() === "" ||
+      Number.isNaN(attemptedNum) ||
+      !Number.isInteger(attemptedNum) ||
+      attemptedNum < correctCount ||
+      attemptedNum > totalQ
+    ) {
+      toast.error(`Attempted must be a whole number between ${correctCount} and ${totalQ}.`);
+      return;
+    }
+
+    const scorePctNum = Number(editScorePercent);
+    if (
+      editScorePercent.trim() === "" ||
+      Number.isNaN(scorePctNum) ||
+      scorePctNum < 0 ||
+      scorePctNum > 100
+    ) {
+      toast.error("Score % must be between 0 and 100.");
+      return;
+    }
+
+    const h = Math.max(0, Math.floor(Number(editHours) || 0));
+    const m = Math.min(59, Math.max(0, Math.floor(Number(editMinutes) || 0)));
+    const s = Math.min(59, Math.max(0, Math.floor(Number(editSeconds) || 0)));
+    const timeTakenSeconds = h * 3600 + m * 60 + s;
+
+    updateMutation.mutate({
+      id: editTarget.id,
+      correctCount,
+      attemptedCount: attemptedNum,
+      scorePercentage: Number(scorePctNum.toFixed(2)),
+      timeTakenSeconds,
+    });
+  };
 
   const signOut = async () => {
     await qc.cancelQueries();
@@ -662,6 +787,15 @@ function AssessmentAdminPage() {
                           <div className="inline-flex items-center gap-1.5">
                             <button
                               type="button"
+                              onClick={() => openEditModal(row)}
+                              className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-[#123A6B] hover:bg-blue-100"
+                              title="Edit marks & details"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                              Edit
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => setSelectedRow(row)}
                               className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-muted"
                             >
@@ -736,6 +870,156 @@ function AssessmentAdminPage() {
           ) : null}
         </div>
       </main>
+
+      {/* Edit Marks & Metrics Modal */}
+      <Dialog open={editTarget !== null} onOpenChange={(open) => !open && setEditTarget(null)}>
+        <DialogContent className="w-[92%] max-w-[92%] rounded-xl p-4 sm:max-w-lg sm:p-6">
+          {editTarget ? (
+            <form onSubmit={handleSaveEdit} className="space-y-4">
+              <DialogHeader>
+                <DialogTitle className="text-[#123A6B]">
+                  Edit Result — {editTarget.candidate_name} ({editTarget.saf_id})
+                </DialogTitle>
+                <DialogDescription>{editTarget.college_name}</DialogDescription>
+              </DialogHeader>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="ctrl-label" htmlFor="edit-marks-input">
+                    Marks (out of {editTarget.total_questions * MARKS_PER_QUESTION})
+                  </label>
+                  <input
+                    id="edit-marks-input"
+                    type="number"
+                    min={0}
+                    max={editTarget.total_questions * MARKS_PER_QUESTION}
+                    step={MARKS_PER_QUESTION}
+                    value={editMarks}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditMarks(val);
+                      const num = Number(val);
+                      const totalQ =
+                        editTarget.total_questions || SAMPLE_ASSESSMENT_QUESTIONS.length;
+                      if (
+                        val.trim() !== "" &&
+                        !Number.isNaN(num) &&
+                        num >= 0 &&
+                        num <= totalQ * MARKS_PER_QUESTION
+                      ) {
+                        const nextCorrect = Math.round(num / MARKS_PER_QUESTION);
+                        const curAttempted = Number(editAttempted) || 0;
+                        if (curAttempted < nextCorrect) {
+                          setEditAttempted(String(nextCorrect));
+                        }
+                        setEditScorePercent(((nextCorrect / totalQ) * 100).toFixed(1));
+                      }
+                    }}
+                    className="form-ctrl"
+                  />
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Correct:{" "}
+                    <strong>
+                      {Math.max(0, Math.round((Number(editMarks) || 0) / MARKS_PER_QUESTION))} /{" "}
+                      {editTarget.total_questions}
+                    </strong>{" "}
+                    (step {MARKS_PER_QUESTION})
+                  </p>
+                </div>
+
+                <div>
+                  <label className="ctrl-label" htmlFor="edit-attempted-input">
+                    Attempted (out of {editTarget.total_questions})
+                  </label>
+                  <input
+                    id="edit-attempted-input"
+                    type="number"
+                    min={Math.max(0, Math.round((Number(editMarks) || 0) / MARKS_PER_QUESTION))}
+                    max={editTarget.total_questions}
+                    value={editAttempted}
+                    onChange={(e) => setEditAttempted(e.target.value)}
+                    className="form-ctrl"
+                  />
+                </div>
+
+                <div>
+                  <label className="ctrl-label" htmlFor="edit-score-pct-input">
+                    Score %
+                  </label>
+                  <input
+                    id="edit-score-pct-input"
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.1}
+                    value={editScorePercent}
+                    onChange={(e) => setEditScorePercent(e.target.value)}
+                    className="form-ctrl"
+                  />
+                </div>
+
+                <div>
+                  <span className="ctrl-label">Time Taken (HH : MM : SS)</span>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      min={0}
+                      max={23}
+                      aria-label="Hours"
+                      value={editHours}
+                      onChange={(e) => setEditHours(e.target.value)}
+                      className="form-ctrl text-center"
+                    />
+                    <span className="font-bold text-muted-foreground">:</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={59}
+                      aria-label="Minutes"
+                      value={editMinutes}
+                      onChange={(e) => setEditMinutes(e.target.value)}
+                      className="form-ctrl text-center"
+                    />
+                    <span className="font-bold text-muted-foreground">:</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={59}
+                      aria-label="Seconds"
+                      value={editSeconds}
+                      onChange={(e) => setEditSeconds(e.target.value)}
+                      className="form-ctrl text-center"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <p className="rounded-md border border-blue-200 bg-blue-50/70 px-3 py-2 text-xs text-slate-700">
+                Saving will randomly assign correct, wrong, and unanswered responses across the{" "}
+                {editTarget.total_questions} questions to match the updated Marks and Attempted
+                count.
+              </p>
+
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setEditTarget(null)}
+                  className="btn-kk btn-cancel-kk"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateMutation.isPending}
+                  className="btn-kk btn-primary-kk font-semibold disabled:opacity-60"
+                >
+                  {updateMutation.isPending ? "Saving…" : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       {/* Answer Breakdown Modal */}
       <Dialog open={selectedRow !== null} onOpenChange={(open) => !open && setSelectedRow(null)}>
