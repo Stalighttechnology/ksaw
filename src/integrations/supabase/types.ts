@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      amrutha_munnade_assessment: {
+        Row: {
+          answers: Json
+          attempted_count: number
+          candidate_name: string
+          college_name: string
+          correct_count: number
+          created_at: string
+          duration_seconds: number
+          id: string
+          saf_id: string
+          score_percentage: number
+          started_at: string
+          submission_reason: string
+          submitted_at: string
+          time_taken_seconds: number
+          total_questions: number
+        }
+        Insert: {
+          answers?: Json
+          attempted_count?: number
+          candidate_name: string
+          college_name: string
+          correct_count?: number
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          saf_id: string
+          score_percentage?: number
+          started_at: string
+          submission_reason?: string
+          submitted_at?: string
+          time_taken_seconds?: number
+          total_questions?: number
+        }
+        Update: {
+          answers?: Json
+          attempted_count?: number
+          candidate_name?: string
+          college_name?: string
+          correct_count?: number
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          saf_id?: string
+          score_percentage?: number
+          started_at?: string
+          submission_reason?: string
+          submitted_at?: string
+          time_taken_seconds?: number
+          total_questions?: number
+        }
+        Relationships: []
+      }
       registrations: {
         Row: {
           admin_notes: string | null
@@ -291,6 +345,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_saf_assessment_completed: {
+        Args: {
+          p_saf_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

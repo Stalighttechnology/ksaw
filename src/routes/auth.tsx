@@ -6,9 +6,12 @@ import { SiteHeader } from "@/components/reg/SiteChrome";
 import { supabase } from "@/integrations/supabase/client";
 
 const title = "Admin Sign In | Registration Collection";
-const description = "Secure sign in for university staff to manage student registration submissions.";
+const description =
+  "Secure sign in for university staff to manage student registration submissions.";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>): { redirect?: string | undefined } =>
+    typeof search["redirect"] === "string" ? { redirect: search["redirect"] } : {},
   head: () => ({
     meta: [
       { title },
@@ -25,6 +28,11 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { redirect: redirectParam } = Route.useSearch();
+  const safeRedirect =
+    redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
+      ? redirectParam
+      : "/admin";
   const [mounted, setMounted] = useState(false);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -34,9 +42,9 @@ function AuthPage() {
   useEffect(() => {
     setMounted(true);
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/admin", replace: true });
+      if (data.session) navigate({ to: safeRedirect as "/admin", replace: true });
     });
-  }, [navigate]);
+  }, [navigate, safeRedirect]);
 
   if (!mounted) return null;
 
@@ -55,15 +63,14 @@ function AuthPage() {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/admin", replace: true });
+        navigate({ to: safeRedirect as "/admin", replace: true });
       } else {
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: typeof window !== "undefined"
-              ? `${window.location.origin}/admin`
-              : "/admin",
+            emailRedirectTo:
+              typeof window !== "undefined" ? `${window.location.origin}/admin` : "/admin",
           },
         });
         if (error) throw error;
