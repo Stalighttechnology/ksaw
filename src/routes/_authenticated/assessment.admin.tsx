@@ -14,7 +14,6 @@ import {
   Filter,
   LogOut,
   Pencil,
-  Printer,
   RefreshCw,
   RotateCcw,
   Search,
@@ -812,6 +811,15 @@ function AssessmentAdminPage() {
                             </button>
                             <button
                               type="button"
+                              onClick={() => exportAssessmentAnswersPdf(row)}
+                              className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+                              title="Download question paper PDF"
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                              PDF
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => setDeleteTarget(row)}
                               className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 hover:bg-red-100"
                               title="Delete attempt"
@@ -1028,31 +1036,19 @@ function AssessmentAdminPage() {
         <DialogContent className="max-h-[85vh] w-[92%] max-w-[92%] overflow-y-auto rounded-xl sm:max-w-3xl">
           {selectedRow ? (
             <>
-              <DialogHeader className="pr-8">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <DialogTitle className="text-[#123A6B]">
-                      {selectedRow.candidate_name} ({selectedRow.saf_id})
-                    </DialogTitle>
-                    <DialogDescription className="mt-1">
-                      {selectedRow.college_name} • Score:{" "}
-                      <strong>
-                        {selectedRow.correct_count * MARKS_PER_QUESTION} /{" "}
-                        {selectedRow.total_questions * MARKS_PER_QUESTION} marks
-                      </strong>{" "}
-                      ({selectedRow.correct_count} / {selectedRow.total_questions} correct •{" "}
-                      {Number(selectedRow.score_percentage).toFixed(1)}%)
-                    </DialogDescription>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => exportAssessmentAnswersPdf(selectedRow)}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[#123A6B] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#0f2f57]"
-                  >
-                    <Printer className="h-4 w-4" />
-                    Export PDF
-                  </button>
-                </div>
+              <DialogHeader>
+                <DialogTitle className="text-[#123A6B]">
+                  {selectedRow.candidate_name} ({selectedRow.saf_id})
+                </DialogTitle>
+                <DialogDescription>
+                  {selectedRow.college_name} • Score:{" "}
+                  <strong>
+                    {selectedRow.correct_count * MARKS_PER_QUESTION} /{" "}
+                    {selectedRow.total_questions * MARKS_PER_QUESTION} marks
+                  </strong>{" "}
+                  ({selectedRow.correct_count} / {selectedRow.total_questions} correct •{" "}
+                  {Number(selectedRow.score_percentage).toFixed(1)}%)
+                </DialogDescription>
               </DialogHeader>
 
               <div className="mt-2 space-y-3">
