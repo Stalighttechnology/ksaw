@@ -908,10 +908,7 @@ function AssessmentAdminPage() {
                         num <= totalQ * MARKS_PER_QUESTION
                       ) {
                         const nextCorrect = Math.round(num / MARKS_PER_QUESTION);
-                        const curAttempted = Number(editAttempted) || 0;
-                        if (curAttempted < nextCorrect) {
-                          setEditAttempted(String(nextCorrect));
-                        }
+                        setEditAttempted(String(Math.max(editTarget.attempted_count, nextCorrect)));
                         setEditScorePercent(((nextCorrect / totalQ) * 100).toFixed(1));
                       }
                     }}
@@ -934,11 +931,10 @@ function AssessmentAdminPage() {
                   <input
                     id="edit-attempted-input"
                     type="number"
-                    min={Math.max(0, Math.round((Number(editMarks) || 0) / MARKS_PER_QUESTION))}
-                    max={editTarget.total_questions}
+                    readOnly
+                    tabIndex={-1}
                     value={editAttempted}
-                    onChange={(e) => setEditAttempted(e.target.value)}
-                    className="form-ctrl"
+                    className="form-ctrl cursor-not-allowed !bg-slate-100 text-slate-600"
                   />
                 </div>
 
@@ -948,13 +944,11 @@ function AssessmentAdminPage() {
                   </label>
                   <input
                     id="edit-score-pct-input"
-                    type="number"
-                    min={0}
-                    max={100}
-                    step={0.1}
-                    value={editScorePercent}
-                    onChange={(e) => setEditScorePercent(e.target.value)}
-                    className="form-ctrl"
+                    type="text"
+                    readOnly
+                    tabIndex={-1}
+                    value={`${editScorePercent}%`}
+                    className="form-ctrl cursor-not-allowed !bg-slate-100 text-slate-600"
                   />
                 </div>
 
