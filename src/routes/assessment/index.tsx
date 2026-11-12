@@ -230,16 +230,28 @@ function AssessmentPage() {
     return () => window.clearInterval(timer);
   }, [session, finalizeSession]);
 
-  // Close college suggestions dropdown on outside click
+  // Close college suggestions dropdown on outside click and clear un-selected custom text
   useEffect(() => {
     const handleOutside = (event: MouseEvent) => {
       if (collegeBoxRef.current && !collegeBoxRef.current.contains(event.target as Node)) {
         setCollegeMenuOpen(false);
+        setCollegeName((prev) => {
+          const matched = applicantColleges.find(
+            (c) => c.toLowerCase() === prev.trim().toLowerCase(),
+          );
+          return matched ?? "";
+        });
       }
     };
     document.addEventListener("mousedown", handleOutside);
     return () => document.removeEventListener("mousedown", handleOutside);
-  }, []);
+  }, [applicantColleges]);
+
+  const matchedCollege = useMemo(() => {
+    const trimmed = collegeName.trim().toLowerCase();
+    if (!trimmed) return undefined;
+    return applicantColleges.find((c) => c.toLowerCase() === trimmed);
+  }, [applicantColleges, collegeName]);
 
   const filteredColleges = useMemo(() => {
     const q = collegeName.trim().toLowerCase();
@@ -258,6 +270,8 @@ function AssessmentPage() {
     }
     if (!collegeName.trim()) {
       nextErrors.collegeName = "College / Center Name is required";
+    } else if (!matchedCollege) {
+      nextErrors.collegeName = "Please select a College / Center Name from the available list";
     }
 
     if (Object.keys(nextErrors).length > 0) {
@@ -290,7 +304,7 @@ function AssessmentPage() {
       {
         candidateName,
         safId: `SAF${safDigits}`,
-        collegeName,
+        collegeName: matchedCollege ?? collegeName,
       },
       ASSESSMENT_DURATION_SECONDS,
     );
@@ -476,9 +490,14 @@ function AssessmentPage() {
                           type="text"
                           className={`form-ctrl${errors.collegeName ? " is-invalid" : ""}`}
                           value={collegeName}
-                          placeholder="Search or enter College / Center Name"
+                          placeholder="Search and select College / Center Name"
                           autoComplete="off"
                           onFocus={() => setCollegeMenuOpen(true)}
+                          onBlur={() => {
+                            if (!matchedCollege) {
+                              setCollegeName("");
+                            }
+                          }}
                           onChange={(e) => {
                             setCollegeName(e.target.value);
                             setCollegeMenuOpen(true);
@@ -487,26 +506,32 @@ function AssessmentPage() {
                             }
                           }}
                         />
-                        {collegeMenuOpen && filteredColleges.length > 0 ? (
+                        {collegeMenuOpen ? (
                           <ul className="absolute left-0 right-0 top-[calc(100%+2px)] z-40 max-h-56 overflow-auto rounded border border-border bg-white py-1 shadow-lg">
-                            {filteredColleges.map((college) => (
-                              <li key={college}>
-                                <button
-                                  type="button"
-                                  className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
-                                  onMouseDown={(e) => {
-                                    e.preventDefault();
-                                    setCollegeName(college);
-                                    setCollegeMenuOpen(false);
-                                    if (errors.collegeName) {
-                                      setErrors((prev) => ({ ...prev, collegeName: undefined }));
-                                    }
-                                  }}
-                                >
-                                  {college}
-                                </button>
+                            {filteredColleges.length > 0 ? (
+                              filteredColleges.map((college) => (
+                                <li key={college}>
+                                  <button
+                                    type="button"
+                                    className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      setCollegeName(college);
+                                      setCollegeMenuOpen(false);
+                                      if (errors.collegeName) {
+                                        setErrors((prev) => ({ ...prev, collegeName: undefined }));
+                                      }
+                                    }}
+                                  >
+                                    {college}
+                                  </button>
+                                </li>
+                              ))
+                            ) : (
+                              <li className="px-3 py-2 text-xs text-slate-500">
+                                No matching colleges found. Please select from the available list.
                               </li>
-                            ))}
+                            )}
                           </ul>
                         ) : null}
                       </div>
