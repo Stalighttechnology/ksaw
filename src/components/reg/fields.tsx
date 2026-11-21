@@ -218,6 +218,11 @@ export function MultiSelect({
   const shown = useMemo(() => {
     if (!q) return options;
     const query = q.toLowerCase();
+    const altQuery = query.includes("center")
+      ? query.replace(/center/g, "centre")
+      : query.includes("centre")
+      ? query.replace(/centre/g, "center")
+      : null;
     
     const startsWithMatches: string[] = [];
     const containsMatches: string[] = [];
@@ -227,9 +232,21 @@ export function MultiSelect({
       // Split by hyphen to isolate the English part if applicable (e.g. for castes)
       const englishPart = (o.split(" - ")[0] || "").toLowerCase();
       
-      if (targetStr.startsWith(query) || englishPart.startsWith(query)) {
+      const isStart =
+        targetStr.startsWith(query) ||
+        (altQuery ? targetStr.startsWith(altQuery) : false) ||
+        englishPart.startsWith(query) ||
+        (altQuery ? englishPart.startsWith(altQuery) : false);
+
+      const isContain =
+        targetStr.includes(query) ||
+        (altQuery ? targetStr.includes(altQuery) : false) ||
+        englishPart.includes(query) ||
+        (altQuery ? englishPart.includes(altQuery) : false);
+
+      if (isStart) {
         startsWithMatches.push(o);
-      } else if (targetStr.includes(query) || englishPart.includes(query)) {
+      } else if (isContain) {
         containsMatches.push(o);
       }
     });

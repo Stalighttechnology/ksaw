@@ -48,7 +48,9 @@ export const COLLEGES = [
   "GFGC- Ramanagar Town",
   "New expert college , Ramanagar",
   "GT Ramanagara",
-  "VISHWA GANGA COMPUTER TRAINING CENTRE YADGIR",
+  "Government Engineering College, Mosalehosahalli, Hassan",
+  "Sri Krishna Institute of Technology Bengaluru",
+  "Vishwa Ganga Computer Training Center Yadgir",
   "Lingeri Konappa education trust Women's Art science and commerce degree college yadgir",
   "Basaveshwar science college, Bagalkote",
   "SADGURU SIDDHAROODH WOMENS DEGREE COLLEGE, GUMPA BIDAR",
@@ -689,9 +691,42 @@ export const COLLEGE_ALIASES: Record<string, readonly string[]> = {
     "GT Ramanagar",
     "GT College Ramanagara",
   ],
-  "VISHWA GANGA COMPUTER TRAINING CENTRE YADGIR": [
+  "Government Engineering College, Mosalehosahalli, Hassan": [
+    "Government Engineering College, Mosalehosahalli, Hassan",
+    "Government Engineering College, Mosalehosahalli Hassan",
+    "Government Engineering College Mosalehosahalli Hassan",
+    "Government Engineering College, Mosalehosahalli",
+    "Government Engineering College Mosalehosahalli",
+    "Govt Engineering College, Mosalehosahalli, Hassan",
+    "Govt Engineering College, Mosalehosahalli Hassan",
+    "Govt Engineering College Mosalehosahalli Hassan",
+    "Govt Engineering College Mosalehosahalli",
+    "GEC Mosalehosahalli",
+    "GEC Hassan",
+    "Mosalehosahalli Engineering College",
+  ],
+  "Sri Krishna Institute of Technology Bengaluru": [
+    "Sri Krishna Institute of Technology Bengaluru",
+    "Sri Krishna Institute of Technology, Bengaluru",
+    "Sri Krishna Institute of Technology Bangalore",
+    "Sri Krishna Institute of Technology, Bangalore",
+    "Sri Krishna Institute of Technology",
+    "Sri krishna institute of technology Bengaluru",
+    "Sri krishna institute of technology Bangalore",
+    "SKIT Bengaluru",
+    "SKIT Bangalore",
+    "SKIT",
+  ],
+  "Vishwa Ganga Computer Training Center Yadgir": [
+    "Vishwa Ganga Computer Training Center Yadgir",
+    "Vishwa ganga computer training center yadgir",
+    "Vishwa Ganga Computer Training Center, Yadgir",
+    "Vishwa Ganga Computer Training Center",
+    "VISHWA GANGA COMPUTER TRAINING CENTER YADGIR",
+    "VISHWA GANGA COMPUTER TRAINING CENTER",
     "VISHWA GANGA COMPUTER TRAINING CENTRE YADGIR",
     "Vishwa Ganga Computer Training Centre Yadgir",
+    "Vishwa ganga computer training centre yadgir",
     "VISHWA GANGA COMPUTER TRAINING CENTRE",
     "Vishwa Ganga Computer Training Centre",
     "VISHWA GANGA COMPUTER TRAINING CENTRE YADGIR NEW BUS STAND OPP, AXIS BANK BESIDE, HYDRABAD ROAD YADGIR",
@@ -972,6 +1007,18 @@ export function normalizeCollegeName(rawName?: string | null): string {
   }
 
   const upper = trimmed.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (upper.includes("MOSALEHOSAHALLI") || upper.includes("MOSALE")) {
+    return "Government Engineering College, Mosalehosahalli, Hassan";
+  }
+  if (
+    upper.includes("SKIT") ||
+    (upper.includes("KRISHNA") && upper.includes("INSTITUTE") && (upper.includes("TECH") || upper.includes("TECHNOLOGY")))
+  ) {
+    return "Sri Krishna Institute of Technology Bengaluru";
+  }
+  if (upper.includes("VISHWAGANGA") || (upper.includes("VISHWA") && upper.includes("GANGA"))) {
+    return "Vishwa Ganga Computer Training Center Yadgir";
+  }
   if (upper === "SHIVAKUMAR" || upper === "SHIVKUMAR") return "Shivkumar";
   if (upper.includes("CHANAKYA")) return "Chanakya Computer Classes";
   if (
