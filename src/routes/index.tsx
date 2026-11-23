@@ -87,7 +87,6 @@ const PAUSED_NIGAMAS = [
   "Kumbara Abhivrudhi",
   "Kadugoulla",
   "Balija Samudaya Abhivrudhi Nigama",
-  "Ambhiga Abhivrudhi",
   "Savita Samaaja Abhivrudhi",
   "Uppara Avhivrudhi",
   "Madivala Machideva Abhvrudhi",
