@@ -20,7 +20,7 @@ export function SiteHeader({ variant = "default" }: { variant?: "default" | "adm
         {/* Center: University Title and Sub-title */}
         <div className="kk-header-titles flex flex-col items-center justify-center text-center px-1">
           <p className={`${isAdmin ? "text-lg sm:text-2xl lg:text-[26px] font-black text-[#123A6B] tracking-tight leading-snug uppercase drop-shadow-2xs" : "kk-header-title"}`}>
-            Karnataka State Akkamahadevi Women&apos;s University
+            Karnataka State Akkamahadevi Women University
           </p>
           <p className={`${isAdmin ? "mt-1 text-xs sm:text-sm lg:text-[14.5px] font-extrabold uppercase tracking-[0.18em] text-[#EE5D1D]" : "kk-header-sub"}`}>
             Vijayapura, Karnataka
@@ -31,7 +31,7 @@ export function SiteHeader({ variant = "default" }: { variant?: "default" | "adm
         <div className="kk-logo kk-logo-right shrink-0 justify-end">
           <img
             src={univLogo}
-            alt="Karnataka State Akkamahadevi Women's University logo"
+            alt="Karnataka State Akkamahadevi Women University logo"
             width={isAdmin ? 70 : 60}
             height={isAdmin ? 70 : 60}
             className={`${isAdmin ? "h-14 w-14 sm:h-16 sm:w-16" : "h-12 w-12 sm:h-15 sm:w-15"} object-contain drop-shadow-2xs transition-transform hover:scale-105`}
@@ -81,7 +81,7 @@ export function SiteFooter({
       <div className="kk-wrap flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="text-center md:text-left space-y-1">
           <p className="font-bold text-sm text-white tracking-wide">
-            Karnataka State Akkamahadevi Women&apos;s University
+            Karnataka State Akkamahadevi Women University
           </p>
           <p className="text-xs text-slate-400">
             Vijayapura, Karnataka • Skill Training &amp; Registration Portal

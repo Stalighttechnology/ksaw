@@ -48,7 +48,7 @@ import {
 } from "@/lib/assessmentSubmission";
 import { useColleges } from "@/lib/useColleges";
 
-const title = "Computer Programming Assessment | Karnataka State Akkamahadevi Women's University";
+const title = "Computer Programming Assessment | Karnataka State Akkamahadevi Women University";
 const description =
   "Computer Programming Assessment portal with 25 questions, 50 marks, and a 1-hour timed session.";
 

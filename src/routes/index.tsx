@@ -1947,7 +1947,7 @@ function RegistrationPage() {
               {isEditing ? "Application Updated Successfully!" : "Application Submitted Successfully!"}
             </h3>
             <p className="text-xs text-muted-foreground mt-1">
-              Your details have been registered with Karnataka State Akkamahadevi Women's University.
+              Your details have been registered with Karnataka State Akkamahadevi Women University.
             </p>
 
             <div className="my-5 w-full rounded-xl bg-muted/40 p-4 border border-border flex flex-col items-center">
